@@ -1,5 +1,3 @@
-Here's the markdown version of the provided text:
-
 # UKBB Health Care Records
 
 This repository contains an ensemble of functions for use analyzing the UKBB records on DNA Nexus.
