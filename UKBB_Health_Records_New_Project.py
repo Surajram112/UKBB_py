@@ -2,31 +2,42 @@ import pandas as pd
 import subprocess
 from datetime import datetime
 import re
+import os
 
 # Function to run system commands
 def run_command(command):
     subprocess.run(command, shell=True, check=True)
 
-# Download files
-files_to_download = [
-    'file-GZKXxpQJKVzZ0BgzQZ1YYj9Z', # GP registrations
-    'file-GZKXxpQJKVzVb7gQvQbYfxKF', # GP clinical
-    'file-GZKXxpQJKVzxKb0FYfGg28v9', # GP scripts
-    'file-Gp36v5jJ0qKKgQXxxQ0gjf0f', # HES Diagnoses
-    'file-Gp36v5QJ0qKJv0pQ0X5Z2B5K', # HES Records
-    'file-Gp36v5jJ0qK58yQkJ06gzGvv', # OPCS Records
-    'file-GZKXgQjJY2Fkg1ZG4Bg8ZJBP', # Cancer_Registry
-    'file-GZJKVv8J9qP9xGfpK5KpP5G9', # self report
-    'file-GZJ9bbQJj59YBg8j4Kffpx9v', # data coding 3
-    'file-GZJ9Z98Jj59YBg8j4Kffpx78', # data coding 4
-    'file-GZJ9Z98Jj59gQ0zX6p3Jx3p9', # data coding 6
-    'file-GZq40X0Jj59QzkKqx73PX3ff', # ICD-O3 coding
-    'file-GZKXVx8J9jFp1qpBQZ8z5PbJ', # death records
-    'file-GZKXVx8J9jFqG2GvJV8vzxK1'  # death causes
-]
+# Create a data folder if it doesn't exist
+data_folder = "ukbb_data"
+if not os.path.exists(data_folder):
+    os.makedirs(data_folder)
 
-for file in files_to_download:
-    run_command(f'dx download {file}')
+# Dictionary of files to download with their corresponding names
+files_to_download = {
+    'file-GZKXxpQJKVzZ0BgzQZ1YYj9Z': 'GP_registrations.csv',
+    'file-GZKXxpQJKVzVb7gQvQbYfxKF': 'GP_clinical.csv',
+    'file-GZKXxpQJKVzxKb0FYfGg28v9': 'GP_scripts.csv',
+    'file-Gp36v5jJ0qKKgQXxxQ0gjf0f': 'HES_diagnoses.csv',
+    'file-Gp36v5QJ0qKJv0pQ0X5Z2B5K': 'HES_records.csv',
+    'file-Gp36v5jJ0qK58yQkJ06gzGvv': 'OPCS_records.csv',
+    'file-GZKXgQjJY2Fkg1ZG4Bg8ZJBP': 'Cancer_Registry.csv',
+    'file-GZJKVv8J9qP9xGfpK5KpP5G9': 'self_report.csv',
+    'file-GZJ9bbQJj59YBg8j4Kffpx9v': 'data_coding_3.csv',
+    'file-GZJ9Z98Jj59YBg8j4Kffpx78': 'data_coding_4.csv',
+    'file-GZJ9Z98Jj59gQ0zX6p3Jx3p9': 'data_coding_6.csv',
+    'file-GZq40X0Jj59QzkKqx73PX3ff': 'ICD-O3_coding.csv',
+    'file-GZKXVx8J9jFp1qpBQZ8z5PbJ': 'death_records.csv',
+    'file-GZKXVx8J9jFqG2GvJV8vzxK1': 'death_causes.csv'
+}
+
+# Download files if they don't exist
+for file_id, file_name in files_to_download.items():
+    file_path = os.path.join(data_folder, file_name)
+    if not os.path.exists(file_path):
+        run_command(f'dx download {file_id} -o {file_path}')
+    else:
+        print(f"{file_name} already exists in {data_folder}")
 
 # Load baseline table
 run_command("curl https://raw.githubusercontent.com/Surajram112/UKBB_py/main/new_baseline.py > new_baseline.py")
