@@ -164,7 +164,7 @@ def read_ICD9(codes, diagfile='HES_hesin_diag.csv', recordfile='HES_hesin.csv'):
     data = data[['dnx_hesin_diag_id', 'eid', 'ins_index', 'arr_index', 'classification', 'diag_icd9', 'diag_icd10']]
     
     icd9_code_data = data['diag_icd9'].str.split(" ").str[0]
-    vec = [any(re.match(f"^{code}", icd9_code_data[i]) for code in codes)
+    vec = [any(re.match(f"^{code}", icd9_code_data[i]) for code in codes) for i in range(len(icd9_code_data))]
     data = data[vec]
     
     records = pd.read_csv(recordfile)
