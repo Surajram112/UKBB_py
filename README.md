@@ -27,16 +27,12 @@ This repository contains an ensemble of functions for use analyzing the UKBB rec
 To set up the environment for running the Python scripts, you need to have Python installed along with the necessary packages. You can install the required packages using pip:
 
 ```sh
-pip install pandas numpy scipy matplotlib seaborn statsmodels requests
+pip install pandas numpy scipy matplotlib seaborn statsmodels
 ```
 
 ```python
-import requests
-import os
-
-# Download the script
-url = "https://raw.githubusercontent.com/Surajram112/UKBB_py/main/UKBB_Health_Records_New_Project.py"
-requests.get(url)
+import subprocess
+subprocess.run("curl https://raw.githubusercontent.com/Surajram112/UKBB_py/main/UKBB_Health_Records_New_Project.py > UKBB_Health_Records_New_Project.py", shell=True, check=True)
 ```
 ### Extracting Healthcare Records
 
