@@ -87,44 +87,10 @@ The line-level grep might also accidentally tag other things that happen to matc
 Below is an example usage of the main script:
 
 ```python
-import pandas as pd
 import subprocess
-from datetime import datetime
-import re
-
-# Function to run system commands
-def run_command(command):
-    subprocess.run(command, shell=True, check=True)
-
-files_to_download = [
-    'file-GZKXxpQJKVzZ0BgzQZ1YYj9Z', # GP registrations
-    'file-GZKXxpQJKVzVb7gQvQbYfxKF', # GP clinical
-    'file-GZKXxpQJKVzxKb0FYfGg28v9', # GP scripts
-    'file-Gp36v5jJ0qKKgQXxxQ0gjf0f', # HES Diagnoses
-    'file-Gp36v5QJ0qKJv0pQ0X5Z2B5K', # HES Records
-    'file-Gp36v5jJ0qK58yQkJ06gzGvv', # OPCS Records
-    'file-GZKXgQjJY2Fkg1ZG4Bg8ZJBP', # Cancer_Registry
-    'file-GZJKVv8J9qP9xGfpK5KpP5G9', # self report
-    'file-GZJ9bbQJj59YBg8j4Kffpx9v', # data coding 3
-    'file-GZJ9Z98Jj59YBg8j4Kffpx78', # data coding 4
-    'file-GZJ9Z98Jj59gQ0zX6p3Jx3p9', # data coding 6
-    'file-GZq40X0Jj59QzkKqx73PX3ff', # ICD-O3 coding
-    'file-GZKXVx8J9jFp1qpBQZ8z5PbJ', # death records
-    'file-GZKXVx8J9jFqG2GvJV8vzxK1'  # death causes
-]
-
-for file in files_to_download:
-    run_command(f'dx download {file}')
-
-# Download and process baseline table
-run_command('dx download file-GZPzVp0JkBXbqJjYZvzvkjg4 -o Baseline.csv')
-run_command('python process_baseline.py')
-
-# Load the processed baseline table
-baseline_table = pd.read_csv('processed_baseline.csv')
+subprocess.run("curl https://raw.githubusercontent.com/Surajram112/UKBB_py/main/UKBB_Health_Records_New_Project.py > UKBB_Health_Records_New_Project.py", shell=True, check=True)
 
 # Define read functions and other functionality here
-# Example:
-# GP_codes = ['XE2eD', '22K..']
-# GP_records = read_GP(GP_codes)
+GP_codes = ['XE2eD', '22K..']
+GP_records = read_GP(GP_codes)
 ```
