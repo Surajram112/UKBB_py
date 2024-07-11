@@ -79,7 +79,7 @@ def process_baseline_table():
     baseline_table['whr'] = baseline_table['waist'] / baseline_table['hip']
 
     # Save the processed baseline table
-    baseline_table.to_csv('processed_baseline.csv', index=False)
+    baseline_table.to_csv('Baseline.csv', index=False)
 
     return baseline_table
 
