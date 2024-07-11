@@ -46,14 +46,14 @@ for file_id, file_name in files_to_download.items():
 run_command("curl https://raw.githubusercontent.com/Surajram112/UKBB_py/main/new_baseline.py > new_baseline.py")
 import new_baseline
     
-def read_GP(codes, folder='ukbb_date/', file='GP_clinical.csv'):
+def read_GP(codes, folder='ukbb_date/', filename='GP_clinical.csv'):
     gp_header = ['eid', 'data_provider', 'event_dt', 'read_2', 'read_3', 'value1', 'value2', 'value3', 'dob', 'assess_date', 'event_age', 'prev']
     if not codes:
         return pd.DataFrame(columns=gp_header)
     
     codes2 = [f",{code}" for code in codes]
     codes3 = '\\|'.join(codes2)
-    grepcode = f"grep '{codes3}' {folder + file} > temp.csv"
+    grepcode = f"grep '{codes3}' {folder + filename} > temp.csv"
     run_command(grepcode)
     
     if not pd.read_csv('temp.csv').shape[0]:
@@ -81,7 +81,7 @@ def read_OPCS(codes, folder='ukbb_date/', filename='HES_hesin_oper.csv'):
     
     codes2 = [f",{code}" for code in codes]
     codes3 = '\\|'.join(codes2)
-    grepcode = f'grep \'{codes3}\' {filename} > temp.csv'
+    grepcode = f'grep \'{codes3}\' {folder + filename} > temp.csv'
     run_command(grepcode)
     
     if not pd.read_csv('temp.csv').shape[0]:
@@ -103,7 +103,7 @@ def read_ICD10(codes, folder='ukbb_date/', diagfile='HES_hesin_diag.csv', record
     run_command(f"sed -i 's/\"//g' {diagfile}")
     codes2 = [f",{code}" for code in codes]
     codes3 = '\\|'.join(codes2)
-    grepcode = f'grep \'{codes3}\' {diagfile} > temp.csv'
+    grepcode = f'grep \'{codes3}\' {folder + diagfile} > temp.csv'
     run_command(grepcode)
     
     if not pd.read_csv('temp.csv').shape[0]:
@@ -112,7 +112,7 @@ def read_ICD10(codes, folder='ukbb_date/', diagfile='HES_hesin_diag.csv', record
     data = pd.read_csv('temp.csv', header=None)
     data.columns = ['dnx_hesin_diag_id', 'eid', 'ins_index', 'arr_index', 'classification', 'diag_icd9', 'diag_icd9_add', 'diag_icd10', 'diag_icd10_add']
     data = data[['dnx_hesin_diag_id', 'eid', 'ins_index', 'arr_index', 'classification', 'diag_icd9', 'diag_icd10']]
-    records = pd.read_csv(recordfile)
+    records = pd.read_csv(folder + recordfile)
     data2 = data.merge(records, on=['eid', 'ins_index', 'arr_index'])
     data2['epistart'] = pd.to_datetime(data2['epistart'])
     data2['epiend'] = pd.to_datetime(data2['epiend'])
@@ -126,7 +126,7 @@ def read_ICD9(codes, folder='ukbb_date/', diagfile='HES_hesin_diag.csv', recordf
     codes = [str(code) for code in codes]
     codes2 = [f",{code}" for code in codes]
     codes3 = '\\|'.join(codes2)
-    grepcode = f'grep \'{codes3}\' {diagfile} > temp.csv'
+    grepcode = f'grep \'{codes3}\' {folder + diagfile} > temp.csv'
     run_command(grepcode)
     
     if os.path.getsize('temp.csv') == 0:
@@ -140,13 +140,13 @@ def read_ICD9(codes, folder='ukbb_date/', diagfile='HES_hesin_diag.csv', recordf
     vec = [any(re.match(f"^{code}", icd9_code_data[i]) for code in codes) for i in range(len(icd9_code_data))]
     data = data[vec]
     
-    records = pd.read_csv(recordfile)
+    records = pd.read_csv(folder + recordfile)
     data2 = data.merge(records, on=['eid', 'ins_index', 'arr_index'])
     data2['epistart'] = pd.to_datetime(data2['epistart'])
     data2['epiend'] = pd.to_datetime(data2['epiend'])
     return data2
 
-def read_cancer(codes, folder='ukbb_date/', file='cancer_participant.csv'):
+def read_cancer(codes, folder='ukbb_date/', filename='cancer_participant.csv'):
     cancer_header = ["eid", "reg_date", "site", "age", "histology", "behaviour", "dob", "assess_date", "diag_age", "prev", "code", "description"]
     if not codes:
         return pd.DataFrame(columns=cancer_header)
@@ -154,7 +154,7 @@ def read_cancer(codes, folder='ukbb_date/', file='cancer_participant.csv'):
     run_command(f"sed -i 's/\"//g' {file}")
     codes2 = [f",{code}" for code in codes]
     codes3 = '\\|'.join(codes2)
-    grepcode = f'grep \'{codes3}\' {file} > temp.csv'
+    grepcode = f'grep \'{codes3}\' {folder + filename} > temp.csv'
     run_command(grepcode)
     
     if not pd.read_csv('temp.csv').shape[0]:
@@ -193,8 +193,8 @@ def read_cancer(codes, folder='ukbb_date/', file='cancer_participant.csv'):
     return data
 
 def read_selfreport(codes, folder='ukbb_date/', file='selfreport_participant.csv'):
-    data = pd.read_csv(file)
-    coding6 = pd.read_csv('coding6.tsv', sep='\t')
+    data = pd.read_csv(folder + file)
+    coding6 = pd.read_csv(folder + 'data_coding6.tsv', sep='\t')
     coding6 = coding6[coding6['coding'] > 1]
     
     outlines = []
@@ -206,8 +206,8 @@ def read_selfreport(codes, folder='ukbb_date/', file='selfreport_participant.csv
     return data.loc[outlines, ['eid']]
 
 def read_selfreport_cancer(codes, folder='ukbb_date/', file='selfreport_participant.csv'):
-    data = pd.read_csv(file)
-    coding3 = pd.read_csv('coding3.tsv', sep='\t')
+    data = pd.read_csv(folder + file)
+    coding3 = pd.read_csv(folder + 'data_coding3.tsv', sep='\t')
     coding3 = coding3[coding3['coding'] > 1]
     
     outlines = []
@@ -220,7 +220,7 @@ def read_selfreport_cancer(codes, folder='ukbb_date/', file='selfreport_particip
 
 def read_treatment(codes, folder='ukbb_date/', file='treatment_participant.csv'):
     data = pd.read_csv(file)
-    coding4 = pd.read_csv('coding4.tsv', sep='\t')
+    coding4 = pd.read_csv(folder + 'data_coding4.tsv', sep='\t')
     coding4 = coding4[coding4['coding'] > 1]
     
     outlines = []
