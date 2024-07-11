@@ -44,7 +44,7 @@ run_command("curl https://raw.githubusercontent.com/Surajram112/UKBB_py/main/new
 
 def process_baseline_table():
     # Download and load baseline table
-    run_command('dx download file-GZPzVp0JkBXbqJjYZvzvkjg4')
+    run_command('dx download file-GZPzVp0JkBXbqJjYZvzvkjg4 -o Baseline.csv')
     baseline_table = pd.read_csv('Baseline.csv')
 
     baseline_table.columns = ['eid', 'recruit_age', 'mob', 'yob', 'sex', 'tdi', 'ethnicity', 'alcohol', 'alcohol_freq', 
@@ -60,10 +60,17 @@ def process_baseline_table():
 
     # Convert month name to number
     baseline_table['mob'] = baseline_table['mob'].apply(lambda x: pd.to_datetime(x, format='%B').month)
+    
+    # Ensure 'yob' and 'mob' columns are integers
+    baseline_table['yob'] = baseline_table['yob'].astype(int)
+    baseline_table['mob'] = baseline_table['mob'].astype(int)
+    
     # Create 'dob' column
     baseline_table['dob'] = pd.to_datetime(baseline_table[['yob', 'mob']].assign(day=15))
+    
     # Convert 'assess_date' to datetime
     baseline_table['assess_date'] = pd.to_datetime(baseline_table['assess_date'])
+    
     # Calculate 'assess_age' and 'whr' columns
     baseline_table['assess_age'] = (baseline_table['assess_date'] - baseline_table['dob']).dt.days / 365.25
     baseline_table['whr'] = baseline_table['waist'] / baseline_table['hip']
