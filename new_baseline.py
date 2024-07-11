@@ -1,3 +1,5 @@
+import subprocess
+
 # Download and load baseline table
 subprocess.run('dx download file-GZPzVp0JkBXbqJjYZvzvkjg4 -o Baseline.csv', shell=True, check=True)
 baseline_table = pd.read_csv('Baseline.csv')
