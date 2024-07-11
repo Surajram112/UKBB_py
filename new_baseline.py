@@ -1,5 +1,5 @@
 # Download and load baseline table
-run_command('dx download file-GZPzVp0JkBXbqJjYZvzvkjg4 -o Baseline.csv')
+subprocess.run('dx download file-GZPzVp0JkBXbqJjYZvzvkjg4 -o Baseline.csv', shell=True, check=True)
 baseline_table = pd.read_csv('Baseline.csv')
 
 baseline_table.columns = ['eid', 'recruit_age', 'mob', 'yob', 'sex', 'tdi', 'ethnicity', 'alcohol', 'alcohol_freq', 
