@@ -45,11 +45,6 @@ for file_id, file_name in files_to_download.items():
 # Load baseline table and import file to run it
 run_command("curl https://raw.githubusercontent.com/Surajram112/UKBB_py/main/new_baseline.py > new_baseline.py")
 import new_baseline
-
-def month_name_to_number(month_name):
-    month_name = month_name.strip().capitalize()
-    month_dict = {name: num for num, name in enumerate(calendar.month_name) if name}
-    return month_dict.get(month_name, 0)
     
 def read_GP(codes, file='GP_gp_clinical.csv'):
     gp_header = ['eid', 'data_provider', 'event_dt', 'read_2', 'read_3', 'value1', 'value2', 'value3', 'dob', 'assess_date', 'event_age', 'prev']
