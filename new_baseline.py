@@ -1,5 +1,11 @@
 import subprocess
 import pandas as pd
+import calendar
+
+def month_name_to_number(month_name):
+    month_name = month_name.strip().capitalize()
+    month_dict = {name: num for num, name in enumerate(calendar.month_name) if name}
+    return month_dict.get(month_name, 0)
 
 # Download and load baseline table
 subprocess.run('dx download file-GZPzVp0JkBXbqJjYZvzvkjg4 -o Baseline.csv', shell=True, check=True)
