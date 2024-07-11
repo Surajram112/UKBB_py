@@ -69,7 +69,7 @@ def process_baseline_table():
     baseline_table['mob'] = baseline_table['mob'].astype(int)
     
     # Create 'dob' column
-    baseline_table['dob'] = pd.to_datetime(baseline_table[['yob', 'mob']].assign(day=15))
+    baseline_table['dob'] = pd.to_datetime(baseline_table[['yob', 'mob']].assign(day=15).astype(str).agg('-'.join, axis=1))
     
     # Convert 'assess_date' to datetime
     baseline_table['assess_date'] = pd.to_datetime(baseline_table['assess_date'])
