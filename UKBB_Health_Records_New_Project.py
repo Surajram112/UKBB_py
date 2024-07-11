@@ -46,7 +46,7 @@ for file_id, file_name in files_to_download.items():
 run_command("curl https://raw.githubusercontent.com/Surajram112/UKBB_py/main/new_baseline.py > new_baseline.py")
 import new_baseline
     
-def read_GP(codes, folder='ukbb_date/', filename='GP_clinical.csv'):
+def read_GP(codes, folder='ukbb_data/', filename='GP_clinical.csv'):
     gp_header = ['eid', 'data_provider', 'event_dt', 'read_2', 'read_3', 'value1', 'value2', 'value3', 'dob', 'assess_date', 'event_age', 'prev']
     if not codes:
         return pd.DataFrame(columns=gp_header)
@@ -74,7 +74,7 @@ def read_GP(codes, folder='ukbb_date/', filename='GP_clinical.csv'):
     data2['prev'] = data2['event_dt'] < data2['assess_date']
     return data2
 
-def read_OPCS(codes, folder='ukbb_date/', filename='HES_hesin_oper.csv'):
+def read_OPCS(codes, folder='ukbb_data/', filename='HES_hesin_oper.csv'):
     opcs_header = ['dnx_hesin_oper_id', 'eid', 'ins_index', 'arr_index', 'opdate', 'level', 'oper3', 'oper3_nb', 'oper4', 'oper4_nb', 'posopdur', 'preopdur']
     if not codes:
         return pd.DataFrame(columns=opcs_header)
@@ -95,7 +95,7 @@ def read_OPCS(codes, folder='ukbb_date/', filename='HES_hesin_oper.csv'):
     data['prev'] = data['opdate'] < data['assess_date']
     return data
 
-def read_ICD10(codes, folder='ukbb_date/', diagfile='HES_hesin_diag.csv', recordfile='HES_hesin.csv'):
+def read_ICD10(codes, folder='ukbb_data/', diagfile='HES_hesin_diag.csv', recordfile='HES_hesin.csv'):
     icd10_header = ['dnx_hesin_diag_id', 'eid', 'ins_index', 'arr_index', 'level', 'diag_icd9', 'diag_icd10', 'dnx_hesin_id', 'epistart', 'epiend']
     if not codes:
         return pd.DataFrame(columns=icd10_header)
@@ -121,7 +121,7 @@ def read_ICD10(codes, folder='ukbb_date/', diagfile='HES_hesin_diag.csv', record
     data2['prev'] = data2['epiend'] < data2['assess_date']
     return data2
 
-def read_ICD9(codes, folder='ukbb_date/', diagfile='HES_hesin_diag.csv', recordfile='HES_hesin.csv'):
+def read_ICD9(codes, folder='ukbb_data/', diagfile='HES_hesin_diag.csv', recordfile='HES_hesin.csv'):
     icd9_header = ['dnx_hesin_diag_id', 'eid', 'ins_index', 'arr_index', 'level', 'diag_icd9', 'diag_icd10', 'dnx_hesin_id', 'epistart', 'epiend']
     codes = [str(code) for code in codes]
     codes2 = [f",{code}" for code in codes]
@@ -146,7 +146,7 @@ def read_ICD9(codes, folder='ukbb_date/', diagfile='HES_hesin_diag.csv', recordf
     data2['epiend'] = pd.to_datetime(data2['epiend'])
     return data2
 
-def read_cancer(codes, folder='ukbb_date/', filename='cancer_participant.csv'):
+def read_cancer(codes, folder='ukbb_data/', filename='cancer_participant.csv'):
     cancer_header = ["eid", "reg_date", "site", "age", "histology", "behaviour", "dob", "assess_date", "diag_age", "prev", "code", "description"]
     if not codes:
         return pd.DataFrame(columns=cancer_header)
@@ -192,7 +192,7 @@ def read_cancer(codes, folder='ukbb_date/', filename='cancer_participant.csv'):
     
     return data
 
-def read_selfreport(codes, folder='ukbb_date/', file='selfreport_participant.csv'):
+def read_selfreport(codes, folder='ukbb_data/', file='selfreport_participant.csv'):
     data = pd.read_csv(folder + file)
     coding6 = pd.read_csv(folder + 'data_coding6.tsv', sep='\t')
     coding6 = coding6[coding6['coding'] > 1]
@@ -205,7 +205,7 @@ def read_selfreport(codes, folder='ukbb_date/', file='selfreport_participant.csv
     
     return data.loc[outlines, ['eid']]
 
-def read_selfreport_cancer(codes, folder='ukbb_date/', file='selfreport_participant.csv'):
+def read_selfreport_cancer(codes, folder='ukbb_data/', file='selfreport_participant.csv'):
     data = pd.read_csv(folder + file)
     coding3 = pd.read_csv(folder + 'data_coding3.tsv', sep='\t')
     coding3 = coding3[coding3['coding'] > 1]
