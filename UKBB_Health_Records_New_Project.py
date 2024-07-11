@@ -59,7 +59,7 @@ def process_baseline_table():
                               'ldl_cholesterol', 'total_cholesterol', 'blood_type', 'assess_date', 'centre']
 
     # Convert month name to number
-    baseline_table['mob'] = baseline_table['mob'].apply(lambda x: pd.to_datetime(x, format='%B').month)
+    baseline_table['mob'] = baseline_table['mob'].apply(lambda x: month_name_to_number(x))
     
     # Ensure 'yob' and 'mob' columns are integers
     baseline_table['yob'] = baseline_table['yob'].astype(int)
@@ -80,6 +80,11 @@ def process_baseline_table():
 
     return baseline_table
 
+def month_name_to_number(month_name):
+    month_name = month_name.strip().capitalize()
+    month_dict = {name: num for num, name in enumerate(calendar.month_name) if name}
+    return month_dict.get(month_name, 0)
+    
 def read_GP(codes, file='GP_gp_clinical.csv'):
     gp_header = ['eid', 'data_provider', 'event_dt', 'read_2', 'read_3', 'value1', 'value2', 'value3', 'dob', 'assess_date', 'event_age', 'prev']
     if not codes:
