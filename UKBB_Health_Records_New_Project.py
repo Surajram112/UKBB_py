@@ -3,6 +3,9 @@ import subprocess
 from datetime import datetime
 import re
 import os
+import requests
+import calendar
+
 
 # Function to run system commands
 def run_command(command):
