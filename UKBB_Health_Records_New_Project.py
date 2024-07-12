@@ -6,7 +6,6 @@ import os
 import requests
 import calendar
 
-
 # Function to run system commands
 def run_command(command):
     subprocess.run(command, shell=True, check=True)
@@ -46,7 +45,7 @@ for file_id, file_name in files_to_download.items():
 run_command("curl https://raw.githubusercontent.com/Surajram112/UKBB_py/main/new_baseline.py > new_baseline.py")
 import new_baseline
     
-def read_GP(codes, folder='ukbb_data/', filename='GP_clinical.csv'):
+def read_GP(codes, folder='ukbb_data/', filename='GP_clinical.csv', baseline_filename='Baseline.csv'):
     gp_header = ['eid', 'data_provider', 'event_dt', 'read_2', 'read_3', 'value1', 'value2', 'value3', 'dob', 'assess_date', 'event_age', 'prev']
     if not codes:
         return pd.DataFrame(columns=gp_header)
@@ -69,12 +68,13 @@ def read_GP(codes, folder='ukbb_data/', filename='GP_clinical.csv'):
         data2 = pd.concat([data2, data[data['read_3'] == code]], ignore_index=True)
         data2 = pd.concat([data2, data[data['read_2'] == code]], ignore_index=True)
     
+    baseline_table = pd.read_csv(baseline_filename)
     data2 = data2.merge(baseline_table[['eid', 'dob', 'assess_date']], on='eid')
     data2['event_age'] = (data2['event_dt'] - data2['dob']).dt.days / 365.25
     data2['prev'] = data2['event_dt'] < data2['assess_date']
     return data2
 
-def read_OPCS(codes, folder='ukbb_data/', filename='HES_hesin_oper.csv'):
+def read_OPCS(codes, folder='ukbb_data/', filename='HES_hesin_oper.csv', baseline_filename='Baseline.csv'):
     opcs_header = ['dnx_hesin_oper_id', 'eid', 'ins_index', 'arr_index', 'opdate', 'level', 'oper3', 'oper3_nb', 'oper4', 'oper4_nb', 'posopdur', 'preopdur']
     if not codes:
         return pd.DataFrame(columns=opcs_header)
@@ -90,12 +90,14 @@ def read_OPCS(codes, folder='ukbb_data/', filename='HES_hesin_oper.csv'):
     data = pd.read_csv('temp.csv', header=None)
     data.columns = opcs_header
     data['opdate'] = pd.to_datetime(data['opdate'])
+    
+    baseline_table = pd.read_csv(baseline_filename)
     data = data.merge(baseline_table[['eid', 'dob', 'assess_date']], on='eid')
     data['op_age'] = (data['opdate'] - data['dob']).dt.days / 365.25
     data['prev'] = data['opdate'] < data['assess_date']
     return data
 
-def read_ICD10(codes, folder='ukbb_data/', diagfile='HES_hesin_diag.csv', recordfile='HES_hesin.csv'):
+def read_ICD10(codes, folder='ukbb_data/', diagfile='HES_hesin_diag.csv', recordfile='HES_hesin.csv', baseline_filename='Baseline.csv'):
     icd10_header = ['dnx_hesin_diag_id', 'eid', 'ins_index', 'arr_index', 'level', 'diag_icd9', 'diag_icd10', 'dnx_hesin_id', 'epistart', 'epiend']
     if not codes:
         return pd.DataFrame(columns=icd10_header)
@@ -116,6 +118,8 @@ def read_ICD10(codes, folder='ukbb_data/', diagfile='HES_hesin_diag.csv', record
     data2 = data.merge(records, on=['eid', 'ins_index', 'arr_index'])
     data2['epistart'] = pd.to_datetime(data2['epistart'])
     data2['epiend'] = pd.to_datetime(data2['epiend'])
+    
+    baseline_table = pd.read_csv(baseline_filename)
     data2 = data2.merge(baseline_table[['eid', 'dob', 'assess_date']], on='eid')
     data2['diag_age'] = (data2['epistart'] - data2['dob']).dt.days / 365.25
     data2['prev'] = data2['epiend'] < data2['assess_date']
@@ -146,7 +150,7 @@ def read_ICD9(codes, folder='ukbb_data/', diagfile='HES_hesin_diag.csv', recordf
     data2['epiend'] = pd.to_datetime(data2['epiend'])
     return data2
 
-def read_cancer(codes, folder='ukbb_data/', filename='cancer_participant.csv'):
+def read_cancer(codes, folder='ukbb_data/', filename='cancer_participant.csv', baseline_filename='Baseline.csv'):
     cancer_header = ["eid", "reg_date", "site", "age", "histology", "behaviour", "dob", "assess_date", "diag_age", "prev", "code", "description"]
     if not codes:
         return pd.DataFrame(columns=cancer_header)
@@ -181,6 +185,8 @@ def read_cancer(codes, folder='ukbb_data/', filename='cancer_participant.csv'):
     
     codes4 = '|'.join(codes)
     data = data[data['site'].str.contains(codes4)]
+    
+    baseline_table = pd.read_csv(baseline_filename)
     data = data.merge(baseline_table[['eid', 'dob', 'assess_date']], on='eid')
     data['diag_age'] = (data['reg_date'] - data['dob']).dt.days / 365.25
     data['prev'] = data['reg_date'] < data['assess_date']
@@ -269,7 +275,7 @@ def read_GP_scripts(codes, folder='ukbb_date/', file='GP_gp_scripts.csv'):
     
     return data2
 
-def read_death(codes, folder='ukbb_date/', diagfile='death_death_cause.csv', recordfile='death_death.csv'):
+def read_death(codes, folder='ukbb_date/', diagfile='death_death_cause.csv', recordfile='death_death.csv', baseline_filename='Baseline.csv'):
     death_header = ['dnx_death_id', 'eid', 'ins_index', 'dsource', 'source', 'date_of_death', 'level', 'cause_icd10']
     
     if not codes:
@@ -289,6 +295,8 @@ def read_death(codes, folder='ukbb_date/', diagfile='death_death_cause.csv', rec
     records = pd.read_csv(recordfile)
     data2 = data.merge(records, on=['eid', 'ins_index'])
     data2['date_of_death'] = pd.to_datetime(data2['date_of_death'])
+    
+    baseline_table = pd.read_csv(baseline_filename)
     data2 = data2.merge(baseline_table[['eid', 'dob', 'assess_date']], on='eid')
     data2['death_age'] = (data2['date_of_death'] - data2['dob']).dt.days / 365.25
     data2['prev'] = data2['date_of_death'] < data2['assess_date']
