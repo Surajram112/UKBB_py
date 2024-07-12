@@ -94,8 +94,8 @@ def read_OPCS(codes, folder='ukbb_data/', filename='HES_hesin_oper.csv', baselin
     data['opdate'] = pd.to_datetime(data['opdate'])
     
     baseline_table = pd.read_csv(baseline_filename)
-    baseline_table['dob'] = pd.to_datetime(baseline_table['dob'], errors='coerce')
-    baseline_table['assess_date'] = pd.to_datetime(baseline_table['assess_date'], errors='coerce')
+    baseline_table['dob'] = pd.to_datetime(baseline_table['dob'])
+    baseline_table['assess_date'] = pd.to_datetime(baseline_table['assess_date'])
     data = data.merge(baseline_table[['eid', 'dob', 'assess_date']], on='eid')
     data['op_age'] = (data['opdate'] - data['dob']).dt.days / 365.25
     data['prev'] = data['opdate'] < data['assess_date']
@@ -124,6 +124,8 @@ def read_ICD10(codes, folder='ukbb_data/', diagfile='HES_hesin_diag.csv', record
     data2['epiend'] = pd.to_datetime(data2['epiend'])
     
     baseline_table = pd.read_csv(baseline_filename)
+    baseline_table['dob'] = pd.to_datetime(baseline_table['dob'])
+    baseline_table['assess_date'] = pd.to_datetime(baseline_table['assess_date'])
     data2 = data2.merge(baseline_table[['eid', 'dob', 'assess_date']], on='eid')
     data2['diag_age'] = (data2['epistart'] - data2['dob']).dt.days / 365.25
     data2['prev'] = data2['epiend'] < data2['assess_date']
@@ -191,6 +193,8 @@ def read_cancer(codes, folder='ukbb_data/', filename='cancer_participant.csv', b
     data = data[data['site'].str.contains(codes4)]
     
     baseline_table = pd.read_csv(baseline_filename)
+    baseline_table['dob'] = pd.to_datetime(baseline_table['dob'])
+    baseline_table['assess_date'] = pd.to_datetime(baseline_table['assess_date'])   baseline_table = pd.read_csv(baseline_filename)
     data = data.merge(baseline_table[['eid', 'dob', 'assess_date']], on='eid')
     data['diag_age'] = (data['reg_date'] - data['dob']).dt.days / 365.25
     data['prev'] = data['reg_date'] < data['assess_date']
@@ -301,6 +305,8 @@ def read_death(codes, folder='ukbb_date/', diagfile='death_death_cause.csv', rec
     data2['date_of_death'] = pd.to_datetime(data2['date_of_death'])
     
     baseline_table = pd.read_csv(baseline_filename)
+    baseline_table['dob'] = pd.to_datetime(baseline_table['dob'])
+    baseline_table['assess_date'] = pd.to_datetime(baseline_table['assess_date'])
     data2 = data2.merge(baseline_table[['eid', 'dob', 'assess_date']], on='eid')
     data2['death_age'] = (data2['date_of_death'] - data2['dob']).dt.days / 365.25
     data2['prev'] = data2['date_of_death'] < data2['assess_date']
