@@ -82,7 +82,7 @@ def read_GP(codes, folder='ukbb_data/', filename='GP_clinical.csv', baseline_fil
     data2['prev'] = data2['event_dt'] < data2['assess_date']
     return data2
 
-def read_OPCS(codes, folder='ukbb_data/', filename='HES_hesin_oper.csv', baseline_filename='Baseline.csv'):
+def read_OPCS(codes, folder='ukbb_data/', filename='OPCS_records.csv', baseline_filename='Baseline.csv'):
     opcs_header = ['dnx_hesin_oper_id', 'eid', 'ins_index', 'arr_index', 'opdate', 'level', 'oper3', 'oper3_nb', 'oper4', 'oper4_nb', 'posopdur', 'preopdur']
     if not codes:
         return pd.DataFrame(columns=opcs_header)
@@ -107,7 +107,7 @@ def read_OPCS(codes, folder='ukbb_data/', filename='HES_hesin_oper.csv', baselin
     data['prev'] = data['opdate'] < data['assess_date']
     return data
 
-def read_ICD10(codes, folder='ukbb_data/', diagfile='HES_hesin_diag.csv', recordfile='HES_hesin.csv', baseline_filename='Baseline.csv'):
+def read_ICD10(codes, folder='ukbb_data/', diagfile='HES_diagnoses.csv', recordfile='HES_records.csv', baseline_filename='Baseline.csv'):
     icd10_header = ['dnx_hesin_diag_id', 'eid', 'ins_index', 'arr_index', 'level', 'diag_icd9', 'diag_icd10', 'dnx_hesin_id', 'epistart', 'epiend']
     if not codes:
         return pd.DataFrame(columns=icd10_header)
@@ -137,7 +137,7 @@ def read_ICD10(codes, folder='ukbb_data/', diagfile='HES_hesin_diag.csv', record
     data2['prev'] = data2['epiend'] < data2['assess_date']
     return data2
 
-def read_ICD9(codes, folder='ukbb_data/', diagfile='HES_hesin_diag.csv', recordfile='HES_hesin.csv'):
+def read_ICD9(codes, folder='ukbb_data/', diagfile='HES_diagnoses.csv', recordfile='HES_records.csv'):
     icd9_header = ['dnx_hesin_diag_id', 'eid', 'ins_index', 'arr_index', 'level', 'diag_icd9', 'diag_icd10', 'dnx_hesin_id', 'epistart', 'epiend']
     codes = [str(code) for code in codes]
     codes2 = [f",{code}" for code in codes]
@@ -162,7 +162,7 @@ def read_ICD9(codes, folder='ukbb_data/', diagfile='HES_hesin_diag.csv', recordf
     data2['epiend'] = pd.to_datetime(data2['epiend'])
     return data2
 
-def read_cancer(codes, folder='ukbb_data/', filename='cancer_participant.csv', baseline_filename='Baseline.csv'):
+def read_cancer(codes, folder='ukbb_data/', filename='Cancer_Registry.csv', baseline_filename='Baseline.csv'):
     cancer_header = ["eid", "reg_date", "site", "age", "histology", "behaviour", "dob", "assess_date", "diag_age", "prev", "code", "description"]
     if not codes:
         return pd.DataFrame(columns=cancer_header)
@@ -212,7 +212,7 @@ def read_cancer(codes, folder='ukbb_data/', filename='cancer_participant.csv', b
     
     return data
 
-def read_selfreport(codes, folder='ukbb_data/', file='selfreport_participant.csv'):
+def read_selfreport(codes, folder='ukbb_data/', file='self_report.csv'):
     data = pd.read_csv(folder + file)
     coding6 = pd.read_csv(folder + 'data_coding6.tsv', sep='\t')
     coding6 = coding6[coding6['coding'] > 1]
@@ -225,7 +225,7 @@ def read_selfreport(codes, folder='ukbb_data/', file='selfreport_participant.csv
     
     return data.loc[outlines, ['eid']]
 
-def read_selfreport_cancer(codes, folder='ukbb_data/', file='selfreport_participant.csv'):
+def read_selfreport_cancer(codes, folder='ukbb_data/', file='self_report.csv'):
     data = pd.read_csv(folder + file)
     coding3 = pd.read_csv(folder + 'data_coding3.tsv', sep='\t')
     coding3 = coding3[coding3['coding'] > 1]
@@ -263,7 +263,7 @@ def first_occurence(ICD10='', GP='', OPCS='', cancer=''):
     
     return all_records           
 
-def read_GP_scripts(codes, folder='ukbb_date/', file='GP_gp_scripts.csv'):
+def read_GP_scripts(codes, folder='ukbb_date/', file='GP_scripts.csv'):
     gp_header = ['eid', 'data_provider', 'issue_date', 'read_2', 'dmd_code', 'bnf_code', 'drug_name', 'quantity']
     
     if not codes:
@@ -289,7 +289,7 @@ def read_GP_scripts(codes, folder='ukbb_date/', file='GP_gp_scripts.csv'):
     
     return data2
 
-def read_death(codes, folder='ukbb_date/', diagfile='death_death_cause.csv', recordfile='death_death.csv', baseline_filename='Baseline.csv'):
+def read_death(codes, folder='ukbb_date/', diagfile='death_causes.csv', recordfile='death_records.csv', baseline_filename='Baseline.csv'):
     death_header = ['dnx_death_id', 'eid', 'ins_index', 'dsource', 'source', 'date_of_death', 'level', 'cause_icd10']
     
     if not codes:
