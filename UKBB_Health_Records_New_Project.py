@@ -60,7 +60,7 @@ def read_GP(codes, folder='ukbb_data/', filename='GP_clinical.csv', baseline_fil
     
     data = pd.read_csv('temp.csv', header=None)
     data.columns = ['eid', 'data_provider', 'event_dt', 'read_2', 'read_3', 'value1', 'value2', 'value3']
-    data['event_dt'] = data['event_dt'].apply(lambda x: '1901-01-01' if re.search("[a-zA-Z]", x) else x)
+    data['event_dt'] = data['event_dt'].astype(str).apply(lambda x: '1901-01-01' if re.search("[a-zA-Z]", x) else x)
     data['event_dt'] = pd.to_datetime(data['event_dt'])
     
     data2 = pd.DataFrame()
