@@ -8,7 +8,13 @@ import calendar
 
 # Function to run system commands
 def run_command(command):
-    subprocess.run(command, shell=True, check=True)
+    try:
+        result = subprocess.run(command, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        return result.stdout
+    except subprocess.CalledProcessError as e:
+        print(f"Command '{e.cmd}' returned non-zero exit status {e.returncode}.")
+        print(f"Error output: {e.stderr}")
+        raise
 
 # Create a data folder if it doesn't exist
 data_folder = "ukbb_data"
@@ -83,7 +89,7 @@ def read_OPCS(codes, folder='ukbb_data/', filename='HES_hesin_oper.csv', baselin
     
     codes2 = [f",{code}" for code in codes]
     codes3 = '\\|'.join(codes2)
-    grepcode = f'grep \'{codes3}\' {folder + filename} > temp.csv'
+    grepcode = f"grep '{codes3}' {folder + filename} > temp.csv"
     run_command(grepcode)
     
     if not pd.read_csv('temp.csv').shape[0]:
