@@ -194,7 +194,7 @@ def read_cancer(codes, folder='ukbb_data/', filename='cancer_participant.csv', b
     
     baseline_table = pd.read_csv(baseline_filename)
     baseline_table['dob'] = pd.to_datetime(baseline_table['dob'])
-    baseline_table['assess_date'] = pd.to_datetime(baseline_table['assess_date'])   baseline_table = pd.read_csv(baseline_filename)
+    baseline_table['assess_date'] = pd.to_datetime(baseline_table['assess_date'])
     data = data.merge(baseline_table[['eid', 'dob', 'assess_date']], on='eid')
     data['diag_age'] = (data['reg_date'] - data['dob']).dt.days / 365.25
     data['prev'] = data['reg_date'] < data['assess_date']
