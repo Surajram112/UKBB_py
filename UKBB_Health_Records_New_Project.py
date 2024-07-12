@@ -69,8 +69,8 @@ def read_GP(codes, folder='ukbb_data/', filename='GP_clinical.csv', baseline_fil
         data2 = pd.concat([data2, data[data['read_2'] == code]], ignore_index=True)
     
     baseline_table = pd.read_csv(baseline_filename)
-    baseline_table['dob'] = pd.to_datetime(baseline_table['dob'], errors='coerce')
-    baseline_table['assess_date'] = pd.to_datetime(baseline_table['assess_date'], errors='coerce')
+    baseline_table['dob'] = pd.to_datetime(baseline_table['dob'])
+    baseline_table['assess_date'] = pd.to_datetime(baseline_table['assess_date'])
     data2 = data2.merge(baseline_table[['eid', 'dob', 'assess_date']], on='eid')
     data2['event_age'] = (data2['event_dt'] - data2['dob']).dt.days / 365.25
     data2['prev'] = data2['event_dt'] < data2['assess_date']
