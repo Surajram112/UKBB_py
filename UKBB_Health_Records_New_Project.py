@@ -112,7 +112,7 @@ def read_OPCS(codes, folder='ukbb_data/', filename='HES_hesin_oper.csv', baselin
     data = data.merge(baseline_table[['eid', 'dob', 'assess_date']], on='eid')
     data['op_age'] = (data['opdate'] - data['dob']).dt.days / 365.25
     data['prev'] = data['opdate'] < data['assess_date']
-    return data
+    return data.drop(columns=['dnx_hesin_oper_id'])
 
 def read_ICD10(codes, folder='ukbb_data/', diagfile='HES_hesin_diag.csv', recordfile='HES_hesin.csv', baseline_filename='Baseline.csv'):
     icd10_header = ['dnx_hesin_diag_id', 'eid', 'ins_index', 'arr_index', 'level', 'diag_icd9', 'diag_icd10', 'dnx_hesin_id', 'epistart', 'epiend']
