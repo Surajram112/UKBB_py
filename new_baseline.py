@@ -12,7 +12,7 @@ def month_name_to_number(month_name):
         subprocess.run('dx download file-GZPzVp0JkBXbqJjYZvzvkjg4 -o Baseline.csv', shell=True, check=True)
 
 # Load baseline table        
-baseline_table = pd.read_csv('Baseline.csv')s
+baseline_table = pd.read_csv('Baseline.csv')
 
 baseline_table.columns = ['eid', 'recruit_age', 'mob', 'yob', 'sex', 'tdi', 'ethnicity', 'alcohol', 'alcohol_freq', 
                           'former_alcohol', 'ever_smoked', 'pack_years', 'smoking_status', 'current_smoking', 
