@@ -169,14 +169,14 @@ def read_ICD10(codes, folder='ukbb_data/', diagfile='HES_hesin_diag.csv', record
 #     data2['epiend'] = pd.to_datetime(data2['epiend'])
 #     return data2
 
-def read_ICD9(codes, diagfile='HES_hesin_diag.csv', recordfile='HES_hesin.csv'):
+def read_ICD9(codes, folder='ukbb_data/', diagfile='HES_hesin_diag.csv', recordfile='HES_hesin.csv'):
     icd9_header = ['dnx_hesin_diag_id', 'eid', 'ins_index', 'arr_index', 'level', 'diag_icd9', 'diag_icd10', 'dnx_hesin_id', 'epistart', 'epiend']
     codes = [str(code) for code in codes]
     codes = ["," + code for code in codes]
     if codes[0] == '':
         return pd.DataFrame(columns=icd9_header)
     codes2 = '|'.join(codes)
-    data = pd.read_csv(diagfile, header=None)
+    data = pd.read_csv(folder + diagfile, header=None)
     data.columns = ['dnx_hesin_diag_id', 'eid', 'ins_index', 'arr_index', 'classification', 'diag_icd9', 'diag_icd9_add', 'diag_icd10', 'diag_icd10_add']
     data = data[['dnx_hesin_diag_id', 'eid', 'ins_index', 'arr_index', 'classification', 'diag_icd9', 'diag_icd10']]
     icd9_code_data = [code.split(" ")[0] for code in data['diag_icd9']]
@@ -184,7 +184,7 @@ def read_ICD9(codes, diagfile='HES_hesin_diag.csv', recordfile='HES_hesin.csv'):
     for j in range(len(codes)):
         vec = [v or bool(re.match(f"^{codes[j]}", code)) for v, code in zip(vec, icd9_code_data)]
     data = data[vec]
-    records = pd.read_csv(recordfile)
+    records = pd.read_csv(folder + recordfile)
     data2 = pd.merge(data, records, how='inner')
     data2['epistart'] = pd.to_datetime(data2['epistart'])
     data2['epiend'] = pd.to_datetime(data2['epiend'])
