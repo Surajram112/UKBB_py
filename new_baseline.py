@@ -7,11 +7,12 @@ def month_name_to_number(month_name):
     month_dict = {name: num for num, name in enumerate(calendar.month_name) if name}
     return month_dict.get(month_name, 0)
 
-# Download baseline table if it dosent exist
+# Check baseline table dosent exist or delete it
     if not os.path.exists('Baseline.csv'):
-        subprocess.run('dx download file-GZPzVp0JkBXbqJjYZvzvkjg4 -o Baseline.csv', shell=True, check=True)
+        os.remove('Baseline.csv')
 
-# Load baseline table        
+# Download and load baseline table
+subprocess.run('dx download file-GZPzVp0JkBXbqJjYZvzvkjg4 -o Baseline.csv', shell=True, check=True)
 baseline_table = pd.read_csv('Baseline.csv')
 
 baseline_table.columns = ['eid', 'recruit_age', 'mob', 'yob', 'sex', 'tdi', 'ethnicity', 'alcohol', 'alcohol_freq', 
