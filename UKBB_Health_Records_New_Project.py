@@ -112,7 +112,7 @@ def read_ICD10(codes, folder='ukbb_data/', diagfile='HES_diagnoses.csv', recordf
     if not codes:
         return pd.DataFrame(columns=icd10_header)
     
-    run_command(f"sed -i 's/\"//g' {diagfile}")
+    run_command(f"sed -i 's/\"//g' {folder + diagfile}")
     codes2 = [f",{code}" for code in codes]
     codes3 = '\\|'.join(codes2)
     grepcode = f'grep \'{codes3}\' {folder + diagfile} > temp.csv'
