@@ -135,7 +135,7 @@ def read_ICD10(codes, folder='ukbb_data/', diagfile='HES_diagnoses.csv', recordf
     data2 = data2.merge(baseline_table[['eid', 'dob', 'assess_date']], on='eid')
     data2['diag_age'] = (data2['epistart'] - data2['dob']).dt.days / 365.25
     data2['prev'] = data2['epiend'] < data2['assess_date']
-    return data2
+    return data2.drop(columns=['dnx_hesin_diag_id','dnx_hesin_id'])
 
 def read_ICD9(codes, folder='ukbb_data/', diagfile='HES_diagnoses.csv', recordfile='HES_records.csv'):
     icd9_header = ['dnx_hesin_diag_id', 'eid', 'ins_index', 'arr_index', 'level', 'diag_icd9', 'diag_icd10', 'dnx_hesin_id', 'epistart', 'epiend']
