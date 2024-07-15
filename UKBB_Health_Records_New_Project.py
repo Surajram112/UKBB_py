@@ -16,36 +16,43 @@ def run_command(command):
         print(f"Error output: {e.stderr}")
         raise
 
+def download_files(file_ids, force_download=False):
+    for file_id in file_ids:
+        # Extract the file name from the file ID
+        file_name = run_command(f'dx describe {file_id} --name').strip()
+        file_path = os.path.join(data_folder, file_name)
+        
+        if not os.path.exists(file_path) or force_download:
+            run_command(f'dx download {file_id} -o {file_path}')
+            print(f"Downloaded {file_name}")
+        else:
+            print(f"{file_name} already exists in {data_folder}")
+
 # Create a data folder if it doesn't exist
 data_folder = "ukbb_data"
 if not os.path.exists(data_folder):
     os.makedirs(data_folder)
 
-# Dictionary of files to download with their corresponding names
-files_to_download = {
-    'file-GZKXxpQJKVzZ0BgzQZ1YYj9Z': 'GP_registrations.csv',
-    'file-GZKXxpQJKVzVb7gQvQbYfxKF': 'GP_clinical.csv',
-    'file-GZKXxpQJKVzxKb0FYfGg28v9': 'GP_scripts.csv',
-    'file-Gp36v5jJ0qKKgQXxxQ0gjf0f': 'HES_diagnoses.csv',
-    'file-Gp36v5QJ0qKJv0pQ0X5Z2B5K': 'HES_records.csv',
-    'file-Gp36v5jJ0qK58yQkJ06gzGvv': 'OPCS_records.csv',
-    'file-GZKXgQjJY2Fkg1ZG4Bg8ZJBP': 'Cancer_Registry.csv',
-    'file-GZJKVv8J9qP9xGfpK5KpP5G9': 'self_report.csv',
-    'file-GZJ9bbQJj59YBg8j4Kffpx9v': 'data_coding_3.csv',
-    'file-GZJ9Z98Jj59YBg8j4Kffpx78': 'data_coding_4.csv',
-    'file-GZJ9Z98Jj59gQ0zX6p3Jx3p9': 'data_coding_6.csv',
-    'file-GZq40X0Jj59QzkKqx73PX3ff': 'ICD-O3_coding.csv',
-    'file-GZKXVx8J9jFp1qpBQZ8z5PbJ': 'death_records.csv',
-    'file-GZKXVx8J9jFqG2GvJV8vzxK1': 'death_causes.csv'
-}
+# List of file IDs to download
+file_ids = [
+    'file-GZKXxpQJKVzZ0BgzQZ1YYj9Z',  # GP registrations
+    'file-GZKXxpQJKVzVb7gQvQbYfxKF',  # GP clinical
+    'file-GZKXxpQJKVzxKb0FYfGg28v9',  # GP scripts
+    'file-Gp36v5jJ0qKKgQXxxQ0gjf0f',  # HES Diagnoses
+    'file-Gp36v5QJ0qKJv0pQ0X5Z2B5K',  # HES Records
+    'file-Gp36v5jJ0qK58yQkJ06gzGvv',  # OPCS Records
+    'file-GZKXgQjJY2Fkg1ZG4Bg8ZJBP',  # Cancer_Registry
+    'file-GZJKVv8J9qP9xGfpK5KpP5G9',  # self report
+    'file-GZJ9bbQJj59YBg8j4Kffpx9v',  # data coding 3
+    'file-GZJ9Z98Jj59YBg8j4Kffpx78',  # data coding 4
+    'file-GZJ9Z98Jj59gQ0zX6p3Jx3p9',  # data coding 6
+    'file-GZq40X0Jj59QzkKqx73PX3ff',  # ICD-O3 coding
+    'file-GZKXVx8J9jFp1qpBQZ8z5PbJ',  # death records
+    'file-GZKXVx8J9jFqG2GvJV8vzxK1'   # death causes
+]
 
-# Download files if they don't exist
-for file_id, file_name in files_to_download.items():
-    file_path = os.path.join(data_folder, file_name)
-    if not os.path.exists(file_path):
-        run_command(f'dx download {file_id} -o {file_path}')
-    else:
-        print(f"{file_name} already exists in {data_folder}")
+# Download files if they don't exist, unless force_download is True
+download_files(file_ids, force_download=False)
 
 # Load baseline table and import file to run it
 run_command("curl https://raw.githubusercontent.com/Surajram112/UKBB_py/main/new_baseline.py > new_baseline.py")
