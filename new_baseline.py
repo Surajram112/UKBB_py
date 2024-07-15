@@ -8,8 +8,8 @@ def month_name_to_number(month_name):
     return month_dict.get(month_name, 0)
 
 # Check baseline table dosent exist or delete it
-    if os.path.exists('Baseline.csv'):
-        os.remove('Baseline.csv')
+if os.path.exists('Baseline.csv'):
+    os.remove('Baseline.csv')
 
 # Download and load baseline table
 subprocess.run('dx download file-GZPzVp0JkBXbqJjYZvzvkjg4 -o Baseline.csv', shell=True, check=True)
