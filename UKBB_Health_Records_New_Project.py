@@ -125,7 +125,7 @@ def read_ICD10(codes, folder='ukbb_data/', diagfile='HES_diagnoses.csv', recordf
     data.columns = ['dnx_hesin_diag_id', 'eid', 'ins_index', 'arr_index', 'classification', 'diag_icd9', 'diag_icd9_add', 'diag_icd10', 'diag_icd10_add']
     data = data[['dnx_hesin_diag_id', 'eid', 'ins_index', 'arr_index', 'classification', 'diag_icd9', 'diag_icd10']]
     records = pd.read_csv(folder + recordfile)
-    data2 = data.merge(records, on=['eid', 'ins_index', 'arr_index'])
+    data2 = data.merge(records, on=['eid', 'ins_index'])
     data2['epistart'] = pd.to_datetime(data2['epistart'])
     data2['epiend'] = pd.to_datetime(data2['epiend'])
     
