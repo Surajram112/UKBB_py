@@ -159,7 +159,7 @@ def read_ICD9(codes, folder='ukbb_data/', diagfile='HES_hesin_diag.csv', recordf
     data.columns = ['dnx_hesin_diag_id', 'eid', 'ins_index', 'arr_index', 'classification', 'diag_icd9', 'diag_icd9_add', 'diag_icd10', 'diag_icd10_add']
     data = data[['dnx_hesin_diag_id', 'eid', 'ins_index', 'arr_index', 'classification', 'diag_icd9', 'diag_icd10']]
     
-    icd9_code_data = data['diag_icd9'].str.split(" ").str[0]
+    icd9_code_data = [code.split(" ")[0] if isinstance(code, str) else "" for code in data['diag_icd9']]
     vec = [any(re.match(f"^{code}", icd9_code_data[i]) for code in codes) for i in range(len(icd9_code_data))]
     data = data[vec]
     
