@@ -221,7 +221,7 @@ def read_cancer(codes, folder='ukbb_data/', filename='cancer_participant.csv', b
 
 def read_selfreport(codes, folder='ukbb_data/', file='selfreport_participant.csv'):
     data = pd.read_csv(folder + file)
-    coding6 = pd.read_csv(folder + 'data_coding6.tsv', sep='\t')
+    coding6 = pd.read_csv(folder + 'coding6.tsv', sep='\t')
     coding6 = coding6[coding6['coding'] > 1]
     
     outlines = []
@@ -234,7 +234,7 @@ def read_selfreport(codes, folder='ukbb_data/', file='selfreport_participant.csv
 
 def read_selfreport_cancer(codes, folder='ukbb_data/', file='selfreport_participant.csv'):
     data = pd.read_csv(folder + file)
-    coding3 = pd.read_csv(folder + 'data_coding3.tsv', sep='\t')
+    coding3 = pd.read_csv(folder + 'coding3.tsv', sep='\t')
     coding3 = coding3[coding3['coding'] > 1]
     
     outlines = []
@@ -247,7 +247,7 @@ def read_selfreport_cancer(codes, folder='ukbb_data/', file='selfreport_particip
 
 def read_treatment(codes, folder='ukbb_date/', file='treatment_participant.csv'):
     data = pd.read_csv(file)
-    coding4 = pd.read_csv(folder + 'data_coding4.tsv', sep='\t')
+    coding4 = pd.read_csv(folder + 'coding4.tsv', sep='\t')
     coding4 = coding4[coding4['coding'] > 1]
     
     outlines = []
