@@ -167,7 +167,7 @@ def read_ICD9(codes, folder='ukbb_data/', diagfile='HES_hesin_diag.csv', recordf
     data2 = data.merge(records, on=['eid', 'ins_index'])
     data2['epistart'] = pd.to_datetime(data2['epistart'])
     data2['epiend'] = pd.to_datetime(data2['epiend'])
-    return data2.drop(columns=['dnx_hesin_diag_id', 'dnx_hesin_id']
+    return data2.drop(columns=['dnx_hesin_diag_id', 'dnx_hesin_id'])
 
 def read_cancer(codes, folder='ukbb_data/', filename='cancer_participant.csv', baseline_filename='Baseline.csv'):
     cancer_header = ["eid", "reg_date", "site", "age", "histology", "behaviour", "dob", "assess_date", "diag_age", "prev", "code", "description"]
