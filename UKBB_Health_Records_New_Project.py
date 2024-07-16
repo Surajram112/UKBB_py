@@ -226,8 +226,8 @@ def read_selfreport(codes, folder='ukbb_data/', file='selfreport_participant.csv
     
     outlines = []
     for code in codes:
-        if len(coding6[coding6['coding'] == code]['meaning']) > 0:
-            outline = data[data['p20002_i0'].str.contains(coding6[coding6['coding'] == code]['meaning'].values[0])].index
+        if len(coding6[coding6['coding'] == int(code)]['meaning']) > 0:
+            outline = data[data['p20002_i0'].str.contains(coding6[coding6['coding'] == int(code)]['meaning'].values[0], na=False)].index
             outlines.extend(outline)
     
     return data.loc[outlines, ['eid']]
