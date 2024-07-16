@@ -230,7 +230,7 @@ def read_selfreport(codes, folder='ukbb_data/', file='selfreport_participant.csv
             outline = data[data['p20002_i0'].str.contains(coding6[coding6['coding'] == int(code)]['meaning'].values[0], na=False)].index
             outlines.extend(outline)
     
-    return data.loc[outlines, ['eid']]
+    return data.loc[outlines]
 
 def read_selfreport_cancer(codes, folder='ukbb_data/', file='selfreport_participant.csv'):
     data = pd.read_csv(folder + file)
@@ -243,7 +243,7 @@ def read_selfreport_cancer(codes, folder='ukbb_data/', file='selfreport_particip
             outline = data[data['p20001_i0'].str.contains(coding3[coding3['coding'] == int(code)]['meaning'].values[0], na=False)].index
             outlines.extend(outline)
     
-    return data.loc[outlines, ['eid']]
+    return data.loc[outlines]
 
 def read_treatment(codes, folder='ukbb_date/', file='treatment_participant.csv'):
     data = pd.read_csv(file)
@@ -252,11 +252,11 @@ def read_treatment(codes, folder='ukbb_date/', file='treatment_participant.csv')
     
     outlines = []
     for code in codes:
-        if len(coding4[coding4['coding'] == code]['meaning']) > 0:
-            outline = data[data['Treatment.medication.code...Instance.0'].str.contains(coding4[coding4['coding'] == code]['meaning'].values[0])].index
+        if len(coding4[coding4['coding'] == int(code)]['meaning']) > 0:
+            outline = data[data['Treatment.medication.code...Instance.0'].str.contains(coding4[coding4['coding'] == int(code)]['meaning'].values[0], na=False)].index
             outlines.extend(outline)
     
-    return data.loc[outlines, ['eid']]
+    return data.loc[outlines]
 
 def first_occurence(ICD10='', GP='', OPCS='', cancer=''):
     ICD10_records = read_ICD10(ICD10).assign(date=lambda x: x['epistart']).loc[:, ['eid', 'date']].assign(source='HES')
