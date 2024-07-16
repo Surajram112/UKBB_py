@@ -239,8 +239,8 @@ def read_selfreport_cancer(codes, folder='ukbb_data/', file='selfreport_particip
     
     outlines = []
     for code in codes:
-        if len(coding6[coding6['coding'] == int(code)]['meaning']) > 0:
-            outline = data[data['p20002_i0'].str.contains(coding6[coding6['coding'] == int(code)]['meaning'].values[0], na=False)].index
+        if len(coding3[coding3['coding'] == int(code)]['meaning']) > 0:
+            outline = data[data['p20001_i0'].str.contains(coding3[coding3['coding'] == int(code)]['meaning'].values[0], na=False)].index
             outlines.extend(outline)
     
     return data.loc[outlines, ['eid']]
