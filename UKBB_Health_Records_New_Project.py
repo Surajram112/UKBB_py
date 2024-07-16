@@ -174,7 +174,7 @@ def read_cancer(codes, folder='ukbb_data/', filename='cancer_participant.csv', b
     if not codes:
         return pd.DataFrame(columns=cancer_header)
     
-    run_command(f"sed -i 's/\"//g' {file}")
+    run_command(f"sed -i 's/\"//g' {folder + filename}")
     codes2 = [f",{code}" for code in codes]
     codes3 = '\\|'.join(codes2)
     grepcode = f'grep \'{codes3}\' {folder + filename} > temp.csv'
