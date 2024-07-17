@@ -221,7 +221,7 @@ def read_cancer(codes, folder='ukbb_data/', filename='cancer_participant.csv', b
     
     return data
 
-def read_selfreport(codes, folder='ukbb_data/', file='selfreport_participant.csv'):
+def read_selfreport(codes, folder='ukbb_data/', file='selfreport_participant.csv', baseline_filename='Baseline.csv'):
     data = pd.read_csv(folder + file)
     coding6 = pd.read_csv(folder + 'coding6.tsv', sep='\t')
     coding6 = coding6[coding6['coding'] > 1]
@@ -231,8 +231,16 @@ def read_selfreport(codes, folder='ukbb_data/', file='selfreport_participant.csv
         if len(coding6[coding6['coding'] == int(code)]['meaning']) > 0:
             outline = data[data['p20002_i0'].str.contains(coding6[coding6['coding'] == int(code)]['meaning'].values[0], na=False)].index
             outlines.extend(outline)
+
+    data2 = data.loc[outlines]
     
-    return data.loc[outlines]
+    baseline_table = pd.read_csv(baseline_filename)
+    baseline_table['dob'] = pd.to_datetime(baseline_table['dob'])
+    baseline_table['assess_date'] = pd.to_datetime(baseline_table['assess_date'])
+    
+    data2 = data2.merge(baseline_table, on='eid')
+    
+    return data2
 
 def read_selfreport_cancer(codes, folder='ukbb_data/', file='selfreport_participant.csv'):
     data = pd.read_csv(folder + file)
