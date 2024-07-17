@@ -82,6 +82,7 @@ traits_file_ids = [
     'file-GpFjjb0J40Y7py7pKGxZ4FV6',  # read code v3 exclusion
     'file-GpFjjb0J40YJXV7Y8xGbXx1X',  # read code v2 type 1 dm
     'file-GpFjjb0J40Y11QYZBVfQ7YF4',  # read code v2 type 2 dm
+    'file-GpFpg18J40YBYgZXG11Y2qq6',  # ICD10 diabetes
 ]
 
 # Download data files if they don't exist, unless force_download is True
