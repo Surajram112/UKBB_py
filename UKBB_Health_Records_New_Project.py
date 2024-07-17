@@ -16,6 +16,15 @@ def run_command(command):
         print(f"Error output: {e.stderr}")
         raise
 
+def read_file_contents(file_path):
+    with open(file_path, 'r') as file:
+        lines = file.readlines()
+
+    # remove any newline characters from each line
+    lines = [line.rstrip('\n') for line in lines]
+    
+    return lines
+
 def download_files(file_ids, force_download=False):
     for file_id in file_ids:
         # Extract the file name from the file ID
