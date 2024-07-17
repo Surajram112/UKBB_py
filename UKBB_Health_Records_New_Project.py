@@ -304,7 +304,7 @@ def read_selfreport_cancer(codes, folder='ukbb_data/', file='selfreport_particip
     
     return data.loc[outlines]
 
-def read_treatment(codes, folder='ukbb_date/', file='treatment_participant.csv'):
+def read_treatment(codes, folder='ukbb_date/', file='selfreport_participant.csv'):
     data = pd.read_csv(file)
     coding4 = pd.read_csv(folder + 'coding4.tsv', sep='\t')
     coding4 = coding4[coding4['coding'] > 1]
