@@ -86,6 +86,7 @@ data_file_ids = [
 # List of file IDs for traits codes to download
 traits_file_ids = [
     'file-GpFq378J40Y1PGqP8gQpKzp6',  # self reported diabetes
+    'file-GpFq9vjJ40Y559k7FZpx4bQf',  # self reported type 1 dm
     'file-GpFjjb0J40YJ1Xkj442Y7pPq',  # manchester diabetes research codes
     'file-GpFjjb0J40YJXV7Y8xGbXx1Q',  # read code v2 drugs
     'file-GpFjjb0J40Y2KQ1yK3Qzx3V9',  # read code v2 exclusion
@@ -95,6 +96,7 @@ traits_file_ids = [
     'file-GpFjjb0J40YJXV7Y8xGbXx1X',  # read code v2 type 1 dm
     'file-GpFjjb0J40Y11QYZBVfQ7YF4',  # read code v2 type 2 dm
     'file-GpFpg18J40YBYgZXG11Y2qq6',  # ICD10 diabetes
+    'file-GpFq9vjJ40Y3Gz5KyqZjKx24',  # ICD10 type 1 dm
 ]
 
 # Download data files if they don't exist, unless force_download is True
