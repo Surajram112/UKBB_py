@@ -25,25 +25,34 @@ def read_file_contents(file_path):
     
     return lines
 
-def download_files(file_ids, force_download=False):
+def download_files(file_ids, destination_folder, force_download=False):
+    # Create the destination folder if it doesn't exist
+    if not os.path.exists(destination_folder):
+        os.makedirs(destination_folder)
+        
     for file_id in file_ids:
         # Extract the file name from the file ID
         file_name = run_command(f'dx describe {file_id} --name').strip()
-        file_path = os.path.join(data_folder, file_name)
+        file_path = os.path.join(destination_folder, file_name)
         
         if not os.path.exists(file_path) or force_download:
             run_command(f'dx download {file_id} -o {file_path}')
             print(f"Downloaded {file_name}")
         else:
-            print(f"{file_name} already exists in {data_folder}")
+            print(f"{file_name} already exists in {destination_folder}")
 
 # Create a data folder if it doesn't exist
 data_folder = "ukbb_data"
 if not os.path.exists(data_folder):
     os.makedirs(data_folder)
 
-# List of file IDs to download
-file_ids = [
+# Create a traits folder if it doesn't exist
+traits_folder = "traits_codes"
+if not os.path.exists(traits_folder):
+    os.makedirs(traits_folder)
+
+# List of file IDs for data to download
+data_file_ids = [
     'file-GZKXxpQJKVzZ0BgzQZ1YYj9Z',  # GP registrations
     'file-GZKXxpQJKVzVb7gQvQbYfxKF',  # GP clinical
     'file-GZKXxpQJKVzxKb0FYfGg28v9',  # GP scripts
@@ -62,8 +71,25 @@ file_ids = [
     'file-GZKXVx8J9jFqG2GvJV8vzxK1'   # death causes
 ]
 
-# Download files if they don't exist, unless force_download is True
-download_files(file_ids, force_download=False)
+# List of file IDs for traits codes to download
+traits_file_ids = [
+    'file-GZKXxpQJKVzZ0BgzQZ1YYj9Z',  # GP registrations
+    'file-GZKXxpQJKVzVb7gQvQbYfxKF',  # GP clinical
+    'file-GZKXxpQJKVzxKb0FYfGg28v9',  # GP scripts
+    'file-Gp36v5jJ0qKKgQXxxQ0gjf0f',  # HES Diagnoses
+    'file-Gp36v5QJ0qKJv0pQ0X5Z2B5K',  # HES Records
+    'file-Gp36v5jJ0qK58yQkJ06gzGvv',  # OPCS Records
+    'file-GZKXgQjJY2Fkg1ZG4Bg8ZJBP',  # Cancer_Registry
+    'file-GZJKVv8J9qP9xGfpK5KpP5G9',  # self report
+    'file-GZJ9Z98Jj59fZFqVq69b6p2Z',  # read code 2 list
+
+]
+
+# Download data files if they don't exist, unless force_download is True
+download_files(data_file_ids, data_folder, force_download=False)
+
+# Download codes lists if they don't exist, unless force_download is True
+download_files(traits_file_ids, traits_folder, force_download=False)
 
 # Load baseline table and import file to run it
 run_command("curl https://raw.githubusercontent.com/Surajram112/UKBB_py/main/new_baseline.py > new_baseline.py")
