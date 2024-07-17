@@ -73,6 +73,7 @@ data_file_ids = [
 
 # List of file IDs for traits codes to download
 traits_file_ids = [
+    'file-GpFp1V8J40YK6fPx9gbk6JGk',  # self reported diabetes
     'file-GpFjjb0J40YJ1Xkj442Y7pPq',  # manchester diabetes research codes
     'file-GpFjjb0J40YJXV7Y8xGbXx1Q',  # read code v2 drugs
     'file-GpFjjb0J40Y2KQ1yK3Qzx3V9',  # read code v2 exclusion
