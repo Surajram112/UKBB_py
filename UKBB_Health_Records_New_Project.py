@@ -73,16 +73,14 @@ data_file_ids = [
 
 # List of file IDs for traits codes to download
 traits_file_ids = [
-    'file-GZKXxpQJKVzZ0BgzQZ1YYj9Z',  # GP registrations
-    'file-GZKXxpQJKVzVb7gQvQbYfxKF',  # GP clinical
-    'file-GZKXxpQJKVzxKb0FYfGg28v9',  # GP scripts
-    'file-Gp36v5jJ0qKKgQXxxQ0gjf0f',  # HES Diagnoses
-    'file-Gp36v5QJ0qKJv0pQ0X5Z2B5K',  # HES Records
-    'file-Gp36v5jJ0qK58yQkJ06gzGvv',  # OPCS Records
-    'file-GZKXgQjJY2Fkg1ZG4Bg8ZJBP',  # Cancer_Registry
-    'file-GZJKVv8J9qP9xGfpK5KpP5G9',  # self report
-    'file-GZJ9Z98Jj59fZFqVq69b6p2Z',  # read code 2 list
-
+    'file-GpFjjb0J40YJ1Xkj442Y7pPq',  # manchester diabetes research codes
+    'file-GpFjjb0J40YJXV7Y8xGbXx1Q',  # read code v2 drugs
+    'file-GpFjjb0J40Y2KQ1yK3Qzx3V9',  # read code v2 exclusion
+    'file-GpFjjb0J40YJ1Xkj442Y7pPk',  # read code v2 type 1 dm
+    'file-GpFjjb0J40Y0Jky82gPj2fxq',  # read code v2 type 2 dm
+    'file-GpFjjb0J40Y7py7pKGxZ4FV6',  # read code v3 exclusion
+    'file-GpFjjb0J40YJXV7Y8xGbXx1X',  # read code v2 type 1 dm
+    'file-GpFjjb0J40Y11QYZBVfQ7YF4',  # read code v2 type 2 dm
 ]
 
 # Download data files if they don't exist, unless force_download is True
