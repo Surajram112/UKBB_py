@@ -24,7 +24,7 @@ def read_file_contents(file_path):
     lines = [line.rstrip('\n') for line in lines]
 
     # split each line into a list of values
-    lines = [line.replace('\t', ' ').split(' ') for line in lines]
+    lines = [line.split('\t') for line in lines]
 
     # the first line contains the column names
     column_names = lines[0]
