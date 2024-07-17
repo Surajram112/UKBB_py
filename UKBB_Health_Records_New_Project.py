@@ -395,11 +395,17 @@ def Generate_GRS(grs_file, folder='ukbb_date/'):
     return plink_score_df
 
 # Example usage
-# GP_codes = ['XE2eD', '22K..']
+# Self_codes = ['1222']
+# Self_records = read_selfreport(Self_codes)
+
+# GP_codes = ['C10..']
 # GP_records = read_GP(GP_codes)
 
 # OPCS_codes = ['Z92.4', 'C29.2']
 # OPCS_records = read_OPCS(OPCS_codes)
 
-# ICD10_codes = ['E11', 'K52.8']
+# ICD9_codes = ['250']
+# ICD9_records = read_ICD9(ICD9_codes)
+
+# ICD10_codes = ['E10']
 # ICD10_records = read_ICD10(ICD10_codes)
