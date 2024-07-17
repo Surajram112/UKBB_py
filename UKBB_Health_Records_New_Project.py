@@ -22,8 +22,20 @@ def read_file_contents(file_path):
 
     # remove any newline characters from each line
     lines = [line.rstrip('\n') for line in lines]
-    
-    return lines
+
+    # split each line into a list of values
+    lines = [line.replace('\t', ' ').split(' ') for line in lines]
+
+    # the first line contains the column names
+    column_names = lines[0]
+
+    # the rest of the lines contain the data
+    data = lines[1:]
+
+    # create a DataFrame from the data
+    df = pd.DataFrame(data, columns=column_names)
+
+    return df
 
 def download_files(file_ids, destination_folder, force_download=False):
     # Create the destination folder if it doesn't exist
