@@ -38,7 +38,7 @@ def read_file_contents(file_path):
 
     return df
 
-def download_files(file_ids, destination_folder, force_download=False):
+def download_files(file_ids, destination_folder, efficient_format='parquet', force_download=False):
     # Create the destination folder if it doesn't exist
     if not os.path.exists(destination_folder):
         os.makedirs(destination_folder)
@@ -47,12 +47,44 @@ def download_files(file_ids, destination_folder, force_download=False):
         # Extract the file name from the file ID
         file_name = run_command(f'dx describe {file_id} --name').strip()
         file_path = os.path.join(destination_folder, file_name)
+        efficient_file_path = file_path.replace('.csv', f'.{efficient_format}')
         
-        if not os.path.exists(file_path) or force_download:
-            run_command(f'dx download {file_id} -o {file_path}')
-            print(f"Downloaded {file_name}")
+        if not os.path.exists(efficient_file_path) or force_download:
+            if not os.path.exists(file_path) or force_download:
+                run_command(f'dx download {file_id} -o {file_path}')
+                print(f"Downloaded {file_name}")
+            else:
+                print(f"{file_name} already exists in {destination_folder}")
+            
+            # Convert to efficient format
+            convert_to_efficient_format(file_path, efficient_format)
+            print(f"Converted {file_name} to {efficient_format}")
         else:
-            print(f"{file_name} already exists in {destination_folder}")
+            print(f"{file_name} in {efficient_format} format already exists in {destination_folder}")
+
+def convert_to_efficient_format(file_path, efficient_format='parquet'):
+    df = pd.read_csv(file_path)
+    efficient_file_path = file_path.replace('.csv', f'.{efficient_format}')
+    
+    if efficient_format == 'parquet':
+        df.to_parquet(efficient_file_path)
+    elif efficient_format == 'pickle':
+        with open(efficient_file_path, 'wb') as f:
+            pickle.dump(df, f)
+    
+    return efficient_file_path
+
+def load_efficient_format(file_path, efficient_format='parquet'):
+    efficient_file_path = file_path.replace('.csv', f'.{efficient_format}')
+    
+    if os.path.exists(efficient_file_path):
+        if efficient_format == 'parquet':
+            return pd.read_parquet(efficient_file_path)
+        elif efficient_format == 'pickle':
+            with open(efficient_file_path, 'rb') as f:
+                return pickle.load(f)
+    else:
+        return None
 
 # Create a data folder if it doesn't exist
 data_folder = "ukbb_data"
@@ -130,9 +162,8 @@ def read_GP(codes, folder='ukbb_data/', filename='GP_gp_clinical.csv', baseline_
     # Filter data using vectorized operations
     data2 = data.filter(pl.col('read_3').is_in(codes) | pl.col('read_2').is_in(codes))
     
-    # Load baseline table from pickle
-    with open(baseline_filename, 'rb') as f:
-        baseline_table = pickle.load(f)
+    # Check if the efficient format of the baseline file exists
+    baseline_data = load_efficient_format(baseline_filename, efficient_format)
 
     baseline_table = pl.DataFrame(baseline_table)
     baseline_table = baseline_table.with_column(pl.col('dob').str.strptime(pl.Date, fmt='%Y-%m-%d'))
