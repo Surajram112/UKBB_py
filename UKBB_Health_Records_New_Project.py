@@ -58,7 +58,7 @@ def download_files(file_ids, destination_folder, efficient_format='parquet', for
             
             # Check file size and convert to efficient format if it's a large CSV file
             file_size_mb = os.path.getsize(file_path) / (1024 * 1024)
-            if file_path.endswith('.csv') and file_size_mb > 10:
+            if file_path.endswith('.csv') and file_size_mb > 100:
                 # Load the data into a temporary variable with specified dtypes
                 df = pd.read_csv(file_path, dtype={'value2': 'str'}, low_memory=False)
                 
