@@ -1,4 +1,5 @@
 import pandas as pd
+import polars as pl
 import subprocess
 from datetime import datetime
 import re
@@ -112,32 +113,35 @@ import new_baseline
 def read_GP(codes, folder='ukbb_data/', filename='GP_gp_clinical.csv', baseline_filename='Baseline.csv'):
     gp_header = ['eid', 'data_provider', 'event_dt', 'read_2', 'read_3', 'value1', 'value2', 'value3', 'dob', 'assess_date', 'event_age', 'prev']
     if not codes:
-        return pd.DataFrame(columns=gp_header)
+        return pl.DataFrame(schema={col: pl.Utf8 for col in gp_header})
     
     codes2 = [f",{code}" for code in codes]
     codes3 = '\\|'.join(codes2)
     grepcode = f"grep '{codes3}' {folder + filename} > temp.csv"
     run_command(grepcode)
     
-    if not pd.read_csv('temp.csv').shape[0]:
-        return pd.DataFrame(columns=gp_header)
-    
-    data = pd.read_csv('temp.csv', header=None)
+    if os.path.getsize('temp.csv') == 0:
+        return pl.DataFrame(schema={col: pl.Utf8 for col in gp_header})
+
+    data = pl.read_csv('temp.csv', has_header=False)
     data.columns = ['eid', 'data_provider', 'event_dt', 'read_2', 'read_3', 'value1', 'value2', 'value3']
-    data['event_dt'] = data['event_dt'].astype(str).apply(lambda x: '1901-01-01' if re.search("[a-zA-Z]", x) else x)
-    data['event_dt'] = pd.to_datetime(data['event_dt'])
+    data = data.with_column(pl.col('event_dt').str.replace_all(r'[a-zA-Z]', '1901-01-01').str.strptime(pl.Date, fmt='%Y-%m-%d'))
+
+    # Filter data using vectorized operations
+    data2 = data.filter(pl.col('read_3').is_in(codes) | pl.col('read_2').is_in(codes))
     
-    data2 = pd.DataFrame()
-    for code in codes:
-        data2 = pd.concat([data2, data[data['read_3'] == code]], ignore_index=True)
-        data2 = pd.concat([data2, data[data['read_2'] == code]], ignore_index=True)
+    # Load baseline table from pickle
+    with open(baseline_filename, 'rb') as f:
+        baseline_table = pickle.load(f)
+
+    baseline_table = pl.DataFrame(baseline_table)
+    baseline_table = baseline_table.with_column(pl.col('dob').str.strptime(pl.Date, fmt='%Y-%m-%d'))
+    baseline_table = baseline_table.with_column(pl.col('assess_date').str.strptime(pl.Date, fmt='%Y-%m-%d'))
     
-    baseline_table = pd.read_csv(baseline_filename)
-    baseline_table['dob'] = pd.to_datetime(baseline_table['dob'])
-    baseline_table['assess_date'] = pd.to_datetime(baseline_table['assess_date'])
-    data2 = data2.merge(baseline_table[['eid', 'dob', 'assess_date']], on='eid')
-    data2['event_age'] = (data2['event_dt'] - data2['dob']).dt.days / 365.25
-    data2['prev'] = data2['event_dt'] < data2['assess_date']
+    data2 = data2.join(baseline_table.select(['eid', 'dob', 'assess_date']), on='eid')
+    data2 = data2.with_column((pl.col('event_dt') - pl.col('dob')).dt.days() / 365.25).alias('event_age')
+    data2 = data2.with_column((pl.col('event_dt') < pl.col('assess_date')).alias('prev'))
+    
     return data2
 
 def read_OPCS(codes, folder='ukbb_data/', filename='HES_hesin_oper.csv', baseline_filename='Baseline.csv'):
