@@ -63,7 +63,7 @@ def download_files(file_ids, destination_folder, efficient_format='parquet', for
             print(f"{file_name} in {efficient_format} format already exists in {destination_folder}")
 
 def convert_to_efficient_format(file_path, efficient_format='parquet'):
-    df = pd.read_csv(file_path)
+    df = pd.read_csv(file_path, low_memory=False)
     efficient_file_path = file_path.replace('.csv', f'.{efficient_format}')
     
     if efficient_format == 'parquet':
