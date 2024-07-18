@@ -56,9 +56,17 @@ def download_files(file_ids, destination_folder, efficient_format='parquet', for
             else:
                 print(f"{file_name} already exists in {destination_folder}")
             
-            # Convert to efficient format
-            convert_to_efficient_format(file_path, efficient_format)
-            print(f"Converted {file_name} to {efficient_format}")
+            # Check file size and convert to efficient format if it's a large CSV file
+            file_size_mb = os.path.getsize(file_path) / (1024 * 1024)
+            if file_path.endswith('.csv') and file_size_mb > 100:
+                # Load the data into a temporary variable with specified dtypes
+                df = pd.read_csv(file_path, dtype={'value2': 'str'}, low_memory=False)
+                
+                # Convert to efficient format and save
+                convert_to_efficient_format(df, file_path, efficient_format)
+                print(f"Converted {file_name} to {efficient_format}")
+            else:
+                print(f"{file_name} is not a large CSV file or is a text file, skipping conversion.")
         else:
             print(f"{file_name} in {efficient_format} format already exists in {destination_folder}")
 
