@@ -17,7 +17,7 @@ def run_command(command):
         print(f"Error output: {e.stderr}")
         raise
 
-def read_file_contents(file_path):
+def read_traits_file(file_path):
     with open(file_path, 'r') as file:
         lines = file.readlines()
 
