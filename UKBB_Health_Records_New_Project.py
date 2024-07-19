@@ -59,7 +59,6 @@ def load_files(file_ids, ukbb_project_folder, instance_ukbb_project_folder, effi
         if not os.path.exists(efficient_project_file_path) and not os.path.exists(efficient_instance_file_path):
             # Create temporary folder for large files, if they are not in the efficient format
             os.makedirs('temp', exist_ok=True)
-
             # Set temporary file path 
             temp_file_path = os.path.join('temp', file_name)
             
@@ -70,16 +69,21 @@ def load_files(file_ids, ukbb_project_folder, instance_ukbb_project_folder, effi
             # Convert files to efficient format
             # Check file size and convert to efficient format if it's a large CSV file
             file_size_mb = os.path.getsize(temp_file_path) / (1024 * 1024)
-            if instance_file_path.endswith('.csv') and file_size_mb > 100:
+            if temp_file_path.endswith('.csv') and file_size_mb > 100:
                 # Convert to efficient format and save
-                convert_to_efficient_format(efficient_instance_file_path, efficient_format)
-                print(f"Converted {file_name} to {efficient_format}")
+                convert_output_file_path = convert_to_efficient_format(temp_file_path, efficient_format)
+                print(f"Converted {file_name} to {efficient_format} and saved to {convert_output_file_path}")
             else:
-                print(f"{file_name} is not a large CSV file or is a text file, skipping conversion.")
+                # Transfer the files from temp file path to efficient instance ukbb_data file
+                transfer_file(file_name, temp_file_path, efficient_project_file_path)
+                print(f"{file_name} is not a large CSV file or is a text file. Saving to {efficient_project_file_path}.")
             
             # Transfer the files from instance ukbb_data file to local biobank project ukbb_data file
             transfer_file(file_name, efficient_instance_file_path, efficient_project_file_path)
             print(f"Transfered {file_name} to {efficient_project_file_path}")
+            
+            # Delete temp folder directory
+            delete_directory('temp')
 
         # Transfer the files from efficient local biobank project ukbb_data file to efficient instance ukbb_data file if not in instance
         if os.path.exists(efficient_project_file_path) and not os.path.exists(efficient_instance_file_path):
@@ -103,13 +107,23 @@ def convert_to_efficient_format(file_path, efficient_format='parquet'):
     elif efficient_format == 'pickle':
         with open(efficient_file_path, 'wb') as f:
             pickle.dump(df, f)
-    
+            
     return efficient_file_path
 
 def transfer_file(file_name, source_file_path, destination_file_path):
-    # Copy the file to the second destination folder
+    # Copy the source file to the destination folder
     shutil.copyfile(source_file_path, destination_file_path)
-    print(f"Saved {file_name} in {destination_file_path}")
+
+def delete_directory(directory):
+    # Delete all files in the directory
+    for filename in os.listdir(directory):
+        file_path = os.path.join(directory, filename)
+        if os.path.isfile(file_path) or os.path.islink(file_path):
+            os.unlink(file_path)
+        elif os.path.isdir(file_path):
+            delete_directory(file_path)
+    # Delete the directory itself
+    os.rmdir(directory)
 
 def load_efficient_format(file_path, efficient_format='parquet'):
     efficient_file_path = file_path.replace('.csv', f'.{efficient_format}')
@@ -125,13 +139,11 @@ def load_efficient_format(file_path, efficient_format='parquet'):
 
 # Create a data folder if it doesn't exist
 data_folder = "ukbb_data"
-if not os.path.exists(data_folder):
-    os.makedirs(data_folder)
+os.makedirs(data_folder, exist_ok=True)
 
 # Create a traits folder if it doesn't exist
 traits_folder = "traits_codes"
-if not os.path.exists(traits_folder):
-    os.makedirs(traits_folder)
+os.makedirs(traits_folder, exist_ok=True)
 
 # List of file IDs for data to download
 data_file_ids = [
@@ -172,11 +184,11 @@ traits_file_ids = [
 ukbb_project_folder = 'mnt/project/ukbb_data'
 instance_ukbb_project_folder  = 'ukbb_data'
 
-# Download data files if they don't exist, unless force_download is True
-download_files(data_file_ids, data_folder, force_download=False)
+# Load data files, if force downlaod is True then original filies will be reloaded
+load_files(data_file_ids, ukbb_project_folder, instance_ukbb_project_folder)
 
-# Download codes lists if they don't exist, unless force_download is True
-download_files(traits_file_ids, traits_folder, force_download=False)
+# Load codes lists , if force downlaod is True then original filies will be reloaded
+load_files(traits_file_ids, ukbb_project_folder, instance_ukbb_project_folder)
 
 # Load baseline table and import file to run it
 run_command("curl https://raw.githubusercontent.com/Surajram112/UKBB_py/main/new_baseline.py > new_baseline.py")
