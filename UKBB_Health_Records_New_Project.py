@@ -67,16 +67,14 @@ def load_files(file_ids, ukbb_project_folder, instance_ukbb_project_folder, effi
             print(f"Downloaded {file_name} to {temp_file_path}")
 
             # Convert files to efficient format
-            # Check file size and convert to efficient format if it's a large CSV file
-            file_size_mb = os.path.getsize(temp_file_path) / (1024 * 1024)
-            if temp_file_path.endswith('.csv') and file_size_mb > 100:
+            if temp_file_path.endswith('.csv'):
                 # Convert to efficient format and save
                 convert_output_file_path = convert_to_efficient_format(temp_file_path, efficient_format)
                 print(f"Converted {file_name} to {efficient_format} and saved to {convert_output_file_path}")
             else:
                 # Transfer the files from temp file path to efficient instance ukbb_data file
                 transfer_file(file_name, temp_file_path, efficient_project_file_path)
-                print(f"{file_name} is not a large CSV file or is a text file. Saving to {efficient_project_file_path}.")
+                print(f"{file_name} is not a CSV file. Saving original format to {efficient_project_file_path}.")
             
             # Transfer the files from instance ukbb_data file to local biobank project ukbb_data file
             transfer_file(file_name, efficient_instance_file_path, efficient_project_file_path)
