@@ -38,7 +38,7 @@ def read_traits_file(file_path):
 
     return df
 
-def download_files(file_ids, destination_folder, efficient_format='parquet', force_download=False):
+def load_files(file_ids, ukbb_project_folder, instance_ukbb_project_folder, efficient_format='parquet', force_download=False):
     # Create the destination folder if it doesn't exist
     if not os.path.exists(destination_folder):
         os.makedirs(destination_folder)
@@ -46,16 +46,24 @@ def download_files(file_ids, destination_folder, efficient_format='parquet', for
     for file_id in file_ids:
         # Extract the file name from the file ID
         file_name = run_command(f'dx describe {file_id} --name').strip()
-        file_path = os.path.join(destination_folder, file_name)
-        efficient_file_path = file_path.replace('.csv', f'.{efficient_format}')
-        
-        if not os.path.exists(efficient_file_path) or force_download:
-            if not os.path.exists(file_path) or force_download:
-                run_command(f'dx download {file_id} -o {file_path}')
-                print(f"Downloaded {file_name}")
-            else:
-                print(f"{file_name} already exists in {destination_folder}")
-            
+
+        # Set up project file paths for local ukbiobank project, usually 'mnt/project..'
+        os.makedirs(ukbb_project_folder, exist_ok=True)
+        project_file_path = os.path.join(ukbb_project_folder, file_name)
+        efficient_project__file_path = file_path.replace('.csv', f'.{efficient_format}')
+
+        #Set up project file paths for instance ukbiobank project, usually just the folder name
+        os.makedirs(instance_ukbb_project_folder, exist_ok=True)
+        instance_file_path = os.path.join(instance_ukbb_project_folder, file_name)
+        efficient_instance_file_path = file_path.replace('.csv', f'.{efficient_format}')
+
+        # If the file does not exist in either folder, download it
+        if not os.path.exists(project_file_path) and not os.path.exists(instance_file_path):
+            # Download the file to the instance ukbb_data file
+            run_command(f'dx download {file_id} -o {file_path}')
+            print(f"Downloaded {file_name}")
+
+            # Convert files to efficient format
             # Check file size and convert to efficient format if it's a large CSV file
             file_size_mb = os.path.getsize(file_path) / (1024 * 1024)
             if file_path.endswith('.csv') and file_size_mb > 100:
@@ -67,6 +75,19 @@ def download_files(file_ids, destination_folder, efficient_format='parquet', for
                 print(f"Converted {file_name} to {efficient_format}")
             else:
                 print(f"{file_name} is not a large CSV file or is a text file, skipping conversion.")
+            
+            # Transfer the files from instance ukbb_data file to local biobank project ukbb_data file
+            transfer_file(efficient_instance_file_path, instance_file_path, project_file_path)
+
+        # Transfer the files from local biobank project ukbb_data file to instance ukbb_data file if not in instance
+        if os.path.exists(project_file_path) and not os.path.exists(instance_file_path):
+            transfer_file(efficient_instance_file_path, project_file_path, instance_file_path)
+        else:
+            print(f"{file_name} in {efficient_format} format already exists in {destination_folder}")
+
+        # Transfer the files from instance ukbb_data file to local biobank project ukbb_data file if not in ukbb project folder
+        if os.path.exists(instance_file_path) and not os.path.exists(project_file_path):
+            transfer_file(efficient_instance_file_path, instance_file_path, project_file_path)
         else:
             print(f"{file_name} in {efficient_format} format already exists in {destination_folder}")
 
@@ -81,6 +102,11 @@ def convert_to_efficient_format(file_path, efficient_format='parquet'):
             pickle.dump(df, f)
     
     return efficient_file_path
+
+def transfer_file(file_name, source_file_path, destination_file_path):
+    # Copy the file to the second destination folder
+    shutil.copyfile(source_file_path, destination_file_path)
+    print(f"Saved {file_name} in {destination_file_path}")
 
 def load_efficient_format(file_path, efficient_format='parquet'):
     efficient_file_path = file_path.replace('.csv', f'.{efficient_format}')
@@ -139,6 +165,9 @@ traits_file_ids = [
     'file-GpFpg18J40YBYgZXG11Y2qq6',  # ICD10 diabetes
     'file-GpFq9vjJ40Y3Gz5KyqZjKx24',  # ICD10 type 1 dm
 ]
+
+ukbb_project_folder = 'mnt/project/ukbb_data'
+instance_ukbb_project_folder  = 'ukbb_data'
 
 # Download data files if they don't exist, unless force_download is True
 download_files(data_file_ids, data_folder, force_download=False)
