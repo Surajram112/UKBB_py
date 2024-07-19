@@ -1,6 +1,7 @@
 import os
 import subprocess
 import re
+import csv
 import requests
 import shutil
 import calendar
@@ -67,6 +68,10 @@ def load_files(file_ids, ukbb_project_folder, instance_ukbb_project_folder, effi
             run_command(f'dx download {file_id} -o {temp_file_path}')
             print(f"Downloaded {file_name} to {temp_file_path}")
 
+            # Checked file and cleaned errors, if neccessary
+            preprocess_file(temp_file_path)
+            print(f"Cleaned and saved {file_name} to {temp_file_path}")
+
             # Convert files to efficient format
             if temp_file_path.endswith('.csv'):
                 # Convert to efficient format and save
@@ -96,9 +101,26 @@ def load_files(file_ids, ukbb_project_folder, instance_ukbb_project_folder, effi
         else:
             print(f"{file_name} in {efficient_format} format already exists in {efficient_project_file_path}")
 
+def preprocess_file(file_path):
+    # Read the CSV file line by line, handle lines with too many fields
+    with open(temp_file_path, 'r') as f:
+        reader = csv.reader(f)
+        lines = list(reader)
+
+    for i, line in enumerate(lines):
+        if len(line) > 4:  # assuming 4 is the expected number of fields
+            line[-2:] = [','.join(line[-2:])]
+            lines[i] = line
+
+    # Write the corrected lines back to the file
+    with open(temp_file_path, 'w', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerows(lines)
+
+
 def convert_to_efficient_format(file_path, efficient_format='parquet'):
     # Load the data into a temporary variable with specified dtypes
-    df = pd.read_csv(file_path, dtype={'value2': 'str'}, low_memory=False)
+    df = pd.read_csv(file_path)
     efficient_file_path = file_path.replace('.csv', f'.{efficient_format}')
     
     if efficient_format == 'parquet':
