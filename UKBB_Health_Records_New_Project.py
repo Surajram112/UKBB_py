@@ -1,11 +1,12 @@
+import os
+import subprocess
+import re
+import requests
+import shutil
+import calendar
+from datetime import datetime
 import pandas as pd
 import polars as pl
-import subprocess
-from datetime import datetime
-import re
-import os
-import requests
-import calendar
 
 # Function to run system commands
 def run_command(command):
