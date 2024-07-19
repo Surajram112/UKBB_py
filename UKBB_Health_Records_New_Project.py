@@ -40,59 +40,62 @@ def read_traits_file(file_path):
 
 def load_files(file_ids, ukbb_project_folder, instance_ukbb_project_folder, efficient_format='parquet', force_download=False):
     # Create the destination folder if it doesn't exist
-    if not os.path.exists(destination_folder):
-        os.makedirs(destination_folder)
-        
+    os.makedirs(ukbb_project_folder, exist_ok=True)
+    os.makedirs(instance_ukbb_project_folder, exist_ok=True)
+    
     for file_id in file_ids:
         # Extract the file name from the file ID
         file_name = run_command(f'dx describe {file_id} --name').strip()
 
         # Set up project file paths for local ukbiobank project, usually 'mnt/project..'
-        os.makedirs(ukbb_project_folder, exist_ok=True)
         project_file_path = os.path.join(ukbb_project_folder, file_name)
-        efficient_project__file_path = file_path.replace('.csv', f'.{efficient_format}')
+        efficient_project_file_path = file_path.replace('.csv', f'.{efficient_format}')
 
         #Set up project file paths for instance ukbiobank project, usually just the folder name
-        os.makedirs(instance_ukbb_project_folder, exist_ok=True)
         instance_file_path = os.path.join(instance_ukbb_project_folder, file_name)
         efficient_instance_file_path = file_path.replace('.csv', f'.{efficient_format}')
-
+        
         # If the file does not exist in either folder, download it
-        if not os.path.exists(project_file_path) and not os.path.exists(instance_file_path):
+        if not os.path.exists(efficient_project_file_path) and not os.path.exists(efficient_instance_file_path):
+            # Create temporary folder for large files, if they are not in the efficient format
+            os.makedirs('temp', exist_ok=True)
+
+            # Set temporary file path 
+            temp_file_path = os.path.join('temp', file_name)
+            
             # Download the file to the instance ukbb_data file
-            run_command(f'dx download {file_id} -o {file_path}')
-            print(f"Downloaded {file_name}")
+            run_command(f'dx download {file_id} -o {temp_file_path}')
+            print(f"Downloaded {file_name} to {temp_file_path}")
 
             # Convert files to efficient format
             # Check file size and convert to efficient format if it's a large CSV file
-            file_size_mb = os.path.getsize(file_path) / (1024 * 1024)
-            if file_path.endswith('.csv') and file_size_mb > 100:
-                # Load the data into a temporary variable with specified dtypes
-                df = pd.read_csv(file_path, dtype={'value2': 'str'}, low_memory=False)
-                
+            file_size_mb = os.path.getsize(temp_file_path) / (1024 * 1024)
+            if instance_file_path.endswith('.csv') and file_size_mb > 100:
                 # Convert to efficient format and save
-                convert_to_efficient_format(df, file_path, efficient_format)
+                convert_to_efficient_format(efficient_instance_file_path, efficient_format)
                 print(f"Converted {file_name} to {efficient_format}")
             else:
                 print(f"{file_name} is not a large CSV file or is a text file, skipping conversion.")
             
             # Transfer the files from instance ukbb_data file to local biobank project ukbb_data file
-            transfer_file(efficient_instance_file_path, instance_file_path, project_file_path)
+            transfer_file(file_name, efficient_instance_file_path, efficient_project_file_path)
+            print(f"Transfered {file_name} to {efficient_project_file_path}")
 
-        # Transfer the files from local biobank project ukbb_data file to instance ukbb_data file if not in instance
-        if os.path.exists(project_file_path) and not os.path.exists(instance_file_path):
-            transfer_file(efficient_instance_file_path, project_file_path, instance_file_path)
+        # Transfer the files from efficient local biobank project ukbb_data file to efficient instance ukbb_data file if not in instance
+        if os.path.exists(efficient_project_file_path) and not os.path.exists(efficient_instance_file_path):
+            transfer_file(file_name, efficient_project_file_path, efficient_instance_file_path)
         else:
-            print(f"{file_name} in {efficient_format} format already exists in {destination_folder}")
+            print(f"{file_name} in {efficient_format} format already exists in {efficient_instance_file_path}")
 
-        # Transfer the files from instance ukbb_data file to local biobank project ukbb_data file if not in ukbb project folder
-        if os.path.exists(instance_file_path) and not os.path.exists(project_file_path):
-            transfer_file(efficient_instance_file_path, instance_file_path, project_file_path)
+        # Transfer the files from efficient instance ukbb_data file to efficient local biobank project ukbb_data file if not in ukbb project folder
+        if os.path.exists(efficient_instance_file_path) and not os.path.exists(efficient_project_file_path):
+            transfer_file(file_name, efficient_instance_file_path, efficient_project_file_path)
         else:
-            print(f"{file_name} in {efficient_format} format already exists in {destination_folder}")
+            print(f"{file_name} in {efficient_format} format already exists in {efficient_project_file_path}")
 
 def convert_to_efficient_format(file_path, efficient_format='parquet'):
-    df = pd.read_csv(file_path, low_memory=False)
+    # Load the data into a temporary variable with specified dtypes
+    df = pd.read_csv(file_path, dtype={'value2': 'str'}, low_memory=False)
     efficient_file_path = file_path.replace('.csv', f'.{efficient_format}')
     
     if efficient_format == 'parquet':
