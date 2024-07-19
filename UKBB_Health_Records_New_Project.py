@@ -49,11 +49,11 @@ def load_files(file_ids, ukbb_project_folder, instance_ukbb_project_folder, effi
 
         # Set up project file paths for local ukbiobank project, usually 'mnt/project..'
         project_file_path = os.path.join(ukbb_project_folder, file_name)
-        efficient_project_file_path = file_path.replace('.csv', f'.{efficient_format}')
+        efficient_project_file_path = project_file_path.replace('.csv', f'.{efficient_format}')
 
         #Set up project file paths for instance ukbiobank project, usually just the folder name
         instance_file_path = os.path.join(instance_ukbb_project_folder, file_name)
-        efficient_instance_file_path = file_path.replace('.csv', f'.{efficient_format}')
+        efficient_instance_file_path = instance_file_path.replace('.csv', f'.{efficient_format}')
         
         # If the file does not exist in either folder, download it
         if not os.path.exists(efficient_project_file_path) and not os.path.exists(efficient_instance_file_path):
@@ -179,7 +179,7 @@ traits_file_ids = [
     'file-GpFq9vjJ40Y3Gz5KyqZjKx24',  # ICD10 type 1 dm
 ]
 
-ukbb_project_folder = 'mnt/project/ukbb_data'
+ukbb_project_folder = '../../mnt/project/ukbb_data'
 instance_ukbb_project_folder  = 'ukbb_data'
 
 # Load data files, if force downlaod is True then original filies will be reloaded
