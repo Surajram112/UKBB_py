@@ -150,7 +150,7 @@ def convert_to_efficient_format(file_path, efficient_format='parquet'):
             
     return efficient_file_path
 
-def transfer_file(file_name, source_file_path, destination_file_path):
+def transfer_file(source_file_path, destination_file_path):
     # Copy the source file to the destination folder
     shutil.copyfile(source_file_path, destination_file_path)
 
