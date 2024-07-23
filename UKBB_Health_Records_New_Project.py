@@ -77,7 +77,7 @@ def load_files(file_ids, ukbb_project_folder, instance_ukbb_project_folder, effi
             # Convert files to efficient format
             if temp_file_path.endswith('.csv'):
                 # Convert to efficient format and save
-                convert_output_file_path = convert_to_efficient_format(temp_file_path, efficient_format)
+                convert_output_file_path = convert_to_efficient_format(temp_file_path, efficient_instance_file_path, efficient_format)
                 print(f"Converted {file_name} to {efficient_format} and saved to {convert_output_file_path}")
             else:
                 # Transfer the files from temp file path to efficient instance ukbb_data file
@@ -137,10 +137,10 @@ def preprocess_file(temp_file_path, sample_size=1000):
         writer = csv.writer(f)
         writer.writerows(lines)
 
-def convert_to_efficient_format(file_path, efficient_format='parquet'):
+def convert_to_efficient_format(input_file_path, output_file_path, efficient_format='parquet'):
     # Load the data into a temporary variable with specified dtypes
-    df = pd.read_csv(file_path)
-    efficient_file_path = file_path.replace('.csv', f'.{efficient_format}')
+    df = pd.read_csv(input_file_path)
+    efficient_file_path = output_file_path.replace('.csv', f'.{efficient_format}')
     
     if efficient_format == 'parquet':
         df.to_parquet(efficient_file_path)
@@ -150,9 +150,9 @@ def convert_to_efficient_format(file_path, efficient_format='parquet'):
             
     return efficient_file_path
 
-def transfer_file(source_file_path, destination_file_path):
+def transfer_file(source_file_path, destination_folder):
     # Copy the source file to the destination folder
-    shutil.copyfile(source_file_path, destination_file_path)
+    shutil.copyfile(source_file_path, destination_folder)
 
 def delete_directory(directory):
     # Delete all files in the directory
