@@ -98,7 +98,7 @@ def load_files(file_ids, ukbb_project_folder, instance_ukbb_project_folder, effi
                 print(f"{file_name} is not a CSV file. Saving original format to {efficient_project_file_path}.")
             
             # Transfer the files from instance ukbb_data file to local biobank project ukbb_data file
-            run_command(f'dx upload {efficient_instance_file_path} -o {ukbb_project_folder}')
+            run_command(f'dx upload {efficient_instance_file_path} -o {ukbb_project_folder.split("/")[-1]}')
             print(f"Transfered {file_name} back to {efficient_project_file_path}")
             
             # Delete temp folder directory
