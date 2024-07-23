@@ -190,10 +190,6 @@ def load_efficient_format(file_path, efficient_format='parquet'):
 data_folder = "ukbb_data"
 os.makedirs(data_folder, exist_ok=True)
 
-# Create a traits folder if it doesn't exist
-traits_folder = "traits_codes"
-os.makedirs(traits_folder, exist_ok=True)
-
 # List of file IDs for data to download
 data_file_ids = [
     'file-GZKXxpQJKVzZ0BgzQZ1YYj9Z',  # GP registrations
