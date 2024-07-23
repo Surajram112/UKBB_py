@@ -2,9 +2,11 @@ import os
 import subprocess
 import re
 import csv
+from collections import Counter
 import requests
 import shutil
 import calendar
+import pickle
 from datetime import datetime
 import pandas as pd
 import polars as pl
@@ -68,7 +70,7 @@ def load_files(file_ids, ukbb_project_folder, instance_ukbb_project_folder, effi
             run_command(f'dx download {file_id} -o {temp_file_path}')
             print(f"Downloaded {file_name} to {temp_file_path}")
 
-            # Checked file and cleaned errors, if neccessary
+            # Checked file and cleaned errors, if necessary
             preprocess_file(temp_file_path)
             print(f"Cleaned and saved {file_name} to {temp_file_path}")
 
@@ -101,22 +103,37 @@ def load_files(file_ids, ukbb_project_folder, instance_ukbb_project_folder, effi
         else:
             print(f"{file_name} in {efficient_format} format already exists in {efficient_project_file_path}")
 
-def preprocess_file(file_path):
-    # Read the CSV file line by line, handle lines with too many fields
+def preprocess_file(temp_file_path, sample_size=1000):
+    """
+    Preprocess a CSV file.
+
+    Parameters:
+    - file_path: The path to the CSV file.
+    - sample_size: The number of lines to sample to determine the most common number of fields.
+    """
+    # Function to handle extra fields
+    def handle_extra_fields(fields, num_expected_cols):
+        fields[num_expected_cols - 1:] = [','.join(fields[num_expected_cols - 1:])]
+        return fields[:num_expected_cols]
+
+    # Read the CSV file line by line
     with open(temp_file_path, 'r') as f:
         reader = csv.reader(f)
         lines = list(reader)
 
+    # Determine the most common number of fields in the first sample_size lines
+    field_counts = Counter(len(line) for line in lines[:sample_size])
+    num_expected_cols = field_counts.most_common(1)[0][0]
+
+    # Iterate over the rows and handle lines with extra fields
     for i, line in enumerate(lines):
-        if len(line) > 4:  # assuming 4 is the expected number of fields
-            line[-2:] = [','.join(line[-2:])]
-            lines[i] = line
+        if len(line) != num_expected_cols:
+            lines[i] = handle_extra_fields(line, num_expected_cols)
 
     # Write the corrected lines back to the file
     with open(temp_file_path, 'w', newline='') as f:
         writer = csv.writer(f)
         writer.writerows(lines)
-
 
 def convert_to_efficient_format(file_path, efficient_format='parquet'):
     # Load the data into a temporary variable with specified dtypes
