@@ -81,11 +81,11 @@ def load_files(file_ids, ukbb_project_folder, instance_ukbb_project_folder, effi
                 print(f"Converted {file_name} to {efficient_format} and saved to {convert_output_file_path}")
             else:
                 # Transfer the files from temp file path to efficient instance ukbb_data file
-                transfer_file(file_name, temp_file_path, efficient_project_file_path)
+                transfer_file(temp_file_path, efficient_project_file_path)
                 print(f"{file_name} is not a CSV file. Saving original format to {efficient_project_file_path}.")
             
             # Transfer the files from instance ukbb_data file to local biobank project ukbb_data file
-            transfer_file(file_name, efficient_instance_file_path, efficient_project_file_path)
+            transfer_file(efficient_instance_file_path, efficient_project_file_path)
             print(f"Transfered {file_name} to {efficient_project_file_path}")
             
             # Delete temp folder directory
@@ -93,14 +93,14 @@ def load_files(file_ids, ukbb_project_folder, instance_ukbb_project_folder, effi
 
         # Transfer the files from efficient local biobank project ukbb_data file to efficient instance ukbb_data file if not in instance
         if os.path.exists(efficient_project_file_path) and not os.path.exists(efficient_instance_file_path):
-            transfer_file(file_name, efficient_project_file_path, efficient_instance_file_path)
+            transfer_file(efficient_project_file_path, efficient_instance_file_path)
             print(f"Transfered {file_name} to {efficient_instance_file_path}")
         else:
             print(f"{file_name} in {efficient_format} format already exists in {efficient_instance_file_path}")
 
         # Transfer the files from efficient instance ukbb_data file to efficient local biobank project ukbb_data file if not in ukbb project folder
         if os.path.exists(efficient_instance_file_path) and not os.path.exists(efficient_project_file_path):
-            transfer_file(file_name, efficient_instance_file_path, efficient_project_file_path)
+            transfer_file(efficient_instance_file_path, efficient_project_file_path)
             print(f"Transfered {file_name} to {efficient_project_file_path}")
         else:
             print(f"{file_name} in {efficient_format} format already exists in {efficient_project_file_path}")
@@ -150,12 +150,13 @@ def convert_to_efficient_format(input_file_path, output_file_path, efficient_for
             
     return efficient_file_path
 
-def transfer_file(file_name, source_file_path, destination_folder):
+def transfer_file(source_file_path, destination_folder):
     # Copy the source file to the destination folder
     try:
         shutil.copyfile(source_file_path, destination_folder)
     except:
-        run_command(f'dx upload {source_file_path} -o {source_file_path}')
+        destination_file_path = source_file_path.replace('temp', f'ukbb_data')
+        run_command(f'dx upload {source_file_path} -o {destination_file_path}')
 
 def delete_directory(directory):
     # Delete all files in the directory
