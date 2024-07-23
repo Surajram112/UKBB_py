@@ -43,6 +43,19 @@ def read_traits_file(file_path):
     return df
 
 def load_files(file_ids, ukbb_project_folder, instance_ukbb_project_folder, efficient_format='parquet', force_download=False):
+    """
+    Load files from a list of file IDs.
+
+    Args:
+        file_ids (List[str]): A list of file IDs.
+        ukbb_project_folder (str): The path to the UKBB project folder.
+        instance_ukbb_project_folder (str): The path to the instance UKBB project folder.
+        efficient_format (str, optional): The desired format for the files. Defaults to 'parquet'.
+        force_download (bool, optional): Whether to force download the files. Defaults to False.
+
+    Returns:
+        None
+    """
     # Create the destination folder if it doesn't exist
     os.makedirs(ukbb_project_folder, exist_ok=True)
     os.makedirs(instance_ukbb_project_folder, exist_ok=True)
@@ -155,8 +168,8 @@ def transfer_file(source_file_path, destination_folder):
     try:
         shutil.copyfile(source_file_path, destination_folder)
     except:
-        destination_file_path = source_file_path.replace('temp', f'ukbb_data')
-        run_command(f'dx upload {source_file_path} -o {destination_file_path}')
+        # destination_folder = destination_folder.replace('temp', f'ukbb_data')
+        run_command(f'dx upload {source_file_path} -o {destination_folder}')
 
 def delete_directory(directory):
     # Delete all files in the directory
