@@ -79,22 +79,22 @@ def load_files(file_ids, ukbb_project_folder, instance_ukbb_project_folder, effi
             # Set temporary file path 
             temp_file_path = os.path.join('temp', file_name)
             
-            # Download the file to the instance ukbb_data file
-            run_command(f'dx download {file_id} -o {temp_file_path}')
-            print(f"Downloaded {file_name} to {temp_file_path}")
-
-            # Checked file and cleaned errors, if necessary
-            preprocess_file(temp_file_path)
-            print(f"Cleaned and saved {file_name} to {temp_file_path}")
-
-            # Convert files to efficient format
+            # if csv file go through pipeline and then save it to efficient format
             if temp_file_path.endswith('.csv'):
+                # Download the file to the instance ukbb_data file
+                run_command(f'dx download {file_id} -o {temp_file_path}')
+                print(f"Downloaded {file_name} to {temp_file_path}")
+
+                # Checked file and cleaned errors, if necessary
+                preprocess_file(temp_file_path)
+                print(f"Cleaned and saved {file_name} to {temp_file_path}")
+                
                 # Convert to efficient format and save
                 convert_output_file_path = convert_to_efficient_format(temp_file_path, efficient_instance_file_path, efficient_format)
                 print(f"Converted {file_name} to {efficient_format} and saved to {convert_output_file_path}")
             else:
                 # Transfer the files from temp file path to efficient instance ukbb_data file
-                shutil.copyfile(temp_file_path, efficient_instance_file_path)
+                run_command(f'dx download {file_id} -o {efficient_instance_file_path.split("/")[-2]}')
                 print(f"{file_name} is not a CSV file. Saving original format to {efficient_project_file_path}.")
             
             # Transfer the files from instance ukbb_data file to local biobank project ukbb_data file
