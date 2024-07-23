@@ -99,7 +99,7 @@ def load_files(file_ids, ukbb_project_folder, instance_ukbb_project_folder, effi
             
             # Transfer the files from instance ukbb_data file to local biobank project ukbb_data file
             run_command(f'dx upload {efficient_instance_file_path} -o {ukbb_project_folder.split("/")[-1]}')
-            print(f"Transfered {file_name} back to {efficient_project_file_path}")
+            print(f"Transferred {file_name} back to {efficient_project_file_path}")
             
             # Delete temp folder directory
             delete_directory('temp')
@@ -107,14 +107,14 @@ def load_files(file_ids, ukbb_project_folder, instance_ukbb_project_folder, effi
         # Transfer the files from efficient local biobank project ukbb_data file to efficient instance ukbb_data file if not in instance
         if os.path.exists(efficient_project_file_path) and not os.path.exists(efficient_instance_file_path):
             run_command(f'dx download {file_id} -o {efficient_instance_file_path.split("/")[-2]}')
-            print(f"Transfered {file_name} to {efficient_instance_file_path}")
+            print(f"Transferred {file_name} to {efficient_instance_file_path}")
         else:
             print(f"{file_name} in {efficient_format} format already exists in {efficient_instance_file_path}")
 
         # Transfer the files from efficient instance ukbb_data file to efficient local biobank project ukbb_data file if not in ukbb project folder
         if os.path.exists(efficient_instance_file_path) and not os.path.exists(efficient_project_file_path):
             run_command(f'dx upload {efficient_instance_file_path} -o {ukbb_project_folder.split("/")[-1]}')
-            print(f"Transfered {file_name} back to {efficient_project_file_path}")
+            print(f"Transferred {file_name} back to {efficient_project_file_path}")
         else:
             print(f"{file_name} in {efficient_format} format already exists in {efficient_project_file_path}")
 
