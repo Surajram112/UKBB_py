@@ -113,7 +113,7 @@ def load_files(file_ids, ukbb_project_folder, instance_ukbb_project_folder, effi
 
         # Transfer the files from efficient instance ukbb_data file to efficient local biobank project ukbb_data file if not in ukbb project folder
         if os.path.exists(efficient_instance_file_path) and not os.path.exists(efficient_project_file_path):
-            shutil.copyfile(efficient_instance_file_path, efficient_project_file_path)
+            run_command(f'dx upload {efficient_instance_file_path} -o {ukbb_project_folder}')
             print(f"Transfered {file_name} to {efficient_project_file_path}")
         else:
             print(f"{file_name} in {efficient_format} format already exists in {efficient_project_file_path}")
