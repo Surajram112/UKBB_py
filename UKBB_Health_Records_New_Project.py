@@ -155,7 +155,7 @@ def transfer_file(file_name, source_file_path, destination_folder):
     try:
         shutil.copyfile(source_file_path, destination_folder)
     except:
-        run_command(f'dx upload {source_file_path} -o {destination_folder + file_name}')
+        run_command(f'dx upload {source_file_path} -o {source_file_path}')
 
 def delete_directory(directory):
     # Delete all files in the directory
