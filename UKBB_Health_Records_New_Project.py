@@ -93,7 +93,7 @@ def load_files(file_ids, ukbb_project_folder, instance_ukbb_project_folder, effi
                 convert_output_file_path = convert_to_efficient_format(temp_file_path, efficient_instance_file_path, efficient_format)
                 print(f"Converted {file_name} to {efficient_format} and saved to {convert_output_file_path}")
             else:
-                # Transfer the files from temp file path to efficient instance ukbb_data file
+                # Download the file to the instance ukbb_data file
                 run_command(f'dx download {file_id} -o {efficient_instance_file_path.split("/")[-2]}')
                 print(f"{file_name} is not a CSV file. Saving original format to {efficient_project_file_path}.")
             
