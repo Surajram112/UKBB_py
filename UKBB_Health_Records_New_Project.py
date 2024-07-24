@@ -57,6 +57,9 @@ def load_files(file_ids, data_folder, local_folder, efficient_format='parquet', 
         efficient_file_path = os.path.join(data_folder, file_name).replace('.csv', f'.{efficient_format}')
         local_efficient_file_path = os.path.join(local_folder, file_name).replace('.csv', f'.{efficient_format}')
         
+        print(f'Instance Path: {efficient_file_path}')
+        print(f'Local Path: {local_efficient_file_path}')
+        
         # If the file does not exist in the folders both local and in the instance, go through the pipeline
         if not os.path.exists(local_efficient_file_path) and not os.path.exists(efficient_file_path):
             # Create temporary folder for large files, if they are not in the efficient format
