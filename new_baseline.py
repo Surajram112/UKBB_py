@@ -44,5 +44,6 @@ baseline_table['assess_date'] = pd.to_datetime(baseline_table['assess_date'])
 baseline_table['assess_age'] = (baseline_table['assess_date'] - baseline_table['dob']).dt.days / 365.25
 baseline_table['whr'] = baseline_table['waist'] / baseline_table['hip']
 
-# Save the processed baseline table
+# Save the processed baseline table and delete csv file
+os.remove('Baseline.csv')
 baseline_table.to_parquet(f'Baseline.parquet')
