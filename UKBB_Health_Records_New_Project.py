@@ -76,8 +76,8 @@ def load_files(file_ids, data_folder, local_folder, efficient_format='parquet', 
                 print(f"Downloaded {file_name} to {temp_file_path}")
 
                 # Checked file and cleaned errors, if necessary
-                preprocess_file(temp_file_path)
-                print(f"Cleaned and saved {file_name} to {temp_file_path}")
+                # preprocess_file(temp_file_path)
+                # print(f"Cleaned and saved {file_name} to {temp_file_path}")
                 
                 # Convert to efficient format and save
                 convert_output_file_path = convert_to_efficient_format(temp_file_path, efficient_file_path, efficient_format)
