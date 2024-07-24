@@ -87,7 +87,7 @@ def load_files(file_ids, data_folder, local_folder, efficient_format='parquet', 
                 print(f"{file_name} is not a CSV file. Saving original format to {data_folder}.")
             
             # Transfer the files from instance ukbb_data file to local biobank project ukbb_data file
-            run_command(f'dx upload {efficient_file_path} --path {project_folder}')
+            run_command(f'dx upload {efficient_file_path} -o {project_folder}')
             print(f"Transferred {file_name} back to {project_folder}")
             
             # Delete temp folder directory
@@ -95,7 +95,7 @@ def load_files(file_ids, data_folder, local_folder, efficient_format='parquet', 
 
         # Transfer the files from efficient instance ukbb_data file to efficient local biobank project ukbb_data file if not in ukbb project folder
         if os.path.exists(efficient_file_path) and not os.path.exists(local_efficient_file_path):
-            run_command(f'dx upload {efficient_file_path} --path {project_folder}')
+            run_command(f'dx upload {efficient_file_path} -o {project_folder}')
             print(f"Transferred {file_name} back to {project_folder}")
         else:
             print(f"{file_name} in {efficient_format} format already exists in {efficient_file_path}")
@@ -176,10 +176,10 @@ def load_efficient_format(file_path, efficient_format='parquet'):
         return None
 
 # Create a data and traits folder if it doesn't exist
-ukbb_folder  = 'ukbb_data'
+ukbb_folder  = 'ukbb_data/'
 os.makedirs(ukbb_folder, exist_ok=True)
 
-traits_folder  = 'ukbb_traits'
+traits_folder  = 'ukbb_traits/'
 os.makedirs(traits_folder, exist_ok=True)
 
 # Set the local project folder just to run find
