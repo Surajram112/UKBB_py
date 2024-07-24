@@ -256,8 +256,8 @@ def read_GP(codes, folder='ukbb_data/', filename='GP_gp_clinical', baseline_file
     baseline_data = pl.read_parquet(baseline_filename + efficient_format)
 
     # Ensure 'eid' columns are of the same type
-    data2 = data2.with_column(pl.col('eid').cast(pl.Utf8))
-    baseline_data = baseline_data.with_column(pl.col('eid').cast(pl.Utf8))
+    # data2 = data2.with_column(pl.col('eid').cast(pl.Utf8))
+    # baseline_data = baseline_data.with_column(pl.col('eid').cast(pl.Utf8))
     
     # Merge with baseline table
     data2 = data2.join(baseline_data.select(['eid', 'dob', 'assess_date']), on='eid')
