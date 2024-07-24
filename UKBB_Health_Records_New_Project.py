@@ -286,7 +286,7 @@ def read_GP(codes, folder='ukbb_data/', filename='GP_gp_clinical', baseline_file
         return pl.DataFrame(schema={col: pl.Utf8 for col in gp_header})
     
     # Load the baseline table
-    baseline_data = pl.read_csv(folder + baseline_filename)
+    baseline_data = pl.read_csv(baseline_filename)
     
     # Ensure date columns are in the correct format
     baseline_data = baseline_data.with_columns([
