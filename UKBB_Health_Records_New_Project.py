@@ -171,9 +171,12 @@ def load_efficient_format(file_path, efficient_format='parquet'):
     else:
         return None
 
-# Create a data folder if it doesn't exist
-data_folder = "ukbb_data"
-os.makedirs(data_folder, exist_ok=True)
+# Create a data and traits folder if it doesn't exist
+ukbb_project_folder  = 'ukbb_data'
+os.makedirs(ukbb_project_folder, exist_ok=True)
+
+traits_project_folder  = 'ukbb_traits'
+os.makedirs(traits_project_folder, exist_ok=True)
 
 # List of file IDs for data to download
 data_file_ids = [
@@ -210,9 +213,6 @@ traits_file_ids = [
     'file-GpFpg18J40YBYgZXG11Y2qq6',  # ICD10 diabetes
     'file-GpFq9vjJ40Y3Gz5KyqZjKx24',  # ICD10 type 1 dm
 ]
-
-ukbb_project_folder  = 'ukbb_data'
-traits_project_folder  = 'ukbb_data'
 
 # Load data files, if force download is True then original files will be reloaded
 load_files(data_file_ids, ukbb_project_folder)
