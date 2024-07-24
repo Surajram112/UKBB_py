@@ -70,7 +70,7 @@ def load_files(file_ids, data_folder, local_folder, efficient_format='parquet', 
             # if csv file go through pipeline and then save it to efficient format
             if temp_file_path.endswith('.csv'):
                 # Download the file to the instance ukbb_data file
-                run_command(f'dx download {file_id} -o {temp_file_path}')
+                run_command(f'dx download {file_id} -o {temp_file_path} --overwrite')
                 print(f"Downloaded {file_name} to {temp_file_path}")
 
                 # Checked file and cleaned errors, if necessary
