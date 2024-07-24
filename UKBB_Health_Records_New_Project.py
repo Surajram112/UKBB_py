@@ -87,7 +87,7 @@ def load_files(file_ids, data_folder, local_folder, efficient_format='parquet', 
             
             # Transfer the files from instance ukbb_data file to local biobank project ukbb_data file
             run_command(f'dx upload {efficient_file_path} -o {data_folder}')
-            print(f"Transferred {file_name} back to {data_folder}")
+            print(f"Transferred {file_name} back to {local_efficient_file_path}")
             
             # Delete temp folder directory
             delete_directory('temp')
@@ -97,12 +97,12 @@ def load_files(file_ids, data_folder, local_folder, efficient_format='parquet', 
             run_command(f'dx download {file_name} -o {data_folder}')
             print(f"Transferred {file_name} to {efficient_file_path}")
         else:
-            print(f"{file_name} in {efficient_format} format already exists in {efficient_file_path}")
+            print(f"{file_name} in {efficient_format} format already exists in {local_efficient_file_path}")
 
         # Transfer the files from efficient instance ukbb_data file to efficient local biobank project ukbb_data file if not in ukbb project folder
-        if os.path.exists(efficient_file_path) and not os.path.exists(local_folder):
+        if os.path.exists(efficient_file_path) and not os.path.exists(local_efficient_file_path):
             run_command(f'dx upload {efficient_file_path} -o {data_folder}')
-            print(f"Transferred {file_name} back to {efficient_file_path}")
+            print(f"Transferred {file_name} back to {local_efficient_file_path}")
         else:
             print(f"{file_name} in {efficient_format} format already exists in {efficient_file_path}")
 
