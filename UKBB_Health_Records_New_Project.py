@@ -235,39 +235,6 @@ load_files(traits_file_ids, traits_folder, local_traits_folder)
 # Load baseline table and import file to run it
 run_command("curl https://raw.githubusercontent.com/Surajram112/UKBB_py/main/new_baseline.py > new_baseline.py")
 import new_baseline
-    
-# def read_GP(codes, folder='ukbb_data/', filename='GP_gp_clinical', baseline_filename='Baseline.csv', efficient_format='.parquet'):
-#     gp_header = ['eid', 'data_provider', 'event_dt', 'read_2', 'read_3', 'value1', 'value2', 'value3', 'dob', 'assess_date', 'event_age', 'prev']
-#     if not codes:
-#         return pl.DataFrame(schema={col: pl.Utf8 for col in gp_header})
-    
-#     codes2 = [f",{code}" for code in codes]
-#     codes3 = '\\|'.join(codes2)
-#     grepcode = f"grep '{codes3}' {folder + filename + efficient_format} > temp.csv"
-#     run_command(grepcode)
-    
-#     if os.path.getsize('temp.csv') == 0:
-#         return pl.DataFrame(schema={col: pl.Utf8 for col in gp_header})
-
-#     data = pl.read_csv('temp.csv', has_header=False)
-#     data.columns = ['eid', 'data_provider', 'event_dt', 'read_2', 'read_3', 'value1', 'value2', 'value3']
-#     data = data.with_column(pl.col('event_dt').str.replace_all(r'[a-zA-Z]', '1901-01-01').str.strptime(pl.Date, fmt='%Y-%m-%d'))
-
-#     # Filter data using vectorized operations
-#     data2 = data.filter(pl.col('read_3').is_in(codes) | pl.col('read_2').is_in(codes))
-    
-#     # Check if the efficient format of the baseline file exists
-#     baseline_data = load_efficient_format(baseline_filename, efficient_format)
-
-#     baseline_table = pl.DataFrame(baseline_data)
-#     baseline_table = baseline_table.with_column(pl.col('dob').str.strptime(pl.Date, fmt='%Y-%m-%d'))
-#     baseline_table = baseline_table.with_column(pl.col('assess_date').str.strptime(pl.Date, fmt='%Y-%m-%d'))
-    
-#     data2 = data2.join(baseline_table.select(['eid', 'dob', 'assess_date']), on='eid')
-#     data2 = data2.with_column((pl.col('event_dt') - pl.col('dob')).dt.days() / 365.25).alias('event_age')
-#     data2 = data2.with_column((pl.col('event_dt') < pl.col('assess_date')).alias('prev'))
-    
-#     return data2
 
 def read_GP(codes, folder='ukbb_data/', filename='GP_gp_clinical', baseline_filename='Baseline', efficient_format='.parquet'):
     # Set up the GP file header
