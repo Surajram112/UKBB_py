@@ -44,7 +44,7 @@ def dx_exists(file_name):
     result = run_command(command)
     return bool(result.strip())
 
-def load_files(file_ids, data_folder, efficient_format='parquet', force_download=False):
+def load_files(file_ids, data_folder, local_folder, efficient_format='parquet', force_download=False):
     
     # Create the output folder if it doesn't already exist
     os.makedirs(data_folder, exist_ok=True)
@@ -54,11 +54,11 @@ def load_files(file_ids, data_folder, efficient_format='parquet', force_download
         file_name = run_command(f'dx describe {file_id} --name').strip()
 
         # Set up file paths
-        file_path = os.path.join(data_folder, file_name)
-        efficient_file_path = file_path.replace('.csv', f'.{efficient_format}')
+        efficient_file_path = os.path.join(data_folder, file_name).replace('.csv', f'.{efficient_format}')
+        local_efficient_file_path = os.path.join(local_folder, file_name).replace('.csv', f'.{efficient_format}')
         
         # If the file does not exist in the folders both local and in the instance, go through the pipeline
-        if not dx_exists(efficient_file_path) and not os.path.exists(efficient_file_path):
+        if not os.path.exists(local_efficient_file_path) and not os.path.exists(efficient_file_path):
             # Create temporary folder for large files, if they are not in the efficient format
             os.makedirs('temp', exist_ok=True)
             # Set temporary file path 
@@ -90,15 +90,15 @@ def load_files(file_ids, data_folder, efficient_format='parquet', force_download
             delete_directory('temp')
 
         # Transfer the files from efficient local biobank project ukbb_data file to efficient instance ukbb_data file if not in instance
-        if dx_exists(efficient_file_path) and not dx_exists(efficient_file_path):
-            run_command(f'dx download {file_id} -o {efficient_file_path.split("/")[-2]}')
+        if os.path.exists(local_efficient_file_path) and not os.path.exists(efficient_file_path):
+            run_command(f'dx download {file_name} -o {data_folder}')
             print(f"Transferred {file_name} to {efficient_file_path}")
         else:
             print(f"{file_name} in {efficient_format} format already exists in {efficient_file_path}")
 
         # Transfer the files from efficient instance ukbb_data file to efficient local biobank project ukbb_data file if not in ukbb project folder
-        if os.path.exists(efficient_file_path) and not dx_exists(efficient_file_path):
-            run_command(f'dx upload {efficient_file_path} -o {ukbb_project_folder.split("/")[-1]}')
+        if os.path.exists(efficient_file_path) and not os.path.exists(local_folder):
+            run_command(f'dx upload {efficient_file_path} -o {data_folder}')
             print(f"Transferred {file_name} back to {efficient_file_path}")
         else:
             print(f"{file_name} in {efficient_format} format already exists in {efficient_file_path}")
@@ -172,11 +172,15 @@ def load_efficient_format(file_path, efficient_format='parquet'):
         return None
 
 # Create a data and traits folder if it doesn't exist
-ukbb_project_folder  = 'ukbb_data'
-os.makedirs(ukbb_project_folder, exist_ok=True)
+ukbb_folder  = 'ukbb_data'
+os.makedirs(ukbb_folder, exist_ok=True)
 
-traits_project_folder  = 'ukbb_traits'
-os.makedirs(traits_project_folder, exist_ok=True)
+traits_folder  = 'ukbb_traits'
+os.makedirs(traits_folder, exist_ok=True)
+
+# Set the local project folder just to run find
+local_data_folder = '../../mnt/project/ukbb_data/'
+local_traits_folder = '../../mnt/project/ukbb_traits/'
 
 # List of file IDs for data to download
 data_file_ids = [
@@ -215,10 +219,10 @@ traits_file_ids = [
 ]
 
 # Load data files, if force download is True then original files will be reloaded
-load_files(data_file_ids, ukbb_project_folder)
+load_files(data_file_ids, ukbb_folder, local_data_folder)
 
 # Load codes lists , if force download is True then original files will be reloaded
-load_files(traits_file_ids, traits_project_folder)
+load_files(traits_file_ids, traits_folder, local_traits_folder)
 
 # Load baseline table and import file to run it
 run_command("curl https://raw.githubusercontent.com/Surajram112/UKBB_py/main/new_baseline.py > new_baseline.py")
