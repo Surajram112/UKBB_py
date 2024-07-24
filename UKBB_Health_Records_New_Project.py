@@ -3,11 +3,7 @@ import subprocess
 import re
 import csv
 from collections import Counter
-import requests
-import shutil
-import calendar
 import pickle
-from datetime import datetime
 import pandas as pd
 import polars as pl
 
@@ -62,7 +58,7 @@ def load_files(file_ids, data_folder, efficient_format='parquet', force_download
         efficient_file_path = file_path.replace('.csv', f'.{efficient_format}')
         
         # If the file does not exist in the folders both local and in the instance, go through the pipeline
-        if not dx_exists(file_path) and not dx_exists(efficient_file_path) and not os.path.exists(file_path) and not os.path.exists(efficient_file_path):
+        if not dx_exists(efficient_file_path) and not os.path.exists(efficient_file_path):
             # Create temporary folder for large files, if they are not in the efficient format
             os.makedirs('temp', exist_ok=True)
             # Set temporary file path 
@@ -94,18 +90,18 @@ def load_files(file_ids, data_folder, efficient_format='parquet', force_download
             delete_directory('temp')
 
         # Transfer the files from efficient local biobank project ukbb_data file to efficient instance ukbb_data file if not in instance
-        if dx_exists(file_path)  ......... os.path.exists(efficient_project_file_path) and not os.path.exists(efficient_instance_file_path):
-            run_command(f'dx download {file_id} -o {efficient_instance_file_path.split("/")[-2]}')
-            print(f"Transferred {file_name} to {efficient_instance_file_path}")
+        if dx_exists(efficient_file_path) and not dx_exists(efficient_file_path):
+            run_command(f'dx download {file_id} -o {efficient_file_path.split("/")[-2]}')
+            print(f"Transferred {file_name} to {efficient_file_path}")
         else:
-            print(f"{file_name} in {efficient_format} format already exists in {efficient_instance_file_path}")
+            print(f"{file_name} in {efficient_format} format already exists in {efficient_file_path}")
 
         # Transfer the files from efficient instance ukbb_data file to efficient local biobank project ukbb_data file if not in ukbb project folder
-        if os.path.exists(efficient_instance_file_path) and not os.path.exists(efficient_project_file_path):
-            run_command(f'dx upload {efficient_instance_file_path} -o {ukbb_project_folder.split("/")[-1]}')
-            print(f"Transferred {file_name} back to {efficient_project_file_path}")
+        if os.path.exists(efficient_file_path) and not dx_exists(efficient_file_path):
+            run_command(f'dx upload {efficient_file_path} -o {ukbb_project_folder.split("/")[-1]}')
+            print(f"Transferred {file_name} back to {efficient_file_path}")
         else:
-            print(f"{file_name} in {efficient_format} format already exists in {efficient_project_file_path}")
+            print(f"{file_name} in {efficient_format} format already exists in {efficient_file_path}")
 
 def preprocess_file(temp_file_path, sample_size=1000):
     """
