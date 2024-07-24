@@ -269,7 +269,7 @@ import new_baseline
     
 #     return data2
 
-def read_GP(codes, folder='ukbb_data/', filename='GP_gp_clinical', baseline_filename='Baseline.csv', efficient_format='.parquet'):
+def read_GP(codes, folder='ukbb_data/', filename='GP_gp_clinical', baseline_filename='Baseline', efficient_format='.parquet'):
     # Set up the GP file header
     gp_header = ['eid', 'data_provider', 'event_dt', 'read_2', 'read_3', 'value1', 'value2', 'value3', 'dob', 'assess_date', 'event_age', 'prev']
     
@@ -286,7 +286,7 @@ def read_GP(codes, folder='ukbb_data/', filename='GP_gp_clinical', baseline_file
         return pl.DataFrame(schema={col: pl.Utf8 for col in gp_header})
     
     # Load the baseline table
-    baseline_data = pl.read_csv(baseline_filename)
+    baseline_data = pl.read_parquet(baseline_filename + efficient_format)
     
     # Ensure date columns are in the correct format
     baseline_data = baseline_data.with_columns([
