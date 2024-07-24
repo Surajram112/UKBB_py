@@ -257,8 +257,8 @@ def read_GP(codes, folder='ukbb_data/', filename='GP_gp_clinical', baseline_file
     
     # Ensure date columns are in the correct format
     baseline_data = baseline_data.with_columns([
-        pl.col('dob').str.strptime(pl.Date, fmt='%Y-%m-%d'),
-        pl.col('assess_date').str.strptime(pl.Date, fmt='%Y-%m-%d')
+        pl.col('dob').str.strptime(pl.Date),
+        pl.col('assess_date').str.strptime(pl.Date)
     ])
     
     # Ensure 'eid' columns are of the same type
