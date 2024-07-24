@@ -45,4 +45,4 @@ baseline_table['assess_age'] = (baseline_table['assess_date'] - baseline_table['
 baseline_table['whr'] = baseline_table['waist'] / baseline_table['hip']
 
 # Save the processed baseline table
-baseline_table.to_csv('Baseline.csv', index=False)
+baseline_table.to_parquet(f'Baseline.parquet')
