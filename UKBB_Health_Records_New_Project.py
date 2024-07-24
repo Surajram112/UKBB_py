@@ -57,6 +57,10 @@ def load_files(file_ids, data_folder, local_folder, efficient_format='parquet', 
         efficient_file_path = os.path.join(data_folder, file_name).replace('.csv', f'.{efficient_format}')
         local_efficient_file_path = os.path.join(local_folder, file_name).replace('.csv', f'.{efficient_format}')
         
+        # Get project ID and create project folder
+        project_folder = run_command(f'dx pwd').strip()
+        project_folder = os.path.join(project_folder, data_folder)
+        
         # If the file does not exist in the folders both local and in the instance, go through the pipeline
         if not os.path.exists(local_efficient_file_path) and not os.path.exists(efficient_file_path):
             # Create temporary folder for large files, if they are not in the efficient format
@@ -83,16 +87,16 @@ def load_files(file_ids, data_folder, local_folder, efficient_format='parquet', 
                 print(f"{file_name} is not a CSV file. Saving original format to {data_folder}.")
             
             # Transfer the files from instance ukbb_data file to local biobank project ukbb_data file
-            run_command(f'dx upload {efficient_file_path} --path {data_folder}')
-            print(f"Transferred {file_name} back to {local_efficient_file_path}")
+            run_command(f'dx upload {efficient_file_path} --path {project_folder}')
+            print(f"Transferred {file_name} back to {project_folder}")
             
             # Delete temp folder directory
             delete_directory('temp')
 
         # Transfer the files from efficient instance ukbb_data file to efficient local biobank project ukbb_data file if not in ukbb project folder
         if os.path.exists(efficient_file_path) and not os.path.exists(local_efficient_file_path):
-            run_command(f'dx upload {efficient_file_path} --path {data_folder}')
-            print(f"Transferred {file_name} back to {local_efficient_file_path}")
+            run_command(f'dx upload {efficient_file_path} --path {project_folder}')
+            print(f"Transferred {file_name} back to {project_folder}")
         else:
             print(f"{file_name} in {efficient_format} format already exists in {efficient_file_path}")
         
