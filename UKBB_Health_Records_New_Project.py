@@ -83,7 +83,7 @@ def load_files(file_ids, data_folder, local_folder, efficient_format='parquet', 
                 print(f"{file_name} is not a CSV file. Saving original format to {data_folder}.")
             
             # Transfer the files from instance ukbb_data file to local biobank project ukbb_data file
-            run_command(f'dx upload {efficient_file_path} -o {data_folder}')
+            run_command(f'dx upload {efficient_file_path} --path {data_folder}')
             print(f"Transferred {file_name} back to {local_efficient_file_path}")
             
             # Delete temp folder directory
@@ -91,7 +91,7 @@ def load_files(file_ids, data_folder, local_folder, efficient_format='parquet', 
 
         # Transfer the files from efficient instance ukbb_data file to efficient local biobank project ukbb_data file if not in ukbb project folder
         if os.path.exists(efficient_file_path) and not os.path.exists(local_efficient_file_path):
-            run_command(f'dx upload {efficient_file_path} -o {data_folder}')
+            run_command(f'dx upload {efficient_file_path} --path {data_folder}')
             print(f"Transferred {file_name} back to {local_efficient_file_path}")
         else:
             print(f"{file_name} in {efficient_format} format already exists in {efficient_file_path}")
