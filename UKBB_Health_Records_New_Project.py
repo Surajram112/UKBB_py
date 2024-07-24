@@ -254,20 +254,16 @@ def read_GP(codes, folder='ukbb_data/', filename='GP_gp_clinical', baseline_file
     
     # Load the baseline table
     baseline_data = pl.read_parquet(baseline_filename + efficient_format)
-
-    # Ensure 'eid' columns are of the same type
-    # data2 = data2.with_column(pl.col('eid').cast(pl.Utf8))
-    # baseline_data = baseline_data.with_column(pl.col('eid').cast(pl.Utf8))
     
     # Merge with baseline table
     data2 = data2.join(baseline_data.select(['eid', 'dob', 'assess_date']), on='eid')
     
     # Calculate additional columns
     data2 = data2.with_columns([
-        ((pl.col('event_dt') - pl.col('dob')).dt.days() / 365.25).alias('event_age'),
-        (pl.col('event_dt') < pl.col('assess_date')).alias('prev')
+    ((pl.col('event_dt') - pl.col('dob')).dt.total_seconds() / (60*60*24*365.25)).alias('event_age'),
+    (pl.col('event_dt') < pl.col('assess_date')).alias('prev')
     ])
-    
+
     return data2
 
 def read_OPCS(codes, folder='ukbb_data/', filename='HES_hesin_oper', baseline_filename='Baseline.csv', extension='.parquet'):
