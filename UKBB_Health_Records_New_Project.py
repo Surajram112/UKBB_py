@@ -60,6 +60,7 @@ def load_files(file_ids, data_folder, local_folder, efficient_format='parquet', 
         # Get project ID and create project folder
         project_folder = run_command(f'dx pwd').strip()
         project_folder = os.path.join(project_folder, data_folder)
+        project_efficient_file_path = os.path.join(project_folder, file_name).replace('.csv', f'.{efficient_format}')
         
         # If the file does not exist in the folders both local and in the instance, go through the pipeline
         if not os.path.exists(local_efficient_file_path) and not os.path.exists(efficient_file_path):
@@ -102,7 +103,7 @@ def load_files(file_ids, data_folder, local_folder, efficient_format='parquet', 
         
         # Transfer the files from efficient local biobank project ukbb_data file to efficient instance ukbb_data file if not in instance
         if os.path.exists(local_efficient_file_path) and not os.path.exists(efficient_file_path):
-            run_command(f'dx download {file_name} -o {data_folder}')
+            run_command(f'dx download {project_efficient_file_path} -o {data_folder}')
             print(f"Transferred {file_name} to {efficient_file_path}")
         else:
             print(f"{file_name} in {efficient_format} format already exists in {local_efficient_file_path}")
