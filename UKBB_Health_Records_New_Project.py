@@ -107,7 +107,7 @@ def load_files(file_ids, data_folder, local_folder, efficient_format='parquet', 
         else:
             print(f"{file_name} in {efficient_format} format already exists in {local_efficient_file_path}")
 
-def preprocess_file(temp_file_path, sample_size=1000):
+def preprocess_file(temp_file_path, sample_size=100):
     """
     Preprocess a CSV file.
 
