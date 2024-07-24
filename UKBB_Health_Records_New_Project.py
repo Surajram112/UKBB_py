@@ -211,14 +211,14 @@ traits_file_ids = [
     'file-GpFq9vjJ40Y3Gz5KyqZjKx24',  # ICD10 type 1 dm
 ]
 
-ukbb_project_folder = '../../mnt/project/ukbb_data'
-instance_ukbb_project_folder  = 'ukbb_data'
+ukbb_project_folder  = 'ukbb_data'
+traits_project_folder  = 'ukbb_data'
 
-# Load data files, if force downlaod is True then original filies will be reloaded
-load_files(data_file_ids, ukbb_project_folder, instance_ukbb_project_folder)
+# Load data files, if force download is True then original files will be reloaded
+load_files(data_file_ids, ukbb_project_folder)
 
-# Load codes lists , if force downlaod is True then original filies will be reloaded
-load_files(traits_file_ids, ukbb_project_folder, instance_ukbb_project_folder)
+# Load codes lists , if force download is True then original files will be reloaded
+load_files(traits_file_ids, traits_project_folder)
 
 # Load baseline table and import file to run it
 run_command("curl https://raw.githubusercontent.com/Surajram112/UKBB_py/main/new_baseline.py > new_baseline.py")
