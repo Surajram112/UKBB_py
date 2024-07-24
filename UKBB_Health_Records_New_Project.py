@@ -142,7 +142,7 @@ def preprocess_file(temp_file_path, sample_size=100):
 
 def convert_to_efficient_format(input_file_path, output_file_path, efficient_format='parquet'):
     # Load the data into a temporary variable with specified dtypes
-    df = pd.read_csv(input_file_path, dtype={'value2':'string'})
+    df = pd.read_csv(input_file_path, dtype=str)
     efficient_file_path = output_file_path.replace('.csv', f'.{efficient_format}')
     
     if efficient_format == 'parquet':
