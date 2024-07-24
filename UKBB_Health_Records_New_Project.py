@@ -74,10 +74,6 @@ def load_files(file_ids, data_folder, local_folder, efficient_format='parquet', 
                 # Download the file to the instance ukbb_data file
                 run_command(f'dx download {file_id} -o {temp_file_path} --overwrite')
                 print(f"Downloaded {file_name} to {temp_file_path}")
-
-                # Checked file and cleaned errors, if necessary
-                # preprocess_file(temp_file_path)
-                # print(f"Cleaned and saved {file_name} to {temp_file_path}")
                 
                 # Convert to efficient format and save
                 convert_output_file_path = convert_to_efficient_format(temp_file_path, efficient_file_path, efficient_format)
@@ -108,7 +104,7 @@ def load_files(file_ids, data_folder, local_folder, efficient_format='parquet', 
         else:
             print(f"{file_name} in {efficient_format} format already exists in {local_efficient_file_path}")
 
-def preprocess_file(temp_file_path, sample_size=100):
+def adjust_num_col(temp_file_path, sample_size=100):
     """
     Preprocess a CSV file.
 
@@ -141,9 +137,16 @@ def preprocess_file(temp_file_path, sample_size=100):
         writer.writerows(lines)
 
 def convert_to_efficient_format(input_file_path, output_file_path, efficient_format='parquet'):
-    # Load the data into a temporary variable with specified dtypes
-    df = pd.read_csv(input_file_path, dtype=str)
-    efficient_file_path = output_file_path.replace('.csv', f'.{efficient_format}')
+    try:
+        # Load the data into a temporary variable with specified dtypes
+        df = pd.read_csv(input_file_path, dtype=str)
+        efficient_file_path = output_file_path.replace('.csv', f'.{efficient_format}')
+    except:
+        # Checked number of columns in file and adjusted to the same
+        adjust_num_col(input_file_path)
+        # Load the data into a temporary variable with specified dtype as string 
+        df = pd.read_csv(input_file_path, dtype=str)
+        efficient_file_path = output_file_path.replace('.csv', f'.{efficient_format}')
     
     if efficient_format == 'parquet':
         df.to_parquet(efficient_file_path)
