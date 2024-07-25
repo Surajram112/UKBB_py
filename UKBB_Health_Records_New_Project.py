@@ -281,7 +281,8 @@ def read_GP(codes, folder='ukbb_data/', filename='GP_gp_clinical', baseline_file
         pl.col('event_dt').str.strptime(pl.Datetime, '%Y-%m-%d').alias('event_dt'),
         pl.col('value1').cast(pl.Float64),
         pl.col('value2').cast(pl.Float64),
-        pl.col('value3').cast(pl.Float64)
+        pl.col('value3').cast(pl.Float64),
+        pl.lit('GP').alias('source')
     ])
 
     # Calculate additional columns
