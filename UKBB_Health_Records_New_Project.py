@@ -250,7 +250,7 @@ def read_GP(incl_codes, excl_codes=None, folder='ukbb_data/', filename='GP_gp_cl
     # Filter data using vectorized operations
     data2 = data.filter(
         (pl.col('read_3').is_in(incl_codes) | pl.col('read_2').is_in(incl_codes)) & 
-        (pl.col('read_3').is_not_in(excl_codes) & pl.col('read_2').is_not_in(excl_codes))
+        (~pl.col('read_3').is_in(excl_codes) & ~pl.col('read_2').is_in(excl_codes))
     )
     
     if data2.is_empty():
@@ -281,9 +281,9 @@ def read_GP(incl_codes, excl_codes=None, folder='ukbb_data/', filename='GP_gp_cl
         
     # Convert date columns to datetime  and float type respectively
     data2 = data2.with_columns([
-        pl.col('event_dt').cast(pl.Datetime),
-        pl.col('dob').cast(pl.Datetime),
-        pl.col('assess_date').cast(pl.Datetime),
+        pl.col('event_dt').cast(pl.Datetime).dt,
+        pl.col('dob').cast(pl.Datetime).dt,
+        pl.col('assess_date').cast(pl.Datetime).dt,
         pl.col('value1').cast(pl.Float64),
         pl.col('value2').cast(pl.Float64),
         pl.col('value3').cast(pl.Float64),
