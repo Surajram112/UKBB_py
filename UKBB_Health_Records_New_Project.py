@@ -286,7 +286,7 @@ def read_GP(codes, folder='ukbb_data/', filename='GP_gp_clinical', baseline_file
         pl.col('value3').cast(pl.Float64),
         ((pl.col('event_dt') - pl.col('dob')).dt.total_seconds() / (60*60*24*365.25)).alias('event_age'),
         (pl.col('event_dt') < pl.col('assess_date')).alias('prev'),
-        pl.lit('GP').alias('source')
+        # pl.lit('GP').alias('source')
     ])
 
     return data2, non_datetime_df
