@@ -237,11 +237,11 @@ load_files(traits_file_ids, traits_folder, local_traits_folder)
 run_command("curl https://raw.githubusercontent.com/Surajram112/UKBB_py/main/new_baseline.py > new_baseline.py")
 import new_baseline
 
-def read_GP(inc_codes, excl_codes=None, folder='ukbb_data/', filename='GP_gp_clinical', baseline_filename='Baseline', efficient_format='.parquet'):
+def read_GP(incl_codes, excl_codes=None, folder='ukbb_data/', filename='GP_gp_clinical', baseline_filename='Baseline', efficient_format='.parquet'):
     # Set up the GP file header
     gp_header = ['eid', 'data_provider', 'event_dt', 'read_2', 'read_3', 'value1', 'value2', 'value3', 'dob', 'assess_date', 'event_age', 'prev']
     
-    if not inc_codes:
+    if not incl_codes:
         return pl.DataFrame(schema={col: pl.Utf8 for col in gp_header})
     
     # Read the parquet file using polars
@@ -249,7 +249,7 @@ def read_GP(inc_codes, excl_codes=None, folder='ukbb_data/', filename='GP_gp_cli
     
     # Filter data using vectorized operations
     data2 = data.filter(
-        (pl.col('read_3').is_in(inc_codes) | pl.col('read_2').is_in(inc_codes)) & 
+        (pl.col('read_3').is_in(incl_codes) | pl.col('read_2').is_in(incl_codes)) & 
         (pl.col('read_3').is_not_in(excl_codes) & pl.col('read_2').is_not_in(excl_codes))
     )
     
