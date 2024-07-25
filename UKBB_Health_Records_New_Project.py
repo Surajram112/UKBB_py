@@ -237,18 +237,21 @@ load_files(traits_file_ids, traits_folder, local_traits_folder)
 run_command("curl https://raw.githubusercontent.com/Surajram112/UKBB_py/main/new_baseline.py > new_baseline.py")
 import new_baseline
 
-def read_GP(codes, folder='ukbb_data/', filename='GP_gp_clinical', baseline_filename='Baseline', efficient_format='.parquet'):
+def read_GP(inc_codes, excl_codes=None, folder='ukbb_data/', filename='GP_gp_clinical', baseline_filename='Baseline', efficient_format='.parquet'):
     # Set up the GP file header
     gp_header = ['eid', 'data_provider', 'event_dt', 'read_2', 'read_3', 'value1', 'value2', 'value3', 'dob', 'assess_date', 'event_age', 'prev']
     
-    if not codes:
+    if not inc_codes:
         return pl.DataFrame(schema={col: pl.Utf8 for col in gp_header})
     
     # Read the parquet file using polars
     data = pl.read_parquet(folder + filename + efficient_format)
     
     # Filter data using vectorized operations
-    data2 = data.filter(pl.col('read_3').is_in(codes) | pl.col('read_2').is_in(codes))
+    data2 = data.filter(
+        (pl.col('read_3').is_in(inc_codes) | pl.col('read_2').is_in(inc_codes)) & 
+        (pl.col('read_3').is_not_in(excl_codes) & pl.col('read_2').is_not_in(excl_codes))
+    )
     
     if data2.is_empty():
         return pl.DataFrame(schema={col: pl.Utf8 for col in gp_header})
@@ -275,20 +278,18 @@ def read_GP(codes, folder='ukbb_data/', filename='GP_gp_clinical', baseline_file
 
     # Filter out non-datetime rows from the main DataFrame
     data2 = data2.filter(~non_datetime_mask)
-    
-    # Set the event date column to datetime
+        
+    # Convert date columns to datetime  and float type respectively
     data2 = data2.with_columns([
-        pl.col('event_dt').str.strptime(pl.Datetime, '%Y-%m-%d').alias('event_dt'),
+        pl.col('event_dt').cast(pl.Datetime),
+        pl.col('dob').cast(pl.Datetime),
+        pl.col('assess_date').cast(pl.Datetime),
         pl.col('value1').cast(pl.Float64),
         pl.col('value2').cast(pl.Float64),
         pl.col('value3').cast(pl.Float64),
+        ((pl.col('event_dt') - pl.col('dob')).dt.total_seconds() / (60*60*24*365.25)).alias('event_age'),
+        (pl.col('event_dt') < pl.col('assess_date')).alias('prev'),
         pl.lit('GP').alias('source')
-    ])
-
-    # Calculate additional columns
-    data2 = data2.with_columns([
-    ((pl.col('event_dt') - pl.col('dob')).dt.total_seconds() / (60*60*24*365.25)).alias('event_age'),
-    (pl.col('event_dt') < pl.col('assess_date')).alias('prev')
     ])
 
     return data2, non_datetime_df
@@ -473,7 +474,14 @@ def read_treatment(codes, folder='ukbb_date/', file='selfreport_participant.csv'
 def first_occurence(ICD10='', GP='', OPCS='', cancer=''):
     ICD10_records = read_ICD10(ICD10).assign(date=lambda x: x['epistart']).loc[:, ['eid', 'date']].assign(source='HES')
     OPCS_records = read_OPCS(OPCS).assign(date=lambda x: x['opdate']).loc[:, ['eid', 'date']].assign(source='OPCS')
-    GP_records = read_GP(GP).assign(date=lambda x: x['event_dt']).loc[:, ['eid', 'date']].assign(source='GP')
+    # GP_records = read_GP(GP).assign(date=lambda x: x['event_dt']).loc[:, ['eid', 'date']].assign(source='GP')
+    
+    # Group by 'eid' and select the earliest event_dt
+    GP_records = read_GP(GP).group_by('eid').agg([
+        pl.col('event_dt').min().alias('date'),
+        pl.col('dob').first(),
+    ])
+    
     cancer_records = read_cancer(cancer).assign(date=lambda x: x['reg_date']).loc[:, ['eid', 'date']].assign(source='Cancer_Registry')
     
     all_records = pd.concat([ICD10_records, OPCS_records, GP_records, cancer_records])
