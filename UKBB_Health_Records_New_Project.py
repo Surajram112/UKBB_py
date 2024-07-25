@@ -242,7 +242,7 @@ def read_GP(incl_codes, excl_codes=None, folder='ukbb_data/', filename='GP_gp_cl
     gp_header = ['eid', 'data_provider', 'event_dt', 'read_2', 'read_3', 'value1', 'value2', 'value3', 'dob', 'assess_date', 'event_age', 'prev']
     
     if not incl_codes:
-        return pl.DataFrame(schema={col: pl.Utf8 for col in gp_header})
+        return pl.DataFrame(schema={col: pl.Utf8 for col in gp_header}), pl.DataFrame(schema={col: pl.Utf8 for col in gp_header})
     
     # Read the parquet file using polars
     data = pl.read_parquet(folder + filename + efficient_format)
@@ -254,7 +254,7 @@ def read_GP(incl_codes, excl_codes=None, folder='ukbb_data/', filename='GP_gp_cl
     )
     
     if data2.is_empty():
-        return pl.DataFrame(schema={col: pl.Utf8 for col in gp_header})
+        return pl.DataFrame(schema={col: pl.Utf8 for col in gp_header}), pl.DataFrame(schema={col: pl.Utf8 for col in gp_header})
     
     # Load the baseline table
     baseline_data = pl.read_parquet(baseline_filename + efficient_format)
