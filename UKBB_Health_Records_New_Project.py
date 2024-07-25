@@ -6,6 +6,7 @@ from collections import Counter
 import pickle
 import pandas as pd
 import polars as pl
+from dateutil.parser import parse
 
 # Function to run system commands
 def run_command(command):
@@ -258,13 +259,35 @@ def read_GP(codes, folder='ukbb_data/', filename='GP_gp_clinical', baseline_file
     # Merge with baseline table
     data2 = data2.join(baseline_data.select(['eid', 'dob', 'assess_date']), on='eid')
     
+    # Function to check if a value is a valid datetime
+    def is_not_datetime(value):
+        try:
+            pd.to_datetime(value)
+            return False
+        except (ValueError, TypeError):
+            return True
+
+    # Apply the function to the specified column using map_elements
+    non_datetime_mask = data2["event_dt"].map_elements(is_not_datetime, return_dtype=pl.Boolean)
+
+    # Filter the DataFrame based on the mask
+    non_datetime_df = data2.filter(non_datetime_mask)
+
+    # Filter out non-datetime rows from the main DataFrame
+    data2 = data2.filter(~non_datetime_mask)
+    
+    # Set the event date column to datetime
+    data2 = data2.with_columns([
+    pl.col('event_dt').str.strptime(pl.Datetime, '%Y-%m-%d', strict=False).alias('event_dt')
+    ])
+
     # Calculate additional columns
     data2 = data2.with_columns([
     ((pl.col('event_dt') - pl.col('dob')).dt.total_seconds() / (60*60*24*365.25)).alias('event_age'),
     (pl.col('event_dt') < pl.col('assess_date')).alias('prev')
     ])
 
-    return data2
+    return data2, non_datetime_df
 
 def read_OPCS(codes, folder='ukbb_data/', filename='HES_hesin_oper', baseline_filename='Baseline.csv', extension='.parquet'):
     opcs_header = ['dnx_hesin_oper_id', 'eid', 'ins_index', 'arr_index', 'opdate', 'level', 'oper3', 'oper3_nb', 'oper4', 'oper4_nb', 'posopdur', 'preopdur']
