@@ -292,7 +292,7 @@ def read_GP(codes, folder='ukbb_data/', filename='GP_gp_clinical', baseline_file
         pl.lit('GP').alias('source')
     ])
     
-    return data2.assign(date=lambda x: x['event_dt']), non_datetime_df
+    return data2, non_datetime_df
 
 def read_OPCS(codes, folder='ukbb_data/', filename='HES_hesin_oper', baseline_filename='Baseline.csv', extension='.parquet'):
     opcs_header = ['dnx_hesin_oper_id', 'eid', 'ins_index', 'arr_index', 'opdate', 'level', 'oper3', 'oper3_nb', 'oper4', 'oper4_nb', 'posopdur', 'preopdur']
