@@ -283,12 +283,15 @@ def read_GP(codes, folder='ukbb_data/', filename='GP_gp_clinical', baseline_file
         pl.col('assess_date').cast(pl.Datetime).dt.date(),
         pl.col('value1').cast(pl.Float64),
         pl.col('value2').cast(pl.Float64),
-        pl.col('value3').cast(pl.Float64),
+        pl.col('value3').cast(pl.Float64)
+    ])
+    
+    data2 = data2.with_columns([
         ((pl.col('event_dt') - pl.col('dob')).dt.total_seconds() / (60*60*24*365.25)).alias('event_age'),
         (pl.col('event_dt') < pl.col('assess_date')).alias('prev'),
         pl.lit('GP').alias('source')
     ])
-
+    
     return data2.assign(date=lambda x: x['event_dt']), non_datetime_df
 
 def read_OPCS(codes, folder='ukbb_data/', filename='HES_hesin_oper', baseline_filename='Baseline.csv', extension='.parquet'):
