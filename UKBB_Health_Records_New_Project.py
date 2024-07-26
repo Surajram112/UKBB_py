@@ -278,9 +278,9 @@ def read_GP(codes, folder='ukbb_data/', filename='GP_gp_clinical', baseline_file
         
     # Convert date columns to datetime  and float type respectively
     data2 = data2.with_columns([
-        pl.col('event_dt').str.strptime(pl.Datetime),
-        pl.col('dob').cast(pl.Datetime),
-        pl.col('assess_date').cast(pl.Datetime),
+        pl.col('event_dt').str.strptime(pl.Datetime).dt.date(),
+        pl.col('dob').cast(pl.Datetime).dt.date(),
+        pl.col('assess_date').cast(pl.Datetime).dt.date(),
         pl.col('value1').cast(pl.Float64),
         pl.col('value2').cast(pl.Float64),
         pl.col('value3').cast(pl.Float64),
