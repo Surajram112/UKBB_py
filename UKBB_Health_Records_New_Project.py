@@ -374,9 +374,9 @@ def read_ICD10(codes, folder='ukbb_data/', diagfile='HES_hesin_diag', recordfile
     
     # Convert dates to datetime
     data2 = data2.with_columns([
-        pl.col('epistart').cast(pl.Datetime).dt.date(),
-        pl.col('epiend').str.strptime(pl.Datetime).dt.date()
-    ])
+            pl.col('epistart').str.strptime(pl.Datetime).dt.date(),
+            pl.col('epiend').str.strptime(pl.Datetime).dt.date()
+        ])
     
     # Load the baseline table
     baseline_data = pl.read_parquet(baseline_filename + extension)
