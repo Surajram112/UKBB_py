@@ -276,7 +276,7 @@ def read_GP(codes, folder='ukbb_data/', filename='GP_gp_clinical', baseline_file
     data2 = data2.filter(~non_datetime_mask)
         
     # Convert date columns to datetime  and float type respectively
-    data2 = data2.with_columns([
+    data2 = data2.with_columns([                                                                                                                                                 
         pl.col('event_dt').str.strptime(pl.Datetime).dt.date(),
         pl.col('dob').cast(pl.Datetime).dt.date(),
         pl.col('assess_date').cast(pl.Datetime).dt.date(),
@@ -357,8 +357,11 @@ def read_ICD10(codes, folder='ukbb_data/', diagfile='HES_hesin_diag', recordfile
     # Read the parquet diagnosis file using polars
     diag_data = pl.read_parquet(folder + diagfile + extension)
     
-    # Filter data using vectorized operations
-    data = diag_data.filter(pl.col('diag_icd10').is_in(codes) | pl.col('diag_icd9').is_in(codes))
+    # Filter data using vectorized operations to check if any code is in the strings
+    data = diag_data.filter(
+        pl.col('diag_icd10').str.contains('|'.join(codes)) | 
+        pl.col('diag_icd9').str.contains('|'.join(codes))
+    )
     
     if data.is_empty():
         return pl.DataFrame(schema={col: pl.Utf8 for col in icd10_header}), pl.DataFrame(schema={col: pl.Utf8 for col in icd10_header})
@@ -369,6 +372,11 @@ def read_ICD10(codes, folder='ukbb_data/', diagfile='HES_hesin_diag', recordfile
     
     # Read the parquet records file using polars
     record_data = pl.read_parquet(folder + recordfile + extension)
+    
+    record_data = record_data.with_columns([
+        pl.col('eid').cast(pl.Int64),
+        pl.col('ins_index').cast(pl.Int64)
+    ])
     
     # Join with record data
     data2 = data.join(record_data, on=['eid', 'ins_index'])
