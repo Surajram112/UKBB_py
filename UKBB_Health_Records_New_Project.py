@@ -375,7 +375,9 @@ def read_ICD10(codes, folder='ukbb_data/', diagfile='HES_hesin_diag', recordfile
     # Convert dates to datetime
     data2 = data2.with_columns([
             pl.col('epistart').str.strptime(pl.Datetime).dt.date(),
-            pl.col('epiend').str.strptime(pl.Datetime).dt.date()
+            pl.col('epiend').str.strptime(pl.Datetime).dt.date(),
+            pl.col('dob').dt.date(),
+            pl.col('assess_date').dt.date()
         ])
     
     # Load the baseline table
@@ -389,7 +391,7 @@ def read_ICD10(codes, folder='ukbb_data/', diagfile='HES_hesin_diag', recordfile
         (pl.col('epiend') < pl.col('assess_date')).alias('prev')
     ])
     
-    return data2.drop(columns=['dnx_hesin_diag_id','dnx_hesin_id']), non_datetime_df.drop(columns=['dnx_hesin_diag_id','dnx_hesin_id'])
+    return data2.drop(['dnx_hesin_diag_id', 'dnx_hesin_id']), non_datetime_df.drop(['dnx_hesin_diag_id', 'dnx_hesin_id'])
 
 def read_ICD9(codes, folder='ukbb_data/', diagfile='HES_hesin_diag', recordfile='HES_hesin', extension='.parquet'):
     icd9_header = ['dnx_hesin_diag_id', 'eid', 'ins_index', 'arr_index', 'level', 'diag_icd9', 'diag_icd10', 'dnx_hesin_id', 'epistart', 'epiend']
