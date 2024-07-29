@@ -318,36 +318,6 @@ def read_OPCS(codes, folder='ukbb_data/', filename='HES_hesin_oper', baseline_fi
     data['prev'] = data['opdate'] < data['assess_date']
     return data.drop(columns=['dnx_hesin_oper_id'])
 
-# def read_ICD10(codes, folder='ukbb_data/', diagfile='HES_hesin_diag', recordfile='HES_hesin', baseline_filename='Baseline', extension='.parquet'):
-#     icd10_header = ['dnx_hesin_diag_id', 'eid', 'ins_index', 'arr_index', 'level', 'diag_icd9', 'diag_icd10', 'dnx_hesin_id', 'epistart', 'epiend']
-#     if not codes:
-#         return pd.DataFrame(columns=icd10_header)
-    
-#     run_command(f"sed -i 's/\"//g' {folder + diagfile}")
-#     codes2 = [f",{code}" for code in codes]
-#     codes3 = '\\|'.join(codes2)
-#     grepcode = f'grep \'{codes3}\' {folder + diagfile} > temp.csv'
-#     run_command(grepcode)
-    
-#     if not pd.read_csv('temp.csv').shape[0]:
-#         return pd.DataFrame(columns=icd10_header)
-    
-#     data = pd.read_csv('temp.csv', header=None)
-#     data.columns = ['dnx_hesin_diag_id', 'eid', 'ins_index', 'arr_index', 'classification', 'diag_icd9', 'diag_icd9_add', 'diag_icd10', 'diag_icd10_add']
-#     data = data[['dnx_hesin_diag_id', 'eid', 'ins_index', 'arr_index', 'classification', 'diag_icd9', 'diag_icd10']]
-#     records = pd.read_csv(folder + recordfile)
-#     data2 = data.merge(records, on=['eid', 'ins_index'])
-#     data2['epistart'] = pd.to_datetime(data2['epistart'])
-#     data2['epiend'] = pd.to_datetime(data2['epiend'])
-    
-#     baseline_table = pd.read_csv(baseline_filename)
-#     baseline_table['dob'] = pd.to_datetime(baseline_table['dob'])
-#     baseline_table['assess_date'] = pd.to_datetime(baseline_table['assess_date'])
-#     data2 = data2.merge(baseline_table[['eid', 'dob', 'assess_date']], on='eid')
-#     data2['diag_age'] = (data2['epistart'] - data2['dob']).dt.days / 365.25
-#     data2['prev'] = data2['epiend'] < data2['assess_date']
-#     return data2.drop(columns=['dnx_hesin_diag_id','dnx_hesin_id'])
-
 def read_ICD10(codes, folder='ukbb_data/', diagfile='HES_hesin_diag', recordfile='HES_hesin', baseline_filename='Baseline', extension='.parquet'):
     icd10_header = ['dnx_hesin_diag_id', 'eid', 'ins_index', 'arr_index', 'level', 'diag_icd9', 'diag_icd10', 'dnx_hesin_id', 'epistart', 'epiend']
     
@@ -381,10 +351,31 @@ def read_ICD10(codes, folder='ukbb_data/', diagfile='HES_hesin_diag', recordfile
     # Join with record data
     data2 = data.join(record_data, on=['eid', 'ins_index'])
     
+    # Function to check if a value is a valid datetime
+    def is_not_datetime(value):
+        try:
+            pd.to_datetime(value)
+            return False
+        except (ValueError, TypeError):
+            return True
+
+    # Apply the function to both 'epistart' and 'epiend' columns using map_elements
+    non_datetime_mask_start = data2["epistart"].map_elements(is_not_datetime, return_dtype=pl.Boolean)
+    non_datetime_mask_end = data2["epiend"].map_elements(is_not_datetime, return_dtype=pl.Boolean)
+
+    # Combine the masks using the OR operator
+    combined_non_datetime_mask = non_datetime_mask_start | non_datetime_mask_end
+
+    # Filter the DataFrame based on the combined mask
+    non_datetime_df = data2.filter(combined_non_datetime_mask)
+
+    # Filter out non-datetime rows from the main DataFrame
+    data2 = data2.filter(~combined_non_datetime_mask)
+    
     # Convert dates to datetime
     data2 = data2.with_columns([
         pl.col('epistart').cast(pl.Datetime).dt.date(),
-        pl.col('epiend').cast(pl.Datetime).dt.date()
+        pl.col('epiend').str.strptime(pl.Datetime).dt.date()
     ])
     
     # Load the baseline table
@@ -398,7 +389,7 @@ def read_ICD10(codes, folder='ukbb_data/', diagfile='HES_hesin_diag', recordfile
         (pl.col('epiend') < pl.col('assess_date')).alias('prev')
     ])
     
-    return data2.drop(columns=['dnx_hesin_diag_id','dnx_hesin_id'])
+    return data2.drop(columns=['dnx_hesin_diag_id','dnx_hesin_id']), non_datetime_df.drop(columns=['dnx_hesin_diag_id','dnx_hesin_id'])
 
 def read_ICD9(codes, folder='ukbb_data/', diagfile='HES_hesin_diag', recordfile='HES_hesin', extension='.parquet'):
     icd9_header = ['dnx_hesin_diag_id', 'eid', 'ins_index', 'arr_index', 'level', 'diag_icd9', 'diag_icd10', 'dnx_hesin_id', 'epistart', 'epiend']
