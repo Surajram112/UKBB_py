@@ -6,7 +6,6 @@ from collections import Counter
 import pickle
 import pandas as pd
 import polars as pl
-from dateutil.parser import parse
 
 # Function to run system commands
 def run_command(command):
@@ -319,34 +318,78 @@ def read_OPCS(codes, folder='ukbb_data/', filename='HES_hesin_oper', baseline_fi
     data['prev'] = data['opdate'] < data['assess_date']
     return data.drop(columns=['dnx_hesin_oper_id'])
 
-def read_ICD10(codes, folder='ukbb_data/', diagfile='HES_hesin_diag', recordfile='HES_hesin', baseline_filename='Baseline.csv', extension='.parquet'):
+# def read_ICD10(codes, folder='ukbb_data/', diagfile='HES_hesin_diag', recordfile='HES_hesin', baseline_filename='Baseline', extension='.parquet'):
+#     icd10_header = ['dnx_hesin_diag_id', 'eid', 'ins_index', 'arr_index', 'level', 'diag_icd9', 'diag_icd10', 'dnx_hesin_id', 'epistart', 'epiend']
+#     if not codes:
+#         return pd.DataFrame(columns=icd10_header)
+    
+#     run_command(f"sed -i 's/\"//g' {folder + diagfile}")
+#     codes2 = [f",{code}" for code in codes]
+#     codes3 = '\\|'.join(codes2)
+#     grepcode = f'grep \'{codes3}\' {folder + diagfile} > temp.csv'
+#     run_command(grepcode)
+    
+#     if not pd.read_csv('temp.csv').shape[0]:
+#         return pd.DataFrame(columns=icd10_header)
+    
+#     data = pd.read_csv('temp.csv', header=None)
+#     data.columns = ['dnx_hesin_diag_id', 'eid', 'ins_index', 'arr_index', 'classification', 'diag_icd9', 'diag_icd9_add', 'diag_icd10', 'diag_icd10_add']
+#     data = data[['dnx_hesin_diag_id', 'eid', 'ins_index', 'arr_index', 'classification', 'diag_icd9', 'diag_icd10']]
+#     records = pd.read_csv(folder + recordfile)
+#     data2 = data.merge(records, on=['eid', 'ins_index'])
+#     data2['epistart'] = pd.to_datetime(data2['epistart'])
+#     data2['epiend'] = pd.to_datetime(data2['epiend'])
+    
+#     baseline_table = pd.read_csv(baseline_filename)
+#     baseline_table['dob'] = pd.to_datetime(baseline_table['dob'])
+#     baseline_table['assess_date'] = pd.to_datetime(baseline_table['assess_date'])
+#     data2 = data2.merge(baseline_table[['eid', 'dob', 'assess_date']], on='eid')
+#     data2['diag_age'] = (data2['epistart'] - data2['dob']).dt.days / 365.25
+#     data2['prev'] = data2['epiend'] < data2['assess_date']
+#     return data2.drop(columns=['dnx_hesin_diag_id','dnx_hesin_id'])
+
+def read_ICD10(codes, folder='ukbb_data/', diagfile='HES_hesin_diag', recordfile='HES_hesin', baseline_filename='Baseline', extension='.parquet'):
     icd10_header = ['dnx_hesin_diag_id', 'eid', 'ins_index', 'arr_index', 'level', 'diag_icd9', 'diag_icd10', 'dnx_hesin_id', 'epistart', 'epiend']
+    
     if not codes:
-        return pd.DataFrame(columns=icd10_header)
+        return pl.DataFrame(schema={col: pl.Utf8 for col in icd10_header}), pl.DataFrame(schema={col: pl.Utf8 for col in icd10_header})
     
-    run_command(f"sed -i 's/\"//g' {folder + diagfile}")
-    codes2 = [f",{code}" for code in codes]
-    codes3 = '\\|'.join(codes2)
-    grepcode = f'grep \'{codes3}\' {folder + diagfile} > temp.csv'
-    run_command(grepcode)
+    # Read the parquet diagnosis file using polars
+    diag_data = pl.read_parquet(folder + diagfile + extension)
     
-    if not pd.read_csv('temp.csv').shape[0]:
-        return pd.DataFrame(columns=icd10_header)
+    # Filter data using vectorized operations
+    data = diag_data.filter(pl.col('diag_icd10').is_in(codes) | pl.col('diag_icd9').is_in(codes))
     
-    data = pd.read_csv('temp.csv', header=None)
+    if data.is_empty():
+        return pl.DataFrame(schema={col: pl.Utf8 for col in icd10_header}), pl.DataFrame(schema={col: pl.Utf8 for col in icd10_header})
+    
     data.columns = ['dnx_hesin_diag_id', 'eid', 'ins_index', 'arr_index', 'classification', 'diag_icd9', 'diag_icd9_add', 'diag_icd10', 'diag_icd10_add']
-    data = data[['dnx_hesin_diag_id', 'eid', 'ins_index', 'arr_index', 'classification', 'diag_icd9', 'diag_icd10']]
-    records = pd.read_csv(folder + recordfile)
-    data2 = data.merge(records, on=['eid', 'ins_index'])
-    data2['epistart'] = pd.to_datetime(data2['epistart'])
-    data2['epiend'] = pd.to_datetime(data2['epiend'])
     
-    baseline_table = pd.read_csv(baseline_filename)
-    baseline_table['dob'] = pd.to_datetime(baseline_table['dob'])
-    baseline_table['assess_date'] = pd.to_datetime(baseline_table['assess_date'])
-    data2 = data2.merge(baseline_table[['eid', 'dob', 'assess_date']], on='eid')
-    data2['diag_age'] = (data2['epistart'] - data2['dob']).dt.days / 365.25
-    data2['prev'] = data2['epiend'] < data2['assess_date']
+    data = data.select(['dnx_hesin_diag_id', 'eid', 'ins_index', 'arr_index', 'classification', 'diag_icd9', 'diag_icd10'])
+    
+    # Read the parquet records file using polars
+    record_data = pl.read_parquet(folder + recordfile + extension)
+    
+    # Join with record data
+    data2 = data.join(record_data, on=['eid', 'ins_index'])
+    
+    # Convert dates to datetime
+    data2 = data2.with_columns([
+        pl.col('epistart').cast(pl.Datetime).dt.date(),
+        pl.col('epiend').cast(pl.Datetime).dt.date()
+    ])
+    
+    # Load the baseline table
+    baseline_data = pl.read_parquet(baseline_filename + extension)
+    
+    # Merge with baseline table
+    data2 = data2.join(baseline_data.select(['eid', 'dob', 'assess_date']), on='eid')
+    
+    data2 = data2.with_columns([
+        ((pl.col('epistart') - pl.col('dob')).dt.total_days() / 365.25).alias('diag_age'),
+        (pl.col('epiend') < pl.col('assess_date')).alias('prev')
+    ])
+    
     return data2.drop(columns=['dnx_hesin_diag_id','dnx_hesin_id'])
 
 def read_ICD9(codes, folder='ukbb_data/', diagfile='HES_hesin_diag', recordfile='HES_hesin', extension='.parquet'):
