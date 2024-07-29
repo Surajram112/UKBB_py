@@ -375,9 +375,7 @@ def read_ICD10(codes, folder='ukbb_data/', diagfile='HES_hesin_diag', recordfile
     # Convert dates to datetime
     data2 = data2.with_columns([
             pl.col('epistart').str.strptime(pl.Datetime).dt.date(),
-            pl.col('epiend').str.strptime(pl.Datetime).dt.date(),
-            pl.col('dob').dt.date(),
-            pl.col('assess_date').dt.date()
+            pl.col('epiend').str.strptime(pl.Datetime).dt.date()
         ])
     
     # Load the baseline table
@@ -388,7 +386,9 @@ def read_ICD10(codes, folder='ukbb_data/', diagfile='HES_hesin_diag', recordfile
     
     data2 = data2.with_columns([
         ((pl.col('epistart') - pl.col('dob')).dt.total_days() / 365.25).alias('diag_age'),
-        (pl.col('epiend') < pl.col('assess_date')).alias('prev')
+        (pl.col('epiend') < pl.col('assess_date')).alias('prev'),
+        pl.col('dob').dt.date(),
+        pl.col('assess_date').dt.date()
     ])
     
     return data2.drop(['dnx_hesin_diag_id', 'dnx_hesin_id']), non_datetime_df.drop(['dnx_hesin_diag_id', 'dnx_hesin_id'])
