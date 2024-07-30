@@ -293,30 +293,69 @@ def read_GP(codes, folder='ukbb_data/', filename='GP_gp_clinical', baseline_file
     
     return data2, non_datetime_df
 
-def read_OPCS(codes, folder='ukbb_data/', filename='HES_hesin_oper', baseline_filename='Baseline.csv', extension='.parquet'):
+def read_OPCS(codes, folder='ukbb_data/', filename='HES_hesin_oper', baseline_filename='Baseline', extension='.parquet'):
     opcs_header = ['dnx_hesin_oper_id', 'eid', 'ins_index', 'arr_index', 'opdate', 'level', 'oper3', 'oper3_nb', 'oper4', 'oper4_nb', 'posopdur', 'preopdur']
+    
     if not codes:
-        return pd.DataFrame(columns=opcs_header)
+        return pl.DataFrame(schema={col: pl.Utf8 for col in opcs_header}), pl.DataFrame(schema={col: pl.Utf8 for col in opcs_header})
     
-    codes2 = [f",{code}" for code in codes]
-    codes3 = '\\|'.join(codes2)
-    grepcode = f"grep '{codes3}' {folder + filename} > temp.csv"
-    run_command(grepcode)
+    # Read the parquet file using polars
+    data = pl.read_parquet(folder + filename + extension)
     
-    if not pd.read_csv('temp.csv').shape[0]:
-        return pd.DataFrame(columns=opcs_header)
+    # Filter data using vectorized operations
+    data2 = data.filter(
+        pl.col('oper3').str.contains('|'.join(codes)) | 
+        pl.col('oper4').str.contains('|'.join(codes))
+    )
     
-    data = pd.read_csv('temp.csv', header=None)
-    data.columns = opcs_header
-    data['opdate'] = pd.to_datetime(data['opdate'])
+    if data2.is_empty():
+        return pl.DataFrame(schema={col: pl.Utf8 for col in opcs_header}), pl.DataFrame(schema={col: pl.Utf8 for col in opcs_header})
     
-    baseline_table = pd.read_csv(baseline_filename)
-    baseline_table['dob'] = pd.to_datetime(baseline_table['dob'])
-    baseline_table['assess_date'] = pd.to_datetime(baseline_table['assess_date'])
-    data = data.merge(baseline_table[['eid', 'dob', 'assess_date']], on='eid')
-    data['op_age'] = (data['opdate'] - data['dob']).dt.days / 365.25
-    data['prev'] = data['opdate'] < data['assess_date']
-    return data.drop(columns=['dnx_hesin_oper_id'])
+    data2 = data2.with_columns([
+        pl.col('eid').cast(pl.Int64),
+        pl.col('ins_index').cast(pl.Int64),
+        pl.col('arr_index').cast(pl.Int64),
+        pl.col('posopdur').cast(pl.Int64),
+        pl.col('preopdur').cast(pl.Int64)
+    ])
+    
+    # Load the baseline table
+    baseline_data = pl.read_parquet(baseline_filename + extension)
+    
+    # Merge with baseline table
+    data2 = data2.join(baseline_data.select(['eid', 'dob', 'assess_date']), on='eid')
+    
+    # Function to check if a value is a valid datetime
+    def is_not_datetime(value):
+        try:
+            pd.to_datetime(value)
+            return False
+        except (ValueError, TypeError):
+            return True
+
+    # Apply the function to the specified column using map_elements
+    non_datetime_mask = data2["opdate"].map_elements(is_not_datetime, return_dtype=pl.Boolean)
+
+    # Filter the DataFrame based on the mask
+    non_datetime_df = data2.filter(non_datetime_mask)
+
+    # Filter out non-datetime rows from the main DataFrame
+    data2 = data2.filter(~non_datetime_mask)
+    
+    # Convert date columns to datetime
+    data2 = data2.with_columns([                                                                                                                                                 
+        pl.col('opdate').str.strptime(pl.Datetime).dt.date(),
+        pl.col('dob').cast(pl.Datetime).dt.date(),
+        pl.col('assess_date').cast(pl.Datetime).dt.date()
+    ])
+    
+    data2 = data2.with_columns([
+        ((pl.col('opdate') - pl.col('dob')).dt.total_days() / 365.25).alias('op_age'),
+        (pl.col('opdate') < pl.col('assess_date')).alias('prev'),
+        pl.lit('OPCS').alias('source')
+    ])
+    
+    return data2.drop('dnx_hesin_oper_id'), non_datetime_df.drop('dnx_hesin_oper_id')
 
 def read_ICD10(codes, folder='ukbb_data/', diagfile='HES_hesin_diag', recordfile='HES_hesin', baseline_filename='Baseline', extension='.parquet'):
     icd10_header = ['dnx_hesin_diag_id', 'eid', 'ins_index', 'arr_index', 'level', 'diag_icd9', 'diag_icd10', 'dnx_hesin_id', 'epistart', 'epiend']
