@@ -720,7 +720,7 @@ def read_selfreport_treatment(codes, folder='ukbb_data/', file='selfreport_parti
     for code in codes:
         meaning = coding4.filter(pl.col('coding') == int(code))['meaning']
         if not meaning.is_empty():
-            # Search in all p20002_i* columns
+            # Search in all p20003_i* columns, reported as 'Treatment/medication code'
             treatment_columns = [col for col in data.columns if col.startswith('p20003_i')]
             for col in treatment_columns:
                 outline = data.filter(pl.col(col).str.contains(meaning[0]))['eid']
@@ -789,8 +789,8 @@ def read_selfreport_operation(codes, folder='ukbb_data/', file='selfreport_parti
     for code in codes:
         meaning = coding4.filter(pl.col('coding') == int(code))['meaning']
         if not meaning.is_empty():
-            # Search in all p20002_i* columns
-            treatment_columns = [col for col in data.columns if col.startswith('p20003_i')]
+            # Search in all p20004_i* columns, recorded as 'Operation code'
+            treatment_columns = [col for col in data.columns if col.startswith('p20004_i')]
             for col in treatment_columns:
                 outline = data.filter(pl.col(col).str.contains(meaning[0]))['eid']
                 outlines.extend(outline.to_list())
@@ -845,7 +845,6 @@ def read_selfreport_operation(codes, folder='ukbb_data/', file='selfreport_parti
     ])
     
     return data2, non_datetime_df
-
 
 def first_occurence(ICD10='', GP='', OPCS='', cancer=''):
     ICD10_records = read_ICD10(ICD10).assign(date=lambda x: x['epistart']).loc[:, ['eid', 'date']].assign(source='HES')
