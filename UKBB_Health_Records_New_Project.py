@@ -429,7 +429,7 @@ def read_ICD10(codes, folder='ukbb_data/', diagfile='HES_hesin_diag', recordfile
         pl.col('assess_date').dt.date(),
         pl.col('epidur').cast(pl.Int64),
         pl.col('bedyear').cast(pl.Int64),
-        pl.col('epiorder').cast(pl.Int64)
+        pl.lit('ICD10').alias('source')
     ])
     
     return data2.drop(['dnx_hesin_diag_id', 'dnx_hesin_id']), non_datetime_df.drop(['dnx_hesin_diag_id', 'dnx_hesin_id'])
@@ -506,7 +506,8 @@ def read_ICD9(codes, folder='ukbb_data/', diagfile='HES_hesin_diag', recordfile=
         pl.col('assess_date').dt.date(),
         pl.col('epidur').cast(pl.Int64),
         pl.col('bedyear').cast(pl.Int64),
-        pl.col('epiorder').cast(pl.Int64)
+        pl.col('epiorder').cast(pl.Int64),
+        pl.lit('ICD9').alias('source')
     ])
     
     return data2.drop(['dnx_hesin_diag_id', 'dnx_hesin_id']), non_datetime_df.drop(['dnx_hesin_diag_id', 'dnx_hesin_id'])
