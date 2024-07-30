@@ -572,13 +572,25 @@ def read_selfreport(codes, folder='ukbb_data/', file='selfreport_participant', b
     # Read the coding6 file
     coding6 = pl.read_csv(folder + 'coding6.tsv', separator='\t')
     coding6 = coding6.filter(pl.col('coding') > 1)
-    
+
     # Filter data using vectorized operations
     outlines = []
     for code in codes:
         meaning = coding6.filter(pl.col('coding') == int(code))['meaning']
         if not meaning.is_empty():
-            outlines.append(data.filter(pl.col('p20002_i0').str.contains(meaning[0])))
+            # Search in all p20002_i* columns
+            non_cancer_illness_columns = [col for col in data.columns if col.startswith('p20002_i')]
+            
+            # Create a condition for each p20002 column
+            conditions = [pl.col(col).str.contains(meaning[0]) for col in non_cancer_illness_columns]
+            
+            # Combine all conditions with OR
+            combined_condition = conditions[0]
+            for condition in conditions[1:]:
+                combined_condition = combined_condition | condition
+            
+            # Filter the data based on the combined condition
+            outlines.append(data.filter(combined_condition))
     
     if not outlines:
         return pl.DataFrame(), pl.DataFrame()
@@ -647,7 +659,19 @@ def read_selfreport_cancer(codes, folder='ukbb_data/', file='selfreport_particip
     for code in codes:
         meaning = coding3.filter(pl.col('coding') == int(code))['meaning']
         if not meaning.is_empty():
-            outlines.append(data.filter(pl.col('p20001_i0').str.contains(meaning[0])))
+            # Search in all p20001_i* columns, related to '	Cancer code, self-reported'
+            cancer_illness_columns = [col for col in data.columns if col.startswith('p20001_i')]
+            
+            # Create a condition for each p20001 column
+            conditions = [pl.col(col).str.contains(meaning[0]) for col in cancer_illness_columns]
+            
+            # Combine all conditions with OR
+            combined_condition = conditions[0]
+            for condition in conditions[1:]:
+                combined_condition = combined_condition | condition
+            
+            # Filter the data based on the combined condition
+            outlines.append(data.filter(combined_condition))
     
     if not outlines:
         return pl.DataFrame(), pl.DataFrame()
