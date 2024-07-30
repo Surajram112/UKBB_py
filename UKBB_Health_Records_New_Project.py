@@ -329,8 +329,7 @@ def read_ICD10(codes, folder='ukbb_data/', diagfile='HES_hesin_diag', recordfile
     
     # Filter data using vectorized operations to check if any code is in the strings
     data = diag_data.filter(
-        pl.col('diag_icd10').str.contains('|'.join(codes)) | 
-        pl.col('diag_icd9').str.contains('|'.join(codes))
+        pl.col('diag_icd10').str.contains('|'.join(codes))
     )
     
     if data.is_empty():
@@ -396,30 +395,82 @@ def read_ICD10(codes, folder='ukbb_data/', diagfile='HES_hesin_diag', recordfile
     
     return data2.drop(['dnx_hesin_diag_id', 'dnx_hesin_id']), non_datetime_df.drop(['dnx_hesin_diag_id', 'dnx_hesin_id'])
 
-def read_ICD9(codes, folder='ukbb_data/', diagfile='HES_hesin_diag', recordfile='HES_hesin', extension='.parquet'):
-    icd9_header = ['dnx_hesin_diag_id', 'eid', 'ins_index', 'arr_index', 'level', 'diag_icd9', 'diag_icd10', 'dnx_hesin_id', 'epistart', 'epiend']
-    codes = [str(code) for code in codes]
-    codes2 = [f",{code}" for code in codes]
-    codes3 = '\\|'.join(codes2)
-    grepcode = f'grep \'{codes3}\' {folder + diagfile} > temp.csv'
-    run_command(grepcode)
+def read_ICD9(codes, folder='ukbb_data/', diagfile='HES_hesin_diag', recordfile='HES_hesin', baseline_filename='Baseline', extension='.parquet'):
+    icd10_header = ['dnx_hesin_diag_id', 'eid', 'ins_index', 'arr_index', 'level', 'diag_icd9', 'diag_icd10', 'dnx_hesin_id', 'epistart', 'epiend']
     
-    if os.path.getsize('temp.csv') == 0:
-        return pd.DataFrame(columns=icd9_header)
+    if not codes:
+        return pl.DataFrame(schema={col: pl.Utf8 for col in icd10_header}), pl.DataFrame(schema={col: pl.Utf8 for col in icd10_header})
     
-    data = pd.read_csv('temp.csv', header=None)
+    # Read the parquet diagnosis file using polars
+    diag_data = pl.read_parquet(folder + diagfile + extension)
+    
+    # Filter data using vectorized operations to check if any code is in the strings
+    data = diag_data.filter(
+        pl.col('diag_icd9').str.contains('|'.join(codes))
+    )
+    
+    if data.is_empty():
+        return pl.DataFrame(schema={col: pl.Utf8 for col in icd10_header}), pl.DataFrame(schema={col: pl.Utf8 for col in icd10_header})
+    
     data.columns = ['dnx_hesin_diag_id', 'eid', 'ins_index', 'arr_index', 'classification', 'diag_icd9', 'diag_icd9_add', 'diag_icd10', 'diag_icd10_add']
-    data = data[['dnx_hesin_diag_id', 'eid', 'ins_index', 'arr_index', 'classification', 'diag_icd9', 'diag_icd10']]
     
-    icd9_code_data = [code.split(" ")[0] if isinstance(code, str) else "" for code in data['diag_icd9']]
-    vec = [any(re.match(f"^{code}", icd9_code_data[i]) for code in codes) for i in range(len(icd9_code_data))]
-    data = data[vec]
+    data = data.select(['dnx_hesin_diag_id', 'eid', 'ins_index', 'arr_index', 'classification', 'diag_icd9', 'diag_icd10'])
     
-    records = pd.read_csv(folder + recordfile)
-    data2 = data.merge(records, on=['eid', 'ins_index'])
-    data2['epistart'] = pd.to_datetime(data2['epistart'])
-    data2['epiend'] = pd.to_datetime(data2['epiend'])
-    return data2.drop(columns=['dnx_hesin_diag_id', 'dnx_hesin_id'])
+    # Read the parquet records file using polars
+    record_data = pl.read_parquet(folder + recordfile + extension)
+    
+    record_data = record_data.with_columns([
+        pl.col('eid').cast(pl.Int64),
+        pl.col('ins_index').cast(pl.Int64)
+    ])
+    
+    # Join with record data
+    data2 = data.join(record_data, on=['eid', 'ins_index'])
+    
+    # Function to check if a value is a valid datetime
+    def is_not_datetime(value):
+        try:
+            pd.to_datetime(value)
+            return False
+        except (ValueError, TypeError):
+            return True
+
+    # Apply the function to both 'epistart' and 'epiend' columns using map_elements
+    non_datetime_mask_start = data2["epistart"].map_elements(is_not_datetime, return_dtype=pl.Boolean)
+    non_datetime_mask_end = data2["epiend"].map_elements(is_not_datetime, return_dtype=pl.Boolean)
+
+    # Combine the masks using the OR operator
+    combined_non_datetime_mask = non_datetime_mask_start | non_datetime_mask_end
+
+    # Filter the DataFrame based on the combined mask
+    non_datetime_df = data2.filter(combined_non_datetime_mask)
+
+    # Filter out non-datetime rows from the main DataFrame
+    data2 = data2.filter(~combined_non_datetime_mask)
+    
+    # Convert dates to datetime
+    data2 = data2.with_columns([
+            pl.col('epistart').str.strptime(pl.Datetime).dt.date(),
+            pl.col('epiend').str.strptime(pl.Datetime).dt.date()
+        ])
+    
+    # Load the baseline table
+    baseline_data = pl.read_parquet(baseline_filename + extension)
+    
+    # Merge with baseline table
+    data2 = data2.join(baseline_data.select(['eid', 'dob', 'assess_date']), on='eid')
+    
+    data2 = data2.with_columns([
+        ((pl.col('epistart') - pl.col('dob')).dt.total_days() / 365.25).alias('diag_age'),
+        (pl.col('epiend') < pl.col('assess_date')).alias('prev'),
+        pl.col('dob').dt.date(),
+        pl.col('assess_date').dt.date(),
+        pl.col('epidur').cast(pl.Int64),
+        pl.col('bedyear').cast(pl.Int64),
+        pl.col('epiorder').cast(pl.Int64)
+    ])
+    
+    return data2.drop(['dnx_hesin_diag_id', 'dnx_hesin_id']), non_datetime_df.drop(['dnx_hesin_diag_id', 'dnx_hesin_id'])
 
 def read_cancer(codes, folder='ukbb_data/', filename='cancer_participant', baseline_filename='Baseline.csv', extension='.parquet'):
     cancer_header = ["eid", "reg_date", "site", "age", "histology", "behaviour", "dob", "assess_date", "diag_age", "prev", "code", "description"]
