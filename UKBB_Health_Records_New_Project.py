@@ -388,7 +388,10 @@ def read_ICD10(codes, folder='ukbb_data/', diagfile='HES_hesin_diag', recordfile
         ((pl.col('epistart') - pl.col('dob')).dt.total_days() / 365.25).alias('diag_age'),
         (pl.col('epiend') < pl.col('assess_date')).alias('prev'),
         pl.col('dob').dt.date(),
-        pl.col('assess_date').dt.date()
+        pl.col('assess_date').dt.date(),
+        pl.col('epidur').cast(pl.Int64),
+        pl.col('bedyear').cast(pl.Int64),
+        pl.col('epiorder').cast(pl.Int64)
     ])
     
     return data2.drop(['dnx_hesin_diag_id', 'dnx_hesin_id']), non_datetime_df.drop(['dnx_hesin_diag_id', 'dnx_hesin_id'])
