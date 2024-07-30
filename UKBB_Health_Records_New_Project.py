@@ -562,7 +562,7 @@ def read_ICD9(codes, folder='ukbb_data/', diagfile='HES_hesin_diag', recordfile=
     
 #     return data
 
-def read_selfreport(codes, folder='ukbb_data/', file='selfreport_participant', baseline_filename='Baseline', coding_file='coding6.tsv', extension='.parquet'):
+def read_selfreport_illness(codes, folder='ukbb_data/', file='selfreport_participant', baseline_filename='Baseline', coding_file='coding6.tsv', extension='.parquet'):
     if not codes:
         return pl.DataFrame(), pl.DataFrame()
     
@@ -776,6 +776,76 @@ def read_selfreport_treatment(codes, folder='ukbb_data/', file='selfreport_parti
     ])
     
     return data2, non_datetime_df
+
+def read_selfreport_operation(codes, folder='ukbb_data/', file='selfreport_participant', baseline_filename='Baseline', coding_file='coding4.tsv', extension='.parquet'):
+    # Read the parquet files using polars
+    data = pl.read_parquet(folder + file + extension)
+    coding4 = pl.read_csv(folder + coding_file, separator='\t')
+    
+    # Filter coding4 data
+    coding4 = coding4.filter(pl.col('coding') > 1)
+    
+    outlines = []
+    for code in codes:
+        meaning = coding4.filter(pl.col('coding') == int(code))['meaning']
+        if not meaning.is_empty():
+            # Search in all p20002_i* columns
+            treatment_columns = [col for col in data.columns if col.startswith('p20003_i')]
+            for col in treatment_columns:
+                outline = data.filter(pl.col(col).str.contains(meaning[0]))['eid']
+                outlines.extend(outline.to_list())
+                
+    if not outlines:
+        return pl.DataFrame(), pl.DataFrame()
+    
+    data = data.filter(pl.col('eid').is_in(outlines))
+    
+    if data.is_empty():
+        return pl.DataFrame(), pl.DataFrame()
+    
+    data = data.with_columns([
+        pl.col('eid').cast(pl.Int64)
+    ])
+    
+    # Load the baseline table
+    baseline_data = pl.read_parquet(baseline_filename + extension)
+    
+    # Merge with baseline table
+    data2 = data.join(baseline_data.select(['eid', 'dob', 'assess_date']), on='eid')
+    
+    # Function to check if a value is a valid datetime
+    def is_not_datetime(value):
+        try:
+            pd.to_datetime(value)
+            return False
+        except (ValueError, TypeError):
+            return True
+
+    # Apply the function to both 'dob' and 'assess_date' columns using map_elements
+    non_datetime_mask_dob = data2["dob"].map_elements(is_not_datetime, return_dtype=pl.Boolean)
+    non_datetime_mask_assess = data2["assess_date"].map_elements(is_not_datetime, return_dtype=pl.Boolean)
+
+    # Combine the masks using the OR operator
+    combined_non_datetime_mask = non_datetime_mask_dob | non_datetime_mask_assess
+
+    # Filter the DataFrame based on the combined mask
+    non_datetime_df = data2.filter(combined_non_datetime_mask)
+
+    # Filter out non-datetime rows from the main DataFrame
+    data2 = data2.filter(~combined_non_datetime_mask)
+    
+    # Convert date columns to datetime
+    data2 = data2.with_columns([
+        pl.col('dob').cast(pl.Datetime).dt.date(),
+        pl.col('assess_date').cast(pl.Datetime).dt.date()
+    ])
+    
+    data2 = data2.with_columns([
+        pl.lit('Self').alias('source')
+    ])
+    
+    return data2, non_datetime_df
+
 
 def first_occurence(ICD10='', GP='', OPCS='', cancer=''):
     ICD10_records = read_ICD10(ICD10).assign(date=lambda x: x['epistart']).loc[:, ['eid', 'date']].assign(source='HES')
