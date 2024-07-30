@@ -351,26 +351,26 @@ def read_ICD10(codes, folder='ukbb_data/', diagfile='HES_hesin_diag', recordfile
     # Join with record data
     data2 = data.join(record_data, on=['eid', 'ins_index'])
     
-#     # Function to check if a value is a valid datetime
-#     def is_not_datetime(value):
-#         try:
-#             pd.to_datetime(value)
-#             return False
-#         except (ValueError, TypeError):
-#             return True
+    # Function to check if a value is a valid datetime
+    def is_not_datetime(value):
+        try:
+            pd.to_datetime(value)
+            return False
+        except (ValueError, TypeError):
+            return True
 
-#     # Apply the function to both 'epistart' and 'epiend' columns using map_elements
-#     non_datetime_mask_start = data2["epistart"].map_elements(is_not_datetime, return_dtype=pl.Boolean)
-#     non_datetime_mask_end = data2["epiend"].map_elements(is_not_datetime, return_dtype=pl.Boolean)
+    # Apply the function to both 'epistart' and 'epiend' columns using map_elements
+    non_datetime_mask_start = data2["epistart"].map_elements(is_not_datetime, return_dtype=pl.Boolean)
+    non_datetime_mask_end = data2["epiend"].map_elements(is_not_datetime, return_dtype=pl.Boolean)
 
-#     # Combine the masks using the OR operator
-#     combined_non_datetime_mask = non_datetime_mask_start | non_datetime_mask_end
+    # Combine the masks using the OR operator
+    combined_non_datetime_mask = non_datetime_mask_start | non_datetime_mask_end
 
-#     # Filter the DataFrame based on the combined mask
-#     non_datetime_df = data2.filter(combined_non_datetime_mask)
+    # Filter the DataFrame based on the combined mask
+    non_datetime_df = data2.filter(combined_non_datetime_mask)
 
-#     # Filter out non-datetime rows from the main DataFrame
-#     data2 = data2.filter(~combined_non_datetime_mask)
+    # Filter out non-datetime rows from the main DataFrame
+    data2 = data2.filter(~combined_non_datetime_mask)
     
     # Convert dates to datetime
     data2 = data2.with_columns([
@@ -391,7 +391,7 @@ def read_ICD10(codes, folder='ukbb_data/', diagfile='HES_hesin_diag', recordfile
         pl.col('assess_date').dt.date()
     ])
     
-    return data2.drop(['dnx_hesin_diag_id', 'dnx_hesin_id'])#, non_datetime_df.drop(['dnx_hesin_diag_id', 'dnx_hesin_id'])
+    return data2.drop(['dnx_hesin_diag_id', 'dnx_hesin_id']), non_datetime_df.drop(['dnx_hesin_diag_id', 'dnx_hesin_id'])
 
 def read_ICD9(codes, folder='ukbb_data/', diagfile='HES_hesin_diag', recordfile='HES_hesin', extension='.parquet'):
     icd9_header = ['dnx_hesin_diag_id', 'eid', 'ins_index', 'arr_index', 'level', 'diag_icd9', 'diag_icd10', 'dnx_hesin_id', 'epistart', 'epiend']
