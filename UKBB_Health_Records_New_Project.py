@@ -512,55 +512,55 @@ def read_ICD9(codes, folder='ukbb_data/', diagfile='HES_hesin_diag', recordfile=
     
     return data2.drop(['dnx_hesin_diag_id', 'dnx_hesin_id']), non_datetime_df.drop(['dnx_hesin_diag_id', 'dnx_hesin_id'])
 
-def read_cancer(codes, folder='ukbb_data/', filename='cancer_participant', baseline_filename='Baseline.csv', extension='.parquet'):
-    cancer_header = ["eid", "reg_date", "site", "age", "histology", "behaviour", "dob", "assess_date", "diag_age", "prev", "code", "description"]
-    if not codes:
-        return pd.DataFrame(columns=cancer_header)
+# def read_cancer(codes, folder='ukbb_data/', filename='cancer_participant', baseline_filename='Baseline.csv', extension='.parquet'):
+#     cancer_header = ["eid", "reg_date", "site", "age", "histology", "behaviour", "dob", "assess_date", "diag_age", "prev", "code", "description"]
+#     if not codes:
+#         return pd.DataFrame(columns=cancer_header)
     
-    run_command(f"sed -i 's/\"//g' {folder + filename}")
-    codes2 = [f",{code}" for code in codes]
-    codes3 = '\\|'.join(codes2)
-    grepcode = f'grep \'{codes3}\' {folder + filename} > temp.csv'
-    run_command(grepcode)
+#     run_command(f"sed -i 's/\"//g' {folder + filename}")
+#     codes2 = [f",{code}" for code in codes]
+#     codes3 = '\\|'.join(codes2)
+#     grepcode = f'grep \'{codes3}\' {folder + filename} > temp.csv'
+#     run_command(grepcode)
     
-    if not pd.read_csv('temp.csv').shape[0]:
-        return pd.DataFrame(columns=cancer_header)
+#     if not pd.read_csv('temp.csv').shape[0]:
+#         return pd.DataFrame(columns=cancer_header)
     
-    data = pd.read_csv('temp.csv', header=None)
-    data.columns = pd.read_csv(file, nrows=1).columns
+#     data = pd.read_csv('temp.csv', header=None)
+#     data.columns = pd.read_csv(file, nrows=1).columns
     
-    ids = data.iloc[:, 0].repeat(22).values
-    datesvars = [f'p40005_i{i}' for i in range(22)]
-    cancersvars = [f'p40006_i{i}' for i in range(22)]
-    agevars = [f'p40008_i{i}' for i in range(22)]
-    histologyvars = [f'p40011_i{i}' for i in range(22)]
-    behaviourvars = [f'p40012_i{i}' for i in range(22)]
+#     ids = data.iloc[:, 0].repeat(22).values
+#     datesvars = [f'p40005_i{i}' for i in range(22)]
+#     cancersvars = [f'p40006_i{i}' for i in range(22)]
+#     agevars = [f'p40008_i{i}' for i in range(22)]
+#     histologyvars = [f'p40011_i{i}' for i in range(22)]
+#     behaviourvars = [f'p40012_i{i}' for i in range(22)]
     
-    dateslist = data[datesvars].values.flatten()
-    cancerslist = data[cancersvars].values.flatten()
-    agelist = data[agevars].values.flatten()
-    histologylist = data[histologyvars].values.flatten()
-    behaviourlist = data[behaviourvars].values.flatten()
+#     dateslist = data[datesvars].values.flatten()
+#     cancerslist = data[cancersvars].values.flatten()
+#     agelist = data[agevars].values.flatten()
+#     histologylist = data[histologyvars].values.flatten()
+#     behaviourlist = data[behaviourvars].values.flatten()
     
-    data = pd.DataFrame({'eid': ids, 'reg_date': dateslist, 'site': cancerslist, 'age': agelist, 'histology': histologylist, 'behaviour': behaviourlist})
-    data['reg_date'] = pd.to_datetime(data['reg_date'])
+#     data = pd.DataFrame({'eid': ids, 'reg_date': dateslist, 'site': cancerslist, 'age': agelist, 'histology': histologylist, 'behaviour': behaviourlist})
+#     data['reg_date'] = pd.to_datetime(data['reg_date'])
     
-    codes4 = '|'.join(codes)
-    data = data[data['site'].str.contains(codes4)]
+#     codes4 = '|'.join(codes)
+#     data = data[data['site'].str.contains(codes4)]
     
-    baseline_table = pd.read_csv(baseline_filename)
-    baseline_table['dob'] = pd.to_datetime(baseline_table['dob'])
-    baseline_table['assess_date'] = pd.to_datetime(baseline_table['assess_date'])
-    data = data.merge(baseline_table[['eid', 'dob', 'assess_date']], on='eid')
-    data['diag_age'] = (data['reg_date'] - data['dob']).dt.days / 365.25
-    data['prev'] = data['reg_date'] < data['assess_date']
-    data['code'] = data['histology'] + '/' + data['behaviour']
+#     baseline_table = pd.read_csv(baseline_filename)
+#     baseline_table['dob'] = pd.to_datetime(baseline_table['dob'])
+#     baseline_table['assess_date'] = pd.to_datetime(baseline_table['assess_date'])
+#     data = data.merge(baseline_table[['eid', 'dob', 'assess_date']], on='eid')
+#     data['diag_age'] = (data['reg_date'] - data['dob']).dt.days / 365.25
+#     data['prev'] = data['reg_date'] < data['assess_date']
+#     data['code'] = data['histology'] + '/' + data['behaviour']
     
-    icdo3 = pd.read_csv('ICDO3.csv', sep='\t')
-    icdo3 = icdo3.rename(columns={'histology': 'description'})
-    data = data.merge(icdo3, on='description', how='left')
+#     icdo3 = pd.read_csv('ICDO3.csv', sep='\t')
+#     icdo3 = icdo3.rename(columns={'histology': 'description'})
+#     data = data.merge(icdo3, on='description', how='left')
     
-    return data
+#     return data
 
 def read_selfreport(codes, folder='ukbb_data/', file='selfreport_participant', baseline_filename='Baseline', extension='.parquet'):
     if not codes:
@@ -700,19 +700,25 @@ def read_selfreport_cancer(codes, folder='ukbb_data/', file='selfreport_particip
     
     return data2, non_datetime_df
 
-def read_treatment(codes, folder='ukbb_date/', file='selfreport_participant.csv'):
-    data = pd.read_csv(file)
-    coding4 = pd.read_csv(folder + 'coding4.tsv', sep='\t')
-    coding4 = coding4[coding4['coding'] > 1]
+def read_selfreport_treatment(codes, folder='ukbb_data/', file='selfreport_participant', coding_file='coding4.tsv', extension='.parquet'):
+    # Read the parquet files using polars
+    data = pl.read_parquet(folder + file + extension)
+    coding4 = pl.read_csv(folder + coding_file, separator='\t')
+    
+    # Filter coding4 data
+    coding4 = coding4.filter(pl.col('coding') > 1)
     
     outlines = []
     for code in codes:
-        if len(coding4[coding4['coding'] == int(code)]['meaning']) > 0:
-            outline = data[data['Treatment.medication.code...Instance.0'].str.contains(coding4[coding4['coding'] == int(code)]['meaning'].values[0], na=False)].index
-            outlines.extend(outline)
+        meaning = coding4.filter(pl.col('coding') == int(code))['meaning']
+        if not meaning.is_empty():
+            # Search in all p20003_i* columns as they encode self-reported treatments
+            treatment_columns = [col for col in data.columns if col.startswith('p20003_i')]
+            for col in treatment_columns:
+                outline = data.filter(pl.col(col).str.contains(meaning[0]))['eid']
+                outlines.extend(outline.to_list())
     
-    return data.loc[outlines]
-
+    return data.filter(pl.col('eid').is_in(outlines))
 def first_occurence(ICD10='', GP='', OPCS='', cancer=''):
     ICD10_records = read_ICD10(ICD10).assign(date=lambda x: x['epistart']).loc[:, ['eid', 'date']].assign(source='HES')
     OPCS_records = read_OPCS(OPCS).assign(date=lambda x: x['opdate']).loc[:, ['eid', 'date']].assign(source='OPCS')
