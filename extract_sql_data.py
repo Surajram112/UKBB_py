@@ -31,7 +31,7 @@ def load_dataset():
 def fields_for_id(field_id, dataset):
     from distutils.version import LooseVersion
     field_id = str(field_id)
-    fields = participant.find_fields(name_regex=r'^p{}(_i\d+)?(_a\d+)?$'.format(field_id))
+    fields = dataset.find_fields(name_regex=r'^p{}(_i\d+)?(_a\d+)?$'.format(field_id))
     return sorted(fields, key=lambda f: LooseVersion(f.name))
 
 # Returns all field names for a given UKB showcase field id
@@ -43,7 +43,7 @@ def field_names_for_id(field_id, dataset):
 
 def fields_by_title_keyword(keyword, dataset):
     from distutils.version import LooseVersion
-    fields = list(participant.find_fields(lambda f: keyword.lower() in f.title.lower()))
+    fields = list(dataset.find_fields(lambda f: keyword.lower() in f.title.lower()))
     return sorted(fields, key=lambda f: LooseVersion(f.name))
 
 # Returns all field names for a given title keyword
