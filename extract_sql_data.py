@@ -2,6 +2,7 @@
 import pyspark
 import dxpy
 import dxdata
+import pandas as pd
 
 # Spark initialization (Done only once; do not rerun this cell unless you select Kernel -> Restart kernel).
 sc = pyspark.SparkContext()
