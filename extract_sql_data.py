@@ -8,10 +8,6 @@ import pandas as pd
 sc = pyspark.SparkContext()
 spark = pyspark.sql.SparkSession(sc).builder.appName("example").config("spark.hadoop.fs.defaultFS", "file:///").getOrCreate()
 
-# The SparkContext is automatically created and accessible via spark.sparkContext
-sc = sparkContext
-
-
 def load_dataset():
     # Automatically discover dispensed database name and dataset id
     dispensed_database = dxpy.find_one_data_object(
