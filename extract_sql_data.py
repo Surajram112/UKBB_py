@@ -1,12 +1,22 @@
 # Import packages
-import pyspark
 import dxpy
 import dxdata
 import pandas as pd
+from pyspark import SparkContext
+from pyspark.sql import SparkSession
 
-# Spark initialization (Done only once; do not rerun this cell unless you select Kernel -> Restart kernel).
-sc = pyspark.SparkContext()
-spark = pyspark.sql.SparkSession(sc)
+# Initialize SparkContext
+sc = SparkContext()
+
+# Initialize SparkSession with the existing SparkContext and additional configurations
+spark = SparkSession.builder \
+    .appName("example") \
+    .config("spark.hadoop.fs.defaultFS", "file:///") \
+    .getOrCreate()
+
+# Set the SparkContext for the SparkSession
+spark.sparkContext = sc
+
 
 def load_dataset():
     # Automatically discover dispensed database name and dataset id
