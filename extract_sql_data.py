@@ -5,17 +5,14 @@ import pandas as pd
 from pyspark import SparkContext
 from pyspark.sql import SparkSession
 
-# Initialize SparkContext
-sc = SparkContext()
-
-# Initialize SparkSession with the existing SparkContext and additional configurations
+# Initialize SparkSession with the desired configuration
 spark = SparkSession.builder \
     .appName("example") \
     .config("spark.hadoop.fs.defaultFS", "file:///") \
     .getOrCreate()
 
-# Set the SparkContext for the SparkSession
-spark.sparkContext = sc
+# The SparkContext is automatically created and accessible via spark.sparkContext
+sc = sparkContext
 
 
 def load_dataset():
