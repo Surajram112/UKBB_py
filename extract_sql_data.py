@@ -1,15 +1,12 @@
 # Import packages
+import pyspark
 import dxpy
 import dxdata
 import pandas as pd
-from pyspark import SparkContext
-from pyspark.sql import SparkSession
 
-# Initialize SparkSession with the desired configuration
-spark = SparkSession.builder \
-    .appName("example") \
-    .config("spark.hadoop.fs.defaultFS", "file:///") \
-    .getOrCreate()
+# Spark initialization (Done only once; do not rerun this cell unless you select Kernel -> Restart kernel).
+sc = pyspark.SparkContext()
+spark = pyspark.sql.SparkSession(sc).builder.appName("example").config("spark.hadoop.fs.defaultFS", "file:///").getOrCreate()
 
 # The SparkContext is automatically created and accessible via spark.sparkContext
 sc = sparkContext
