@@ -69,6 +69,10 @@ def fields_by_title_keyword(keyword, dataset):
 def field_names_by_title_keyword(keyword, dataset):
     return [f.name for f in fields_by_title_keyword(keyword, dataset)]
 
+# Returns all field titles for a given title keyword
+def field_titles_by_title_keyword(keyword, dataset):
+    return [f.title for f in fields_by_title_keyword(keyword, dataset)]
+
 # Extract and save datasets in efficient format with desired columns
 def extract_and_save_data(dataset_name, columns_file, search_terms, extension=".parquet"):
     """
@@ -138,7 +142,3 @@ def extract_and_save_data(dataset_name, columns_file, search_terms, extension=".
 
     subprocess.run(f'dx upload {data_folder + output_filename + extension} --path ukbb_data/')
     print(f"Data uploaded to DNAnexus Project folder")
-
-# Returns all field titles for a given title keyword
-def field_titles_by_title_keyword(keyword, dataset):
-    return [f.title for f in fields_by_title_keyword(keyword, dataset)]
