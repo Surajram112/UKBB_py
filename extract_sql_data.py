@@ -93,7 +93,6 @@ def extract_and_save_data(dataset_name, columns_file, search_terms, extension=".
     # Set DNAnexus project, data and traits folder
     project_folder = "../../mnt/project/"
     data_folder = "ukbb_data/"
-    traits_folder = "ukbb_traits/"
 
     # Load the columns file
     base_fields = read_traits_file(project_folder + columns_file)['Code'].tolist()
