@@ -147,5 +147,5 @@ def extract_and_save_data(dataset_name, columns_file, search_terms, extension=".
     pl.from_pandas(df.toPandas()).write_parquet(data_folder + output_filename + extension)
     print(f"Data saved to {output_filename}")
 
-    subprocess.run(f'dx upload {data_folder + output_filename + extension} --path ukbb_data/')
+    subprocess.run(f'dx upload {data_folder + output_filename + extension} --path ukbb_data/', shell=True, check=True)
     print(f"Data uploaded to DNAnexus Project folder")
