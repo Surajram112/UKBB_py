@@ -3,6 +3,7 @@ import pyspark
 import dxpy
 import dxdata
 import os
+import subprocess
 import polars as pl
 import pandas as pd
 
