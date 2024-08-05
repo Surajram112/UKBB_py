@@ -6,7 +6,7 @@ import pandas as pd
 
 # Spark initialization (Done only once; do not rerun this cell unless you select Kernel -> Restart kernel).
 sc = pyspark.SparkContext()
-spark = pyspark.sql.SparkSession(sc).builder.appName("example").config("spark.hadoop.fs.defaultFS", "file:///").getOrCreate()
+spark = pyspark.sql.SparkSession(sc)
 
 def load_dataset():
     # Automatically discover dispensed database name and dataset id
