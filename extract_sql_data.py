@@ -114,6 +114,9 @@ def extract_and_save_data(dataset_name, columns_file, search_terms, extension=".
         for term in search_terms:
             additional_columns.extend(field_names_by_title_keyword(term, dataset))
 
+    # Combine file columns with additional columns
+    field_names = base_fields_exp + additional_columns
+
     # Check if file already exists
     if os.path.exists(project_folder + data_folder + output_filename + extension):
         # Load existing data
