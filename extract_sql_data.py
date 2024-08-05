@@ -69,6 +69,76 @@ def fields_by_title_keyword(keyword, dataset):
 def field_names_by_title_keyword(keyword, dataset):
     return [f.name for f in fields_by_title_keyword(keyword, dataset)]
 
+# Extract and save datasets in efficient format with desired columns
+def extract_and_save_data(dataset_name, columns_file, search_terms, extension=".parquet"):
+    """
+    Extracts specific columns from a dataset and saves them as a Parquet file.
+
+    Parameters:
+    - dataset_name (str): The name of the dataset to be loaded.
+    - columns_file (str): Path to the file containing the list of columns to be extracted.
+    - search_terms (list): List of search terms to find additional columns.
+    - output_path (str): The path where the output Parquet file will be saved. Default is 'ukbb_data/'.
+    - extension (str): The extension for the output file. Default is ".parquet".
+    """
+    # Load the dataset
+    datasets = load_dataset()
+
+    # Set DNAnexus project folder
+    project_folder = "../../mnt/project/"
+
+    # Load the columns file
+    base_fields = read_traits_file(project_folder + columns_file)['Code'].tolist()
+
+    # Take columns file name as file name for output
+    output_filename = os.path.basename(columns_file).split('.')[0]
+
+    # Access the main dataset_name entity
+    dataset = datasets[dataset_name]
+
+    # Expand codes to include all instances (visits)
+    base_fields_exp = []
+    for code in base_fields:
+        base_fields_exp.extend(field_names_for_id(code, dataset))
+
+    # Read additional columns based on search terms
+    additional_columns = []
+    if search_terms:
+        for term in search_terms:
+            additional_columns.extend(field_names_by_title_keyword(term, dataset))
+
+    # Check if file already exists
+    if os.path.exists(project_folder + data_folder + output_filename + extension):
+        # Load existing data
+        existing_data = pl.read_parquet(output_filename)
+
+        # Determine which columns have not been processed yet
+        existing_columns = existing_data.columns
+        new_columns = [col for col in field_names if col not in existing_columns]
+
+        # If there are new columns to process
+        if new_columns:
+            # Retrieve fields and 
+            df = dataset.retrieve_fields(names=new_columns, engine=dxdata.connect())
+
+            # Merge with existing data
+            df = existing_data.hstack(df)
+        else:
+            print(f"All columns in {output_filename} have been processed.")
+    else:
+        # Retrieve fields and 
+        df = dataset.retrieve_fields(names=field_names, engine=dxdata.connect())
+
+    # Set up local dir for ukbb data
+    os.makedirs(data_folder, exist_ok=True)
+
+    # Save as Parquet file
+    pl.from_pandas(df.toPandas()).write_parquet(data_folder + output_filename + extension)
+    print(f"Data saved to {output_filename}")
+
+    subprocess.run(f'dx upload {data_folder + output_filename + extension} --path ukbb_data/')
+    print(f"Data uploaded to DNAnexus Project folder")
+
 # Returns all field titles for a given title keyword
 def field_titles_by_title_keyword(keyword, dataset):
     return [f.title for f in fields_by_title_keyword(keyword, dataset)]
