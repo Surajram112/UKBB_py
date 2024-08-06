@@ -153,6 +153,8 @@ def extract_and_save_data(dataset_name, columns_file, search_terms, output_path=
     
     # Save field names directly from the the spark data frame and their definition to a text file
     with open(ext_folder + output_filename + '.txt', 'w') as f:
+        # Write the column names
+        f.write('Code' + '\t' + 'Description' + '\n')
         # Iterate over each field in the dataset
         for field in dataset.fields:
             # If the field name is in your list of field names
