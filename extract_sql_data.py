@@ -160,6 +160,6 @@ def extract_and_save_data(dataset_name, columns_file, search_terms, output_path=
     print(f"Data saved to {output_filename}")
     
     # Upload to DNAnexus
-    subprocess.run(f'dx upload {ext_folder + output_filename + '.txt'} --path {output_path + ext_folder}', shell=True, check=True)
+    subprocess.run(f'dx upload {ext_folder + output_filename + ".txt"} --path {output_path + ext_folder}', shell=True, check=True)
     subprocess.run(f'dx upload {data_folder + output_filename + extension} --path {output_path + data_folder}', shell=True, check=True)
     print(f"Columns and Data uploaded to DNAnexus Project folder")
