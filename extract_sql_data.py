@@ -95,6 +95,12 @@ def extract_and_save_data(dataset_name, columns_file, search_terms, output_path=
     project_folder = "../../mnt/project/"
     data_folder = "ukbb_data/"
     ext_folder = "extract_table_codes/"
+    
+    # Set up local dir for ukbb data
+    os.makedirs(data_folder, exist_ok=True)
+    
+    # Set up local dir for field names used to extract data
+    os.makedirs(ext_folder, exist_ok=True)
 
     # Load the columns file from the ubkk project folder. Check if it exists in the instance first.
     if os.path.exists(ext_folder + columns_file):
@@ -122,6 +128,21 @@ def extract_and_save_data(dataset_name, columns_file, search_terms, output_path=
     # Combine file columns with additional columns
     field_names = base_fields_exp + additional_columns
 
+    # Save field names directly from the the spark data frame and their definition to a text file
+    with open(ext_folder + output_filename + '.txt', 'w') as f:
+        # Write the column names
+        f.write('Code' + '\t' + 'Description' + '\n')
+        # Iterate over each field in the dataset
+        for field in dataset.fields:
+            # If the field name is in your list of field names
+            if field.name in field_names:
+                # Write the name and title of the field
+                f.write(field.name + '\t' + field.title + '\n')
+    
+    # Upload to DNAnexus
+    subprocess.run(f'dx upload {ext_folder + output_filename + ".txt"} --path {output_path + ext_folder}', shell=True, check=True)
+    print(f"Field names saved and uploaded to DNAnexus Project folder")
+    
     # Check if file already exists
     if os.path.exists(project_folder + data_folder + output_filename + extension):
         # Load existing data
@@ -133,43 +154,27 @@ def extract_and_save_data(dataset_name, columns_file, search_terms, output_path=
 
         # If there are new columns to process
         if new_columns:
-            # Retrieve fields and 
+            # Retrieve fields 
             df = dataset.retrieve_fields(names=new_columns, engine=dxdata.connect())
 
             # Merge with existing data
             df = existing_data.hstack(df)
+            
+            # Save as Parquet file
+            pl.from_pandas(df.toPandas()).write_parquet(data_folder + output_filename + extension)
+            
+            # Upload to DNAnexus
+            subprocess.run(f'dx upload {data_folder + output_filename + extension} --path {output_path + data_folder}', shell=True, check=True)
+            print(f"Data saved and uploaded to DNAnexus Project folder")
         else:
-            df = existing_data
-            print(f"All columns in {output_filename} have been processed.")
+            print(f"No additional columns were requested and data already exists in DNAnexus Project folder")
     else:
-        # Retrieve fields and 
+        # Retrieve fields
         df = dataset.retrieve_fields(names=field_names, engine=dxdata.connect())
-
-    # Set up local dir for ukbb data
-    os.makedirs(data_folder, exist_ok=True)
-    
-    # Set up local dir for field names used to extract data
-    os.makedirs(ext_folder, exist_ok=True)
-    
-    # Save field names directly from the the spark data frame and their definition to a text file
-    with open(ext_folder + output_filename + '.txt', 'w') as f:
-        # Write the column names
-        f.write('Code' + '\t' + 'Description' + '\n')
-        # Iterate over each field in the dataset
-        for field in dataset.fields:
-            # If the field name is in your list of field names
-            if field.name in field_names:
-                # Write the name and title of the field
-                f.write(field.name + '\t' + field.title + '\n')
-
-    # Save as Parquet file, if there are any new columns 
-    if new_columns:
-        pl.from_pandas(df.toPandas()).write_parquet(project_folder + data_folder + output_filename + extension)
-        print(f"Data saved to {output_filename}")
-    else:
-        print(f"Data already exists in {output_filename}")
-
-    # Upload to DNAnexus
-    subprocess.run(f'dx upload {ext_folder + output_filename + ".txt"} --path {output_path + ext_folder}', shell=True, check=True)
-    subprocess.run(f'dx upload {data_folder + output_filename + extension} --path {output_path + data_folder}', shell=True, check=True)
-    print(f"Columns and Data uploaded to DNAnexus Project folder")
+        
+        # Save as Parquet file
+        pl.from_pandas(df.toPandas()).write_parquet(data_folder + output_filename + extension)
+        
+        # Upload to DNAnexus
+        subprocess.run(f'dx upload {data_folder + output_filename + extension} --path {output_path + data_folder}', shell=True, check=True)
+        print(f"Data saved and uploaded to DNAnexus Project folder")
