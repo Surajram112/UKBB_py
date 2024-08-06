@@ -154,14 +154,14 @@ def extract_and_save_data(dataset_name, columns_file, search_terms, output_path=
 
         # If there are new columns to process
         if new_columns:
-            # Retrieve fields 
-            df = dataset.retrieve_fields(names=new_columns, engine=dxdata.connect())
+            # Retrieve fields and convert Spark DataFrame to Polars DataFrame
+            df = pl.from_pandas(dataset.retrieve_fields(names=new_columns, engine=dxdata.connect()).toPandas())
 
             # Merge with existing data
             df = existing_data.hstack(df)
             
             # Save as Parquet file
-            pl.from_pandas(df.toPandas()).write_parquet(data_folder + output_filename + extension)
+            df.write_parquet(data_folder + output_filename + extension)
             
             # Upload to DNAnexus
             subprocess.run(f'dx upload {data_folder + output_filename + extension} --path {output_path + data_folder}', shell=True, check=True)
