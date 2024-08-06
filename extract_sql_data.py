@@ -125,7 +125,7 @@ def extract_and_save_data(dataset_name, columns_file, search_terms, output_path=
     # Check if file already exists
     if os.path.exists(project_folder + data_folder + output_filename + extension):
         # Load existing data
-        existing_data = pl.read_parquet(output_filename + extension)
+        existing_data = pl.read_parquet(project_folder + data_folder + output_filename + extension)
 
         # Determine which columns have not been processed yet
         existing_columns = existing_data.columns
