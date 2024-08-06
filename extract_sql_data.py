@@ -139,6 +139,7 @@ def extract_and_save_data(dataset_name, columns_file, search_terms, output_path=
             # Merge with existing data
             df = existing_data.hstack(df)
         else:
+            df = existing_data
             print(f"All columns in {output_filename} have been processed.")
     else:
         # Retrieve fields and 
