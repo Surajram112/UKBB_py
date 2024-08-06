@@ -77,7 +77,7 @@ def field_titles_by_title_keyword(keyword, dataset):
     return [f.title for f in fields_by_title_keyword(keyword, dataset)]
 
 # Extract and save datasets in efficient format with desired columns
-def extract_and_save_data(dataset_name, columns_file, search_terms, output_path="ukbb_data/", extension=".parquet"):
+def extract_and_save_data(dataset_name, columns_file, search_terms, output_path="phe_data/", extension=".parquet"):
     """
     Extracts specific columns from a dataset and saves them as a Parquet file.
 
@@ -158,6 +158,8 @@ def extract_and_save_data(dataset_name, columns_file, search_terms, output_path=
     # Save as Parquet file
     pl.from_pandas(df.toPandas()).write_parquet(data_folder + output_filename + extension)
     print(f"Data saved to {output_filename}")
-
-    subprocess.run(f'dx upload {data_folder + output_filename + extension} --path {output_path}', shell=True, check=True)
-    print(f"Data uploaded to DNAnexus Project folder")
+    
+    # Upload to DNAnexus
+    subprocess.run(f'dx upload {ext_folder + output_filename + '.txt'} --path {output_path + ext_folder}', shell=True, check=True)
+    subprocess.run(f'dx upload {data_folder + output_filename + extension} --path {output_path + data_folder}', shell=True, check=True)
+    print(f"Columns and Data uploaded to DNAnexus Project folder")
