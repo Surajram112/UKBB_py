@@ -158,7 +158,9 @@ def extract_and_save_data(dataset_name, columns_file, search_terms, output_path,
         # If there are new columns to process
         if new_columns:
             # Retrieve fields and convert Spark DataFrame to Polars DataFrame
-            df = pl.from_pandas(dataset.retrieve_fields(names=new_columns, engine=dxdata.connect()).toPandas())
+            df = dataset.retrieve_fields(names=new_columns, engine=dxdata.connect()).toPandas()
+            
+            df = pl.from_pandas(df)
 
             # Merge with existing data
             df = existing_data.hstack(df)
