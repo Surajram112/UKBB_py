@@ -151,10 +151,17 @@ def extract_and_save_data(dataset_name, columns_file, search_terms, output_path=
     # Set up local dir for field names used to extract data
     os.makedirs(ext_folder, exist_ok=True)
     
+    # Get dataset fields
+    fields = dataset.fields
+    
     # Save field names directly from the the spark data frame and their definition to a text file
     with open(ext_folder + output_filename + '.txt', 'w') as f:
-        for field in df.fields:
-            f.write(field.name + '\t' + field.title + '\n')
+        # Iterate over each field in the dataset
+        for field in fields:
+            # If the field name is in your list of field names
+            if field.name in field_names:
+                # Write the name and title of the field
+                f.write(field.name + '\t' + field.title + '\n')
 
     # Save as Parquet file
     pl.from_pandas(df.toPandas()).write_parquet(data_folder + output_filename + extension)
