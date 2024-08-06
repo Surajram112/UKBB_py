@@ -77,7 +77,7 @@ def field_titles_by_title_keyword(keyword, dataset):
     return [f.title for f in fields_by_title_keyword(keyword, dataset)]
 
 # Extract and save datasets in efficient format with desired columns
-def extract_and_save_data(dataset_name, columns_file, search_terms, output_path="pheno_data/", extension=".parquet"):
+def extract_and_save_data(dataset_name, columns_file, search_terms, output_path, extension=".parquet"):
     """
     Extracts specific columns from a dataset and saves them as a Parquet file.
 
