@@ -139,6 +139,9 @@ def extract_and_save_data(dataset_name, columns_file, search_terms, output_path,
                 # Write the name and title of the field
                 f.write(field.name + '\t' + field.title + '\n')
     
+    # Ensure the directory exists on DNAnexus
+    subprocess.run(f'dx mkdir -p {output_path + ext_folder}', shell=True, check=True)
+    
     # Upload to DNAnexus
     subprocess.run(f'dx upload {ext_folder + output_filename + ".txt"} --path {output_path + ext_folder}', shell=True, check=True)
     print(f"Field names saved and uploaded to DNAnexus Project folder")
@@ -163,6 +166,9 @@ def extract_and_save_data(dataset_name, columns_file, search_terms, output_path,
             # Save as Parquet file
             df.write_parquet(data_folder + output_filename + extension)
             
+            # Ensure the directory exists on DNAnexus
+            subprocess.run(f'dx mkdir -p {output_path + data_folder}', shell=True, check=True)
+            
             # Upload to DNAnexus
             subprocess.run(f'dx upload {data_folder + output_filename + extension} --path {output_path + data_folder}', shell=True, check=True)
             print(f"Data saved and uploaded to DNAnexus Project folder")
@@ -174,6 +180,9 @@ def extract_and_save_data(dataset_name, columns_file, search_terms, output_path,
         
         # Save as Parquet file
         pl.from_pandas(df.toPandas()).write_parquet(data_folder + output_filename + extension)
+        
+        # Ensure the directory exists on DNAnexus
+        subprocess.run(f'dx mkdir -p {output_path + data_folder}', shell=True, check=True)
         
         # Upload to DNAnexus
         subprocess.run(f'dx upload {data_folder + output_filename + extension} --path {output_path + data_folder}', shell=True, check=True)
