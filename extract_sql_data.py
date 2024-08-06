@@ -162,10 +162,13 @@ def extract_and_save_data(dataset_name, columns_file, search_terms, output_path=
                 # Write the name and title of the field
                 f.write(field.name + '\t' + field.title + '\n')
 
-    # Save as Parquet file
-    pl.from_pandas(df.toPandas()).write_parquet(data_folder + output_filename + extension)
-    print(f"Data saved to {output_filename}")
-    
+    # Save as Parquet file, if there are any new columns 
+    if new_columns:
+        pl.from_pandas(df.toPandas()).write_parquet(project_folder + data_folder + output_filename + extension)
+        print(f"Data saved to {output_filename}")
+    else:
+        print(f"Data already exists in {output_filename}")
+
     # Upload to DNAnexus
     subprocess.run(f'dx upload {ext_folder + output_filename + ".txt"} --path {output_path + ext_folder}', shell=True, check=True)
     subprocess.run(f'dx upload {data_folder + output_filename + extension} --path {output_path + data_folder}', shell=True, check=True)
