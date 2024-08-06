@@ -77,7 +77,7 @@ def field_titles_by_title_keyword(keyword, dataset):
     return [f.title for f in fields_by_title_keyword(keyword, dataset)]
 
 # Extract and save datasets in efficient format with desired columns
-def extract_and_save_data(dataset_name, columns_file, search_terms, extension=".parquet"):
+def extract_and_save_data(dataset_name, columns_file, search_terms, output_path="ukbb_data/", extension=".parquet"):
     """
     Extracts specific columns from a dataset and saves them as a Parquet file.
 
@@ -94,9 +94,13 @@ def extract_and_save_data(dataset_name, columns_file, search_terms, extension=".
     # Set DNAnexus project, data and traits folder
     project_folder = "../../mnt/project/"
     data_folder = "ukbb_data/"
+    ext_folder = "extract_table_codes/"
 
-    # Load the columns file
-    base_fields = read_traits_file(project_folder + columns_file)['Code'].tolist()
+    # Load the columns file from the ubkk project folder. Check if it exists in the instance first.
+    if os.path.exists(ext_folder + columns_file):
+        base_fields = read_traits_file(ext_folder + columns_file)['Code'].tolist()
+    else:
+        base_fields = read_traits_file(project_folder + ext_folder + columns_file)['Code'].tolist()
 
     # Take columns file name as file name for output
     output_filename = os.path.basename(columns_file).split('.')[0]
@@ -142,10 +146,18 @@ def extract_and_save_data(dataset_name, columns_file, search_terms, extension=".
 
     # Set up local dir for ukbb data
     os.makedirs(data_folder, exist_ok=True)
+    
+    # Set up local dir for field names used to extract data
+    os.makedirs(ext_folder, exist_ok=True)
+    
+    # Save field names directly from the the spark data frame and their definition to a text file
+    with open(ext_folder + output_filename + '.txt', 'w') as f:
+        for field in df.fields:
+            f.write(field.name + '\t' + field.title + '\n')
 
     # Save as Parquet file
     pl.from_pandas(df.toPandas()).write_parquet(data_folder + output_filename + extension)
     print(f"Data saved to {output_filename}")
 
-    subprocess.run(f'dx upload {data_folder + output_filename + extension} --path ukbb_data/', shell=True, check=True)
+    subprocess.run(f'dx upload {data_folder + output_filename + extension} --path {output_path}', shell=True, check=True)
     print(f"Data uploaded to DNAnexus Project folder")
