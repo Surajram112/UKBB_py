@@ -849,7 +849,7 @@ def read_selfreport_operation(codes, folder='ukbb_data/', file='selfreport_parti
 def first_occurence(ICD10='', GP='', OPCS='', cancer=''):
     ICD10_records = read_ICD10(ICD10).assign(date=lambda x: x['epistart']).loc[:, ['eid', 'date']].assign(source='HES')
     OPCS_records = read_OPCS(OPCS).assign(date=lambda x: x['opdate']).loc[:, ['eid', 'date']].assign(source='OPCS')
-    # GP_records = read_GP(GP).assign(date=lambda x: x['event_dt']).loc[:, ['eid', 'date']].assign(source='GP')
+    GP_records = read_GP(GP).assign(date=lambda x: x['event_dt']).loc[:, ['eid', 'date']].assign(source='GP')
     
     # Group by 'eid' and select the earliest event_dt
     GP_records = read_GP(GP).group_by('eid').agg([

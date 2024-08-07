@@ -115,7 +115,7 @@ def extract_and_save_data(dataset_name, columns_file, search_terms, output_path,
     dataset = datasets[dataset_name]
 
     # Expand codes to include all instances (visits)
-    base_fields_exp = []
+    base_fields_exp = base_fields
     for code in base_fields:
         base_fields_exp.extend(field_names_for_id(code, dataset))
 
