@@ -17,7 +17,7 @@ conf = pyspark.SparkConf() \
     .set("spark.driver.maxResultSize", "8g")
     
 # Spark initialization (Done only once; do not rerun this cell unless you select Kernel -> Restart kernel).
-sc = pyspark.SparkContext(conf=conf)
+sc = pyspark.SparkContext() # conf=conf)
 spark = pyspark.sql.SparkSession(sc)
 
 def load_dataset():
