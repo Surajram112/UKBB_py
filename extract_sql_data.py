@@ -162,17 +162,16 @@ def extract_and_save_data(dataset_name, columns_file, search_terms, output_path,
 
         # If there are new columns to process
         if new_columns:
-            # Retrieve fields and convert Spark DataFrame to Polars DataFrame
-            df = dataset.retrieve_fields(names=new_columns, engine=dxdata.connect()).toPandas()
-            
-            df = pl.from_pandas(df)
+            # Retrieve fields and convert Spark DataFrame to Pandas DataFrame
+            df_new = dataset.retrieve_fields(names=new_columns, engine=dxdata.connect()).toPandas()
 
-            # Merge with existing data
-            df = existing_data.hstack(df)
-            
-            # Save as Parquet file
-            df.write_parquet(data_folder + output_filename + extension)
-            
+            # Concatenate existing and new data using pd.concat
+            df_combined = pd.concat([existing_data.to_pandas(), df_new], axis=1)
+
+            # Convert to Polars DataFrame and save as Parquet file
+            df_combined_polars = pl.from_pandas(df_combined)
+            df_combined_polars.write_parquet(data_folder + output_filename + extension)
+
             # Ensure the directory exists on DNAnexus
             subprocess.run(f'dx mkdir -p {output_path + data_folder}', shell=True, check=True)
             
@@ -184,9 +183,10 @@ def extract_and_save_data(dataset_name, columns_file, search_terms, output_path,
     else:
         # Retrieve fields
         df = dataset.retrieve_fields(names=field_names, engine=dxdata.connect())
-        
-        # Save as Parquet file
-        pl.from_pandas(df.toPandas()).write_parquet(data_folder + output_filename + extension)
+
+        # Convert to Pandas DataFrame and then to Polars DataFrame
+        df_polars = pl.from_pandas(df.toPandas())
+        df_polars.write_parquet(data_folder + output_filename + extension)
         
         # Ensure the directory exists on DNAnexus
         subprocess.run(f'dx mkdir -p {output_path + data_folder}', shell=True, check=True)
