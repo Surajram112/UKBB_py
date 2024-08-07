@@ -8,7 +8,9 @@ import polars as pl
 import pandas as pd
 
 # Create a SparkConf object and set the necessary configurations
-conf = pyspark.SparkConf().set("spark.kryoserializer.buffer.max", "128m")
+conf = pyspark.SparkConf() \
+    .set("spark.kryoserializer.buffer.max", "128m") \
+    .set("spark.driver.maxResultSize", "4g")
     
 # Spark initialization (Done only once; do not rerun this cell unless you select Kernel -> Restart kernel).
 sc = pyspark.SparkContext(conf=conf)
