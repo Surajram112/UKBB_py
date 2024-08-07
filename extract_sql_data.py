@@ -183,7 +183,7 @@ def extract_and_save_data(dataset_name, columns_file, search_terms, output_path,
             print(f"Data saved and uploaded to DNAnexus Project folder")
         else:
             # Save as Parquet file
-            existing_data.to_parquet(data_folder + output_filename + extension)
+            existing_data.write_parquet(data_folder + output_filename + extension)
             
             # Upload to DNAnexus
             subprocess.run(f'dx upload {data_folder + output_filename + extension} --path {output_path + data_folder}', shell=True, check=True)
