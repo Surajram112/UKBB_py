@@ -172,9 +172,8 @@ def extract_and_save_data(dataset_name, columns_file, search_terms, output_path,
             # Concatenate existing and new data using pd.concat
             df_combined = pd.concat([existing_data.to_pandas(), df_new], axis=1)
 
-            # Convert to Polars DataFrame and save as Parquet file
-            df_combined_polars = pl.from_pandas(df_combined)
-            df_combined_polars.write_parquet(data_folder + output_filename + extension)
+            # Save as Parquet file
+            df_combined.to_parquet(data_folder + output_filename + extension)
 
             # Ensure the directory exists on DNAnexus
             subprocess.run(f'dx mkdir -p {output_path + data_folder}', shell=True, check=True)
@@ -189,8 +188,7 @@ def extract_and_save_data(dataset_name, columns_file, search_terms, output_path,
         df = dataset.retrieve_fields(names=field_names, engine=dxdata.connect()).toPandas()
 
         # Convert to Pandas DataFrame and then to Polars DataFrame
-        df_polars = pl.from_pandas(df)
-        df_polars.write_parquet(data_folder + output_filename + extension)
+        df.toPandas().to_parquet(data_folder + output_filename + extension, index=False)
         
         # Ensure the directory exists on DNAnexus
         subprocess.run(f'dx mkdir -p {output_path + data_folder}', shell=True, check=True)
