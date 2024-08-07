@@ -181,10 +181,10 @@ def extract_and_save_data(dataset_name, columns_file, search_terms, output_path,
             print(f"No additional columns were requested and data already exists in DNAnexus Project folder")
     else:
         # Retrieve fields
-        df = dataset.retrieve_fields(names=field_names, engine=dxdata.connect())
+        df = dataset.retrieve_fields(names=field_names, engine=dxdata.connect()).toPandas()
 
         # Convert to Pandas DataFrame and then to Polars DataFrame
-        df_polars = pl.from_pandas(df.toPandas())
+        df_polars = pl.from_pandas(df)
         df_polars.write_parquet(data_folder + output_filename + extension)
         
         # Ensure the directory exists on DNAnexus
