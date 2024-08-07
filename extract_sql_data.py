@@ -113,7 +113,7 @@ def extract_and_save_data(dataset_name, columns_file, search_terms, output_path,
 
     # Access the main dataset_name entity and get columns names as list
     dataset = datasets[dataset_name]
-    dataset_cols = [field.name for field in dataset.fields]
+    dataset_fields = [field.name for field in dataset.fields]
 
     # Expand codes to include all instances (visits)
     base_fields_exp = []
@@ -127,13 +127,11 @@ def extract_and_save_data(dataset_name, columns_file, search_terms, output_path,
             additional_columns.extend(field_names_by_title_keyword(term, dataset))
 
     # Combine file columns with additional columns
-    field_names = base_fields + base_fields_exp + additional_columns
+    all_field_names = base_fields + base_fields_exp + additional_columns
     
     # Ensure the columns fields exist in the dataset
-    for field in field_names:
-        if field not in dataset_cols:
-            field_names.remove(field)
-
+    field_names = [field for field in all_field_names if field in dataset_fields]
+    
     # Save field names directly from the the spark data frame and their definition to a text file
     with open(ext_folder + output_filename + '.txt', 'w') as f:
         # Write the column names
