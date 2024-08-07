@@ -9,7 +9,7 @@ import pandas as pd
 
 # Spark configuration
 conf = pyspark.SparkConf() \
-    .set("spark.kryoserializer.buffer.max", "0") \
+    .set("spark.kryoserializer.buffer.max", "2046m") \
     .set("spark.driver.maxResultSize", "0")  # Set to 0 for unlimited
     
 # Spark initialization (Done only once; do not rerun this cell unless you select Kernel -> Restart kernel).
