@@ -118,11 +118,6 @@ def extract_and_save_data(dataset_name, columns_file, search_terms, output_path,
     base_fields_exp = []
     for code in base_fields:
         base_fields_exp.extend(field_names_for_id(code, dataset))
-        
-    # Ensure the columns fields exist in the dataset
-    for field in base_fields:
-        if field not in dataset.fields:
-            base_fields_exp.extend(field)
 
     # Read additional columns based on search terms
     additional_columns = []
@@ -131,7 +126,12 @@ def extract_and_save_data(dataset_name, columns_file, search_terms, output_path,
             additional_columns.extend(field_names_by_title_keyword(term, dataset))
 
     # Combine file columns with additional columns
-    field_names = base_fields_exp + additional_columns
+    field_names = base_fields + base_fields_exp + additional_columns
+    
+    # Ensure the columns fields exist in the dataset
+    for field in field_names:
+        if field not in dataset.fields:
+            field_names.remove(field)
 
     # Save field names directly from the the spark data frame and their definition to a text file
     with open(ext_folder + output_filename + '.txt', 'w') as f:
