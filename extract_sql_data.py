@@ -7,7 +7,7 @@ import subprocess
 import polars as pl
 import pandas as pd
 
-conf = pyspark.SparkConf().set("spark.kryoserializer.buffer.max", "1024m")
+conf = pyspark.SparkConf().set("spark.kryoserializer.buffer.max", "2046m")
     
 # Spark initialization (Done only once; do not rerun this cell unless you select Kernel -> Restart kernel).
 sc = pyspark.SparkContext(conf=conf)
