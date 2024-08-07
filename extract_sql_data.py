@@ -187,7 +187,7 @@ def extract_and_save_data(dataset_name, columns_file, search_terms, output_path,
             
             # Upload to DNAnexus
             subprocess.run(f'dx upload {data_folder + output_filename + extension} --path {output_path + data_folder}', shell=True, check=True)
-            print(f"No additional columns were requested and data already exists in DNAnexus Project folder, so it was moved to output folder")
+            print(f"No additional columns were requested and data already exists in DNAnexus Project folder")
     else:
         # Retrieve fields
         df = dataset.retrieve_fields(names=field_names, engine=dxdata.connect())
