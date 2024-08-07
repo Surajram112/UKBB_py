@@ -9,8 +9,12 @@ import pandas as pd
 
 # Create a SparkConf object and set the necessary configurations
 conf = pyspark.SparkConf() \
-    .set("spark.kryoserializer.buffer.max", "1024m") \
-    .set("spark.driver.maxResultSize", "4g")
+    .set("spark.kryoserializer.buffer.max", "2048m") \
+    .set("spark.driver.memory", "16g") \
+    .set("spark.executor.memory", "16g") \
+    .set("spark.sql.broadcastTimeout", "7200") \
+    .set("spark.sql.autoBroadcastJoinThreshold", "-1") \
+    .set("spark.driver.maxResultSize", "8g")
     
 # Spark initialization (Done only once; do not rerun this cell unless you select Kernel -> Restart kernel).
 sc = pyspark.SparkContext(conf=conf)
