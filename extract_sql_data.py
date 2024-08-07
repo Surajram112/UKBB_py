@@ -7,8 +7,17 @@ import subprocess
 import polars as pl
 import pandas as pd
 
+# Create a SparkConf object and set the necessary configurations
+conf = pyspark.SparkConf() \
+    .setAppName("YourAppName") \
+    .set("spark.kryoserializer.buffer.max", "128m") \
+    .set("spark.driver.memory", "4g") \
+    .set("spark.executor.memory", "4g") \
+    .set("spark.sql.broadcastTimeout", "3600") \
+    .set("spark.sql.autoBroadcastJoinThreshold", "-1")
+    
 # Spark initialization (Done only once; do not rerun this cell unless you select Kernel -> Restart kernel).
-sc = pyspark.SparkContext()
+sc = pyspark.SparkContext(conf=conf)
 spark = pyspark.sql.SparkSession(sc)
 
 def load_dataset():
