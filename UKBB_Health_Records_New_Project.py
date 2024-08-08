@@ -225,7 +225,7 @@ traits_file_ids = [
     'file-GpFjjb0J40Y11QYZBVfQ7YF4',  # read code v2 type 2 dm
     'file-GpFpg18J40YBYgZXG11Y2qq6',  # ICD10 diabetes
     'file-GpFq9vjJ40Y3Gz5KyqZjKx24',  # ICD10 type 1 dm
-    'file-Gpp7Z0jJ40Y23bPjy26vKFXK',  # ICD9 type 1 dm
+    'file-Gpp8VKQJ40Y31j8ZqG4Q052b',  # ICD9 type 1 dm
 ]
 
 # Load data files, if force download is True then original files will be reloaded
