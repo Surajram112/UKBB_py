@@ -199,7 +199,7 @@ data_file_ids = [
     'file-Gp36v5QJ0qKJv0pQ0X5Z2B5K',  # HES Records
     'file-Gp36v5jJ0qK58yQkJ06gzGvv',  # OPCS Records
     'file-GZKXgQjJY2Fkg1ZG4Bg8ZJBP',  # Cancer_Registry
-    'file-GZJKVv8J9qP9xGfpK5KpP5G9',  # self report
+    'file-GpGYp9QJ40Y35BgFBB0qVZ15',  # self report
     'file-GZJ9Z98Jj59fZFqVq69b6p2Z',  # read code 2 list
     'file-GZJ9Z98Jj59b8zjVF1x1Z19G',  # read code 3 list
     'file-GZJ9bbQJj59YBg8j4Kffpx9v',  # data coding 3
