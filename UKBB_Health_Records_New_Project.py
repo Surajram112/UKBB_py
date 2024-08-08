@@ -660,13 +660,11 @@ def read_selfreport_cancer(codes, folder='ukbb_data/', file='selfreport_particip
     # Filter data using vectorized operations            
     outlines = []
     for code in codes:
-        meaning = coding3.filter(pl.col('coding') == int(code))['meaning']
-        if not meaning.is_empty():
-            # Search in all p20001_i* columns, related to '	Cancer code, self-reported'
-            treatment_columns = [col for col in data.columns if col.startswith('p20001_i')]
-            for col in treatment_columns:
-                outline = data.filter(pl.col(col).str.contains(meaning[0]))['eid']
-                outlines.extend(outline.to_list())
+        # Search in all p20001_i* columns, related to '	Cancer code, self-reported'
+        treatment_columns = [col for col in data.columns if col.startswith('p20001_i')]
+        for col in treatment_columns:
+            outline = data.filter(pl.col(col).str.contains(code))['eid']
+            outlines.extend(outline.to_list())
     
     if not outlines:
         return pl.DataFrame(), pl.DataFrame()
@@ -727,16 +725,25 @@ def read_selfreport_treatment(codes, folder='ukbb_data/', file='selfreport_parti
     # Filter coding4 data
     coding4 = coding4.filter(pl.col('coding') > 1)
     
+    # outlines = []
+    # for code in codes:
+    #     meaning = coding4.filter(pl.col('coding') == int(code))['meaning']
+    #     if not meaning.is_empty():
+    #         # Search in all p20003_i* columns, reported as 'Treatment/medication code'
+    #         treatment_columns = [col for col in data.columns if col.startswith('p20003_i')]
+    #         for col in treatment_columns:
+    #             outline = data.filter(pl.col(col).str.contains(meaning[0]))['eid']
+    #             outlines.extend(outline.to_list())
+    
+    # Filter data using vectorized operations
     outlines = []
     for code in codes:
-        meaning = coding4.filter(pl.col('coding') == int(code))['meaning']
-        if not meaning.is_empty():
-            # Search in all p20003_i* columns, reported as 'Treatment/medication code'
-            treatment_columns = [col for col in data.columns if col.startswith('p20003_i')]
-            for col in treatment_columns:
-                outline = data.filter(pl.col(col).str.contains(meaning[0]))['eid']
-                outlines.extend(outline.to_list())
-                
+        # Search in all p20003_i* columns, reported as 'Treatment/medication code'
+        treatment_columns = [col for col in data.columns if col.startswith('p20003_i')]
+        for col in treatment_columns:
+            outline = data.filter(pl.col(col).str.contains(code))['eid']
+            outlines.extend(outline.to_list())
+    
     if not outlines:
         return pl.DataFrame(), pl.DataFrame()
     
