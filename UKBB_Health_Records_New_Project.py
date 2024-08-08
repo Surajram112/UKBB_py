@@ -848,9 +848,10 @@ def read_selfreport_operation(codes, folder='ukbb_data/', file='selfreport_parti
     
     return data2, non_datetime_df
 
-def first_occurence(ICD10='', GP='', OPCS='', cancer=''):
-    ICD10_records = read_ICD10(ICD10).assign(date=lambda x: x['epistart']).loc[:, ['eid', 'date']].assign(source='HES')
-    OPCS_records = read_OPCS(OPCS).assign(date=lambda x: x['opdate']).loc[:, ['eid', 'date']].assign(source='OPCS')
+def first_occurence(ICD10='', GP='', ICD9='', OPCS='', cancer=''):
+    ICD10_records = read_ICD10(ICD10).assign(date=lambda x: x['epistart']).loc[:, ['eid', 'date']].assign(source='HES10')
+    ICD9_records = read_ICD10(ICD9).assign(date=lambda x: x['epistart']).loc[:, ['eid', 'date']].assign(source='HES9')
+    # OPCS_records = read_OPCS(OPCS).assign(date=lambda x: x['opdate']).loc[:, ['eid', 'date']].assign(source='OPCS')
     GP_records = read_GP(GP).assign(date=lambda x: x['event_dt']).loc[:, ['eid', 'date']].assign(source='GP')
     
     # Group by 'eid' and select the earliest event_dt
@@ -859,9 +860,9 @@ def first_occurence(ICD10='', GP='', OPCS='', cancer=''):
         pl.col('dob').first(),
     ])
     
-    cancer_records = read_cancer(cancer).assign(date=lambda x: x['reg_date']).loc[:, ['eid', 'date']].assign(source='Cancer_Registry')
+    # cancer_records = read_cancer(cancer).assign(date=lambda x: x['reg_date']).loc[:, ['eid', 'date']].assign(source='Cancer_Registry')
     
-    all_records = pd.concat([ICD10_records, OPCS_records, GP_records, cancer_records])
+    all_records = pd.concat([ICD10_records, ICD9_records, GP_records])
     all_records['date'] = pd.to_datetime(all_records['date'])
     all_records = all_records.sort_values('date').drop_duplicates('eid')
     
