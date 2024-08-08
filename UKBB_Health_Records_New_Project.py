@@ -575,17 +575,26 @@ def read_selfreport_illness(codes, folder='ukbb_data/', file='selfreport_partici
     coding6 = pl.read_csv(folder + coding_file, separator='\t')
     coding6 = coding6.filter(pl.col('coding') > 1)
 
+    # # Filter data using vectorized operations
+    # outlines = []
+    # for code in codes:
+    #     meaning = coding6.filter(pl.col('coding') == int(code))['meaning']
+    #     if not meaning.is_empty():
+    #         # Search in all p20002_i* columns, reporting 'Non-cancer illness code, self-reported'
+    #         non_cancer_illness_columns = [col for col in data.columns if col.startswith('p20002_i')]
+    #         for col in non_cancer_illness_columns:
+    #             outline = data.filter(pl.col(col).str.contains(meaning[0]))['eid']
+    #             outlines.extend(outline.to_list())
+    
     # Filter data using vectorized operations
     outlines = []
     for code in codes:
-        meaning = coding6.filter(pl.col('coding') == int(code))['meaning']
-        if not meaning.is_empty():
-            # Search in all p20002_i* columns, reporting 'Non-cancer illness code, self-reported'
-            non_cancer_illness_columns = [col for col in data.columns if col.startswith('p20002_i')]
-            for col in non_cancer_illness_columns:
-                outline = data.filter(pl.col(col).str.contains(meaning[0]))['eid']
-                outlines.extend(outline.to_list())
-
+        # Search in all p20002_i* columns, reporting 'Non-cancer illness code, self-reported'
+        non_cancer_illness_columns = [col for col in data.columns if col.startswith('p20002_i')]
+        for col in non_cancer_illness_columns:
+            outline = data.filter(pl.col(col).str.contains(code))['eid']
+            outlines.extend(outline.to_list())
+            
     if not outlines:
         return pl.DataFrame(), pl.DataFrame()
     
