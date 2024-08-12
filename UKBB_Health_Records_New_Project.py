@@ -308,7 +308,7 @@ def read_OPCS(codes, folder='ukbb_data/', filename='HES_hesin_oper', baseline_fi
         return pl.DataFrame(schema={col: pl.Utf8 for col in opcs_header}), pl.DataFrame(schema={col: pl.Utf8 for col in opcs_header})
     
     # Read the parquet file using polars
-    data = pl.read_parquet(folder + filename + extension)
+    data = pl.read_parquet(folder + filename + extension, use_pyarrow=True)
     
     # Filter data using vectorized operations
     data2 = data.filter(
