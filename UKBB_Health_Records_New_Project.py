@@ -238,64 +238,6 @@ load_files(traits_file_ids, traits_folder, local_traits_folder)
 run_command("curl https://raw.githubusercontent.com/Surajram112/UKBB_py/main/new_baseline.py > new_baseline.py")
 import new_baseline
 
-# def read_GP(codes, folder='ukbb_data/', filename='GP_gp_clinical', baseline_filename='Baseline', efficient_format='.parquet'):
-#     # Set up the GP file header
-#     gp_header = ['eid', 'data_provider', 'event_dt', 'read_2', 'read_3', 'value1', 'value2', 'value3', 'dob', 'assess_date', 'event_age', 'prev']
-    
-#     if not codes:
-#         return pl.DataFrame(schema={col: pl.Utf8 for col in gp_header}), pl.DataFrame(schema={col: pl.Utf8 for col in gp_header})
-    
-#     # Read the parquet file using polars
-#     data = pl.read_parquet(folder + filename + efficient_format)
-    
-#     # Filter data using vectorized operations
-#     data2 = data.filter(pl.col('read_3').is_in(codes) | pl.col('read_2').is_in(codes))
-    
-#     if data2.is_empty():
-#         return pl.DataFrame(schema={col: pl.Utf8 for col in gp_header}), pl.DataFrame(schema={col: pl.Utf8 for col in gp_header})
-    
-#     # Load the baseline table
-#     baseline_data = pl.read_parquet(baseline_filename + efficient_format)
-    
-#     # Merge with baseline table
-#     data2 = data2.join(baseline_data.select(['eid', 'dob', 'assess_date']), on='eid')
-    
-#     # Function to check if a value is a valid datetime
-#     def is_not_datetime(value):
-#         try:
-#             pd.to_datetime(value)
-#             return False
-#         except (ValueError, TypeError):
-#             return True
-
-#     # Apply the function to the specified column using map_elements
-#     non_datetime_mask = data2["event_dt"].map_elements(is_not_datetime, return_dtype=pl.Boolean)
-
-#     # Filter the DataFrame based on the mask
-#     non_datetime_df = data2.filter(non_datetime_mask)
-
-#     # Filter out non-datetime rows from the main DataFrame
-#     data2 = data2.filter(~non_datetime_mask)
-        
-#     # Convert date columns to datetime  and float type respectively
-#     data2 = data2.with_columns([                                                                                                                                                 
-#         pl.col('event_dt').str.strptime(pl.Datetime).dt.date(),
-#         pl.col('dob').cast(pl.Datetime).dt.date(),
-#         pl.col('assess_date').cast(pl.Datetime).dt.date(),
-#         pl.col('value1').cast(pl.Float64),
-#         pl.col('value2').cast(pl.Float64),
-#         pl.col('value3').cast(pl.Float64)
-#     ])
-    
-#     data2 = data2.with_columns([
-#         ((pl.col('event_dt') - pl.col('dob')).dt.total_seconds() / (60*60*24*365.25)).alias('event_age'),
-#         (pl.col('event_dt') < pl.col('assess_date')).alias('prev'),
-#         pl.lit('GP').alias('source'),
-#         pl.col('event_dt').alias('date')
-#     ])
-    
-#     return data2, non_datetime_df
-
 def read_GP(codes, folder='ukbb_data/', filename='GP_gp_clinical', baseline_filename='Baseline', efficient_format='.parquet'):
     gp_header = ['eid', 'data_provider', 'event_dt', 'read_2', 'read_3', 'value1', 'value2', 'value3', 'dob', 'assess_date', 'event_age', 'prev']
     
@@ -323,13 +265,6 @@ def read_GP(codes, folder='ukbb_data/', filename='GP_gp_clinical', baseline_file
         pl.lit("").alias('exclude_reason')
     ])
 
-    # Convert date columns to datetime and handle invalid dates
-    data2 = data2.with_columns([
-        pl.col('event_dt').str.strptime(pl.Datetime, strict=False).dt.date().alias('event_dt'),
-        pl.col('dob').cast(pl.Datetime, strict=False).dt.date().alias('dob'),
-        pl.col('assess_date').cast(pl.Datetime, strict=False).dt.date().alias('assess_date')
-    ])
-
     # Update exclude and exclude_reason for invalid dates
     data2 = data2.with_columns([
         pl.when(pl.col('event_dt').is_null())
@@ -340,6 +275,13 @@ def read_GP(codes, folder='ukbb_data/', filename='GP_gp_clinical', baseline_file
         .then("Invalid event_dt")
         .otherwise(pl.col('exclude_reason'))
         .alias('exclude_reason')
+    ])
+    
+    # Convert date columns to datetime and handle invalid dates
+    data2 = data2.with_columns([
+        pl.col('event_dt').str.strptime(pl.Datetime, strict=False).dt.date().alias('event_dt'),
+        pl.col('dob').cast(pl.Datetime, strict=False).dt.date().alias('dob'),
+        pl.col('assess_date').cast(pl.Datetime, strict=False).dt.date().alias('assess_date')
     ])
 
     # Convert value columns to float
