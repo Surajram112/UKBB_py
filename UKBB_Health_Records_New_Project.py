@@ -240,9 +240,9 @@ load_files(traits_file_ids, traits_folder, local_traits_folder)
 run_command("curl https://raw.githubusercontent.com/Surajram112/UKBB_py/main/new_baseline.py > new_baseline.py")
 import new_baseline
 
-def read_GP(codes, folder='ukbb_data/', filename='GP_gp_clinical', baseline_filename='Baseline', efficient_format='.parquet'):
+def read_GP(codes, folder='ukbb_data/', filename='GP_gp_clinical', efficient_format='.parquet'):
     gp_header = ['eid', 'data_provider', 'event_dt', 'read_2', 'read_3', 'value1', 'value2', 'value3', 'dob', 'assess_date', 'event_age', 'prev']
-    
+     
     if not codes:
         return pl.DataFrame(schema={col: pl.Utf8 for col in gp_header})
     
@@ -255,11 +255,6 @@ def read_GP(codes, folder='ukbb_data/', filename='GP_gp_clinical', baseline_file
     if data2.is_empty():
         return pl.DataFrame(schema={col: pl.Utf8 for col in gp_header})
     
-    # Load the baseline table
-    baseline_data = pl.read_parquet(baseline_filename + efficient_format)
-    
-    # Merge with baseline table
-    data2 = data2.join(baseline_data.select(['eid', 'dob', 'assess_date']), on='eid')
     
     # Add exclusion columns
     data2 = data2.with_columns([
@@ -269,9 +264,7 @@ def read_GP(codes, folder='ukbb_data/', filename='GP_gp_clinical', baseline_file
     
     # Convert date columns to datetime and handle invalid dates
     data2 = data2.with_columns([
-        pl.col('event_dt').str.strptime(pl.Datetime, strict=False).dt.date().alias('event_dt'),
-        pl.col('dob').cast(pl.Datetime, strict=False).dt.date().alias('dob'),
-        pl.col('assess_date').cast(pl.Datetime, strict=False).dt.date().alias('assess_date')
+        pl.col('event_dt').str.strptime(pl.Datetime, strict=False).dt.date().alias('event_dt')
     ])
 
     # Update exclude and exclude_reason for invalid dates
@@ -290,13 +283,7 @@ def read_GP(codes, folder='ukbb_data/', filename='GP_gp_clinical', baseline_file
     data2 = data2.with_columns([
         pl.col('value1').cast(pl.Float64, strict=False),
         pl.col('value2').cast(pl.Float64, strict=False),
-        pl.col('value3').cast(pl.Float64, strict=False)
-    ])
-    
-    # Calculate event_age and prev
-    data2 = data2.with_columns([
-        ((pl.col('event_dt') - pl.col('dob')).dt.total_seconds() / (60*60*24*365.25)).alias('event_age'),
-        (pl.col('event_dt') < pl.col('assess_date')).alias('prev'),
+        pl.col('value3').cast(pl.Float64, strict=False), 
         pl.lit('GP').alias('source')
     ])
     
