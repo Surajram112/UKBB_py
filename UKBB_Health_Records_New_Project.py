@@ -879,25 +879,42 @@ def read_selfreport_operation(codes, folder='ukbb_data/', file='selfreport_parti
     
     return data2.with_columns(pl.lit('Self').alias('source'))
 
-def first_occurence(ICD10='', GP='', ICD9='', OPCS='', cancer=''):
-    ICD10_records = read_ICD10(ICD10).assign(date=lambda x: x['epistart']).loc[:, ['eid', 'date']].assign(source='HES10')
-    ICD9_records = read_ICD10(ICD9).assign(date=lambda x: x['epistart']).loc[:, ['eid', 'date']].assign(source='HES9')
-    # OPCS_records = read_OPCS(OPCS).assign(date=lambda x: x['opdate']).loc[:, ['eid', 'date']].assign(source='OPCS')
-    GP_records = read_GP(GP).assign(date=lambda x: x['event_dt']).loc[:, ['eid', 'date']].assign(source='GP')
+def first_occurance(*dataframes):
+    # Create a new column 'Date_diag_earliest' for each DataFrame
+    processed_dfs = []
+    for df in dataframes:
+        if 'event_dt' in df.columns:
+            df = df.with_columns(pl.col('event_dt').cast(pl.Datetime).alias('Date_diag_earliest'))
+        elif 'date' in df.columns:
+            df = df.with_columns(pl.col('date').cast(pl.Datetime).alias('Date_diag_earliest'))
+        elif 'assess_date' in df.columns:
+            df = df.with_columns(pl.col('assess_date').cast(pl.Datetime).alias('Date_diag_earliest'))
+        processed_dfs.append(df)
     
-    # Group by 'eid' and select the earliest event_dt
-    GP_records = read_GP(GP).group_by('eid').agg([
-        pl.col('event_dt').min().alias('date'),
-        pl.col('dob').first(),
-    ])
+    # Concatenate the DataFrames
+    all_records = pl.concat(processed_dfs, how="diagonal")
+
+    # Group by 'eid' and get the earliest 'Date_diag_earliest'
+    earliest_dates = all_records.group_by('eid').agg(pl.col('Date_diag_earliest').min().alias('Date_diag_earliest'))
+
+    # Join the earliest dates back to the original DataFrame to retain all columns
+    all_records = all_records.join(earliest_dates, on='eid', how='left')
+
+    # Drop duplicates based on 'eid' and keep the first occurrence
+    all_records = all_records.sort('Date_diag_earliest').group_by('eid').first()
+
+    # Drop the original 'date' column if it exists
+    if 'date' in all_records.columns:
+        all_records = all_records.drop('date')
+
+    # Calculate Diagnosis Age
+    all_records = all_records.with_columns(
+        ((pl.col('Date_diag_earliest') - pl.col('dob')).dt.total_days() / 365.25)
+        .round()
+        .alias('Diagnosis Age')
+    )
     
-    # cancer_records = read_cancer(cancer).assign(date=lambda x: x['reg_date']).loc[:, ['eid', 'date']].assign(source='Cancer_Registry')
-    
-    all_records = pd.concat([ICD10_records, ICD9_records, GP_records])
-    all_records['date'] = pd.to_datetime(all_records['date'])
-    all_records = all_records.sort_values('date').drop_duplicates('eid')
-    
-    return all_records           
+    return all_records        
 
 def read_GP_scripts(codes, folder='ukbb_date/', file='GP_gp_scripts.csv'):
     gp_header = ['eid', 'data_provider', 'issue_date', 'read_2', 'dmd_code', 'bnf_code', 'drug_name', 'quantity']
