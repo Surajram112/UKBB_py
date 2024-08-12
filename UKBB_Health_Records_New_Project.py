@@ -238,12 +238,69 @@ load_files(traits_file_ids, traits_folder, local_traits_folder)
 run_command("curl https://raw.githubusercontent.com/Surajram112/UKBB_py/main/new_baseline.py > new_baseline.py")
 import new_baseline
 
+# def read_GP(codes, folder='ukbb_data/', filename='GP_gp_clinical', baseline_filename='Baseline', efficient_format='.parquet'):
+#     # Set up the GP file header
+#     gp_header = ['eid', 'data_provider', 'event_dt', 'read_2', 'read_3', 'value1', 'value2', 'value3', 'dob', 'assess_date', 'event_age', 'prev']
+    
+#     if not codes:
+#         return pl.DataFrame(schema={col: pl.Utf8 for col in gp_header}), pl.DataFrame(schema={col: pl.Utf8 for col in gp_header})
+    
+#     # Read the parquet file using polars
+#     data = pl.read_parquet(folder + filename + efficient_format)
+    
+#     # Filter data using vectorized operations
+#     data2 = data.filter(pl.col('read_3').is_in(codes) | pl.col('read_2').is_in(codes))
+    
+#     if data2.is_empty():
+#         return pl.DataFrame(schema={col: pl.Utf8 for col in gp_header}), pl.DataFrame(schema={col: pl.Utf8 for col in gp_header})
+    
+#     # Load the baseline table
+#     baseline_data = pl.read_parquet(baseline_filename + efficient_format)
+    
+#     # Merge with baseline table
+#     data2 = data2.join(baseline_data.select(['eid', 'dob', 'assess_date']), on='eid')
+    
+#     # Function to check if a value is a valid datetime
+#     def is_not_datetime(value):
+#         try:
+#             pd.to_datetime(value)
+#             return False
+#         except (ValueError, TypeError):
+#             return True
+
+#     # Apply the function to the specified column using map_elements
+#     non_datetime_mask = data2["event_dt"].map_elements(is_not_datetime, return_dtype=pl.Boolean)
+
+#     # Filter the DataFrame based on the mask
+#     non_datetime_df = data2.filter(non_datetime_mask)
+
+#     # Filter out non-datetime rows from the main DataFrame
+#     data2 = data2.filter(~non_datetime_mask)
+        
+#     # Convert date columns to datetime  and float type respectively
+#     data2 = data2.with_columns([                                                                                                                                                 
+#         pl.col('event_dt').str.strptime(pl.Datetime).dt.date(),
+#         pl.col('dob').cast(pl.Datetime).dt.date(),
+#         pl.col('assess_date').cast(pl.Datetime).dt.date(),
+#         pl.col('value1').cast(pl.Float64),
+#         pl.col('value2').cast(pl.Float64),
+#         pl.col('value3').cast(pl.Float64)
+#     ])
+    
+#     data2 = data2.with_columns([
+#         ((pl.col('event_dt') - pl.col('dob')).dt.total_seconds() / (60*60*24*365.25)).alias('event_age'),
+#         (pl.col('event_dt') < pl.col('assess_date')).alias('prev'),
+#         pl.lit('GP').alias('source'),
+#         pl.col('event_dt').alias('date')
+#     ])
+    
+#     return data2, non_datetime_df
+
 def read_GP(codes, folder='ukbb_data/', filename='GP_gp_clinical', baseline_filename='Baseline', efficient_format='.parquet'):
-    # Set up the GP file header
     gp_header = ['eid', 'data_provider', 'event_dt', 'read_2', 'read_3', 'value1', 'value2', 'value3', 'dob', 'assess_date', 'event_age', 'prev']
     
     if not codes:
-        return pl.DataFrame(schema={col: pl.Utf8 for col in gp_header}), pl.DataFrame(schema={col: pl.Utf8 for col in gp_header})
+        return pl.DataFrame(schema={col: pl.Utf8 for col in gp_header})
     
     # Read the parquet file using polars
     data = pl.read_parquet(folder + filename + efficient_format)
@@ -252,7 +309,7 @@ def read_GP(codes, folder='ukbb_data/', filename='GP_gp_clinical', baseline_file
     data2 = data.filter(pl.col('read_3').is_in(codes) | pl.col('read_2').is_in(codes))
     
     if data2.is_empty():
-        return pl.DataFrame(schema={col: pl.Utf8 for col in gp_header}), pl.DataFrame(schema={col: pl.Utf8 for col in gp_header})
+        return pl.DataFrame(schema={col: pl.Utf8 for col in gp_header})
     
     # Load the baseline table
     baseline_data = pl.read_parquet(baseline_filename + efficient_format)
@@ -260,33 +317,39 @@ def read_GP(codes, folder='ukbb_data/', filename='GP_gp_clinical', baseline_file
     # Merge with baseline table
     data2 = data2.join(baseline_data.select(['eid', 'dob', 'assess_date']), on='eid')
     
-    # Function to check if a value is a valid datetime
-    def is_not_datetime(value):
-        try:
-            pd.to_datetime(value)
-            return False
-        except (ValueError, TypeError):
-            return True
+    # Add exclusion columns
+    data2 = data2.with_columns([
+        pl.lit(False).alias('exclude'),
+        pl.lit("").alias('exclude_reason')
+    ])
 
-    # Apply the function to the specified column using map_elements
-    non_datetime_mask = data2["event_dt"].map_elements(is_not_datetime, return_dtype=pl.Boolean)
+    # Convert date columns to datetime and handle invalid dates
+    data2 = data2.with_columns([
+        pl.col('event_dt').str.strptime(pl.Datetime, strict=False).dt.date().alias('event_dt'),
+        pl.col('dob').cast(pl.Datetime, strict=False).dt.date().alias('dob'),
+        pl.col('assess_date').cast(pl.Datetime, strict=False).dt.date().alias('assess_date')
+    ])
 
-    # Filter the DataFrame based on the mask
-    non_datetime_df = data2.filter(non_datetime_mask)
+    # Update exclude and exclude_reason for invalid dates
+    data2 = data2.with_columns([
+        pl.when(pl.col('event_dt').is_null())
+        .then(True)
+        .otherwise(pl.col('exclude'))
+        .alias('exclude'),
+        pl.when(pl.col('event_dt').is_null())
+        .then("Invalid event_dt")
+        .otherwise(pl.col('exclude_reason'))
+        .alias('exclude_reason')
+    ])
 
-    # Filter out non-datetime rows from the main DataFrame
-    data2 = data2.filter(~non_datetime_mask)
-        
-    # Convert date columns to datetime  and float type respectively
-    data2 = data2.with_columns([                                                                                                                                                 
-        pl.col('event_dt').str.strptime(pl.Datetime).dt.date(),
-        pl.col('dob').cast(pl.Datetime).dt.date(),
-        pl.col('assess_date').cast(pl.Datetime).dt.date(),
-        pl.col('value1').cast(pl.Float64),
-        pl.col('value2').cast(pl.Float64),
-        pl.col('value3').cast(pl.Float64)
+    # Convert value columns to float
+    data2 = data2.with_columns([
+        pl.col('value1').cast(pl.Float64, strict=False),
+        pl.col('value2').cast(pl.Float64, strict=False),
+        pl.col('value3').cast(pl.Float64, strict=False)
     ])
     
+    # Calculate event_age and prev
     data2 = data2.with_columns([
         ((pl.col('event_dt') - pl.col('dob')).dt.total_seconds() / (60*60*24*365.25)).alias('event_age'),
         (pl.col('event_dt') < pl.col('assess_date')).alias('prev'),
@@ -294,7 +357,7 @@ def read_GP(codes, folder='ukbb_data/', filename='GP_gp_clinical', baseline_file
         pl.col('event_dt').alias('date')
     ])
     
-    return data2, non_datetime_df
+    return data2
 
 def read_OPCS(codes, folder='ukbb_data/', filename='HES_hesin_oper', baseline_filename='Baseline', extension='.parquet'):
     opcs_header = ['dnx_hesin_oper_id', 'eid', 'ins_index', 'arr_index', 'opdate', 'level', 'oper3', 'oper3_nb', 'oper4', 'oper4_nb', 'posopdur', 'preopdur']
@@ -360,84 +423,6 @@ def read_OPCS(codes, folder='ukbb_data/', filename='HES_hesin_oper', baseline_fi
     ])
     
     return data2.drop('dnx_hesin_oper_id'), non_datetime_df.drop('dnx_hesin_oper_id')
-
-# def read_ICD10(codes, folder='ukbb_data/', diagfile='HES_hesin_diag', recordfile='HES_hesin', baseline_filename='Baseline', extension='.parquet'):
-#     icd10_header = ['dnx_hesin_diag_id', 'eid', 'ins_index', 'arr_index', 'level', 'diag_icd9', 'diag_icd10', 'dnx_hesin_id', 'epistart', 'epiend']
-    
-#     if not codes:
-#         return pl.DataFrame(schema={col: pl.Utf8 for col in icd10_header}), pl.DataFrame(schema={col: pl.Utf8 for col in icd10_header})
-    
-#     # Read the parquet diagnosis file using polars
-#     diag_data = pl.read_parquet(folder + diagfile + extension)
-    
-#     # Filter data using vectorized operations to check if any code is in the strings
-#     data = diag_data.filter(
-#         pl.col('diag_icd10').str.contains('|'.join(codes))
-#     )
-    
-#     if data.is_empty():
-#         return pl.DataFrame(schema={col: pl.Utf8 for col in icd10_header}), pl.DataFrame(schema={col: pl.Utf8 for col in icd10_header})
-    
-#     data.columns = ['dnx_hesin_diag_id', 'eid', 'ins_index', 'arr_index', 'classification', 'diag_icd9', 'diag_icd9_add', 'diag_icd10', 'diag_icd10_add']
-    
-#     data = data.select(['dnx_hesin_diag_id', 'eid', 'ins_index', 'arr_index', 'classification', 'diag_icd9', 'diag_icd10'])
-    
-#     # Read the parquet records file using polars
-#     record_data = pl.read_parquet(folder + recordfile + extension)
-    
-#     record_data = record_data.with_columns([
-#         pl.col('eid').cast(pl.Int64),
-#         pl.col('ins_index').cast(pl.Int64)
-#     ])
-    
-#     # Join with record data
-#     data2 = data.join(record_data, on=['eid', 'ins_index'])
-    
-#     # Function to check if a value is a valid datetime
-#     def is_not_datetime(value):
-#         try:
-#             pd.to_datetime(value)
-#             return False
-#         except (ValueError, TypeError):
-#             return True
-
-#     # Apply the function to both 'epistart' and 'epiend' columns using map_elements
-#     non_datetime_mask_start = data2["epistart"].map_elements(is_not_datetime, return_dtype=pl.Boolean)
-#     non_datetime_mask_end = data2["epiend"].map_elements(is_not_datetime, return_dtype=pl.Boolean)
-
-#     # Combine the masks using the OR operator
-#     combined_non_datetime_mask = non_datetime_mask_start | non_datetime_mask_end
-
-#     # Filter the DataFrame based on the combined mask
-#     non_datetime_df = data2.filter(combined_non_datetime_mask)
-
-#     # Filter out non-datetime rows from the main DataFrame
-#     data2 = data2.filter(~combined_non_datetime_mask)
-    
-#     # Convert dates to datetime
-#     data2 = data2.with_columns([
-#             pl.col('epistart').str.strptime(pl.Datetime).dt.date(),
-#             pl.col('epiend').str.strptime(pl.Datetime).dt.date()
-#         ])
-    
-#     # Load the baseline table
-#     baseline_data = pl.read_parquet(baseline_filename + extension)
-    
-#     # Merge with baseline table
-#     data2 = data2.join(baseline_data.select(['eid', 'dob', 'assess_date']), on='eid')
-    
-#     data2 = data2.with_columns([
-#         ((pl.col('epistart') - pl.col('dob')).dt.total_days() / 365.25).alias('diag_age'),
-#         (pl.col('epiend') < pl.col('assess_date')).alias('prev'),
-#         pl.col('dob').dt.date(),
-#         pl.col('assess_date').dt.date(),
-#         pl.col('epidur').cast(pl.Int64),
-#         pl.col('bedyear').cast(pl.Int64),
-#         pl.lit('HES_ICD10').alias('source'),
-#         pl.col('epistart').alias('date')
-#     ])
-    
-#     return data2.drop(['dnx_hesin_diag_id', 'dnx_hesin_id']), non_datetime_df.drop(['dnx_hesin_diag_id', 'dnx_hesin_id'])
 
 def read_ICD10(codes, folder='ukbb_data/', diagfile='HES_hesin_diag', recordfile='HES_hesin', baseline_filename='Baseline', extension='.parquet'):
     icd10_header = ['dnx_hesin_diag_id', 'eid', 'ins_index', 'arr_index', 'level', 'diag_icd9', 'diag_icd10', 'dnx_hesin_id', 'epistart', 'epiend']
