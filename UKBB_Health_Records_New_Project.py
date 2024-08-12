@@ -600,12 +600,12 @@ def read_selfreport_illness(codes, folder='ukbb_data/', file='selfreport_partici
     if not outlines:
         return pl.DataFrame(), pl.DataFrame()
     
-    data = data.filter(pl.col('eid').is_in(outlines))
+    data2 = data.filter(pl.col('eid').is_in(outlines))
     
-    if data.is_empty():
+    if data2.is_empty():
         return pl.DataFrame(), pl.DataFrame()
     
-    data = data.with_columns([
+    data2 = data2.with_columns([
         pl.col('eid').cast(pl.Int64)
     ])
     
