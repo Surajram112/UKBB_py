@@ -633,17 +633,6 @@ def read_selfreport_illness(codes, folder='ukbb_data/', file='selfreport_partici
     coding6 = pl.read_csv(folder + coding_file, separator='\t')
     coding6 = coding6.filter(pl.col('coding') > 1)
 
-    # # Filter data using vectorized operations
-    # outlines = []
-    # for code in codes:
-    #     meaning = coding6.filter(pl.col('coding') == int(code))['meaning']
-    #     if not meaning.is_empty():
-    #         # Search in all p20002_i* columns, reporting 'Non-cancer illness code, self-reported'
-    #         non_cancer_illness_columns = [col for col in data.columns if col.startswith('p20002_i')]
-    #         for col in non_cancer_illness_columns:
-    #             outline = data.filter(pl.col(col).str.contains(meaning[0]))['eid']
-    #             outlines.extend(outline.to_list())
-    
     # Filter data using vectorized operations
     outlines = []
     for code in codes:
@@ -671,31 +660,28 @@ def read_selfreport_illness(codes, folder='ukbb_data/', file='selfreport_partici
     # Merge with baseline table
     data2 = data.join(baseline_data.select(['eid', 'dob', 'assess_date']), on='eid')
     
-    # Function to check if a value is a valid datetime
-    def is_not_datetime(value):
-        try:
-            pd.to_datetime(value)
-            return False
-        except (ValueError, TypeError):
-            return True
-
-    # Apply the function to both 'dob' and 'assess_date' columns using map_elements
-    non_datetime_mask_dob = data2["dob"].map_elements(is_not_datetime, return_dtype=pl.Boolean)
-    non_datetime_mask_assess = data2["assess_date"].map_elements(is_not_datetime, return_dtype=pl.Boolean)
-
-    # Combine the masks using the OR operator
-    combined_non_datetime_mask = non_datetime_mask_dob | non_datetime_mask_assess
-
-    # Filter the DataFrame based on the combined mask
-    non_datetime_df = data2.filter(combined_non_datetime_mask)
-
-    # Filter out non-datetime rows from the main DataFrame
-    data2 = data2.filter(~combined_non_datetime_mask)
-    
-    # Convert date columns to datetime
+    # Add exclusion columns
     data2 = data2.with_columns([
-        pl.col('dob').cast(pl.Datetime).dt.date(),
-        pl.col('assess_date').cast(pl.Datetime).dt.date()
+        pl.lit(False).alias('exclude'),
+        pl.lit("").alias('exclude_reason')
+    ])
+    
+    # Convert date columns to datetime and handle invalid dates
+    data2 = data2.with_columns([
+        pl.col('dob').cast(pl.Datetime, strict=False).dt.date().alias('dob'),
+        pl.col('assess_date').cast(pl.Datetime, strict=False).dt.date().alias('assess_date')
+    ])
+
+    # Update exclude and exclude_reason for invalid dates
+    data2 = data2.with_columns([
+        pl.when(pl.col('dob').is_null() | pl.col('assess_date').is_null())
+        .then(pl.lit(True))
+        .otherwise(pl.col('exclude'))
+        .alias('exclude'),
+        pl.when(pl.col('dob').is_null() | pl.col('assess_date').is_null())
+        .then(pl.lit("Invalid date"))
+        .otherwise(pl.col('exclude_reason'))
+        .alias('exclude_reason')
     ])
     
     data2 = data2.with_columns([
@@ -703,7 +689,7 @@ def read_selfreport_illness(codes, folder='ukbb_data/', file='selfreport_partici
         pl.col('assess_date').alias('date')
     ])
     
-    return data2, non_datetime_df
+    return data2
 
 def read_selfreport_cancer(codes, folder='ukbb_data/', file='selfreport_participant', baseline_filename='Baseline', coding_file='coding3.tsv', extension='.parquet'):
     if not codes:
