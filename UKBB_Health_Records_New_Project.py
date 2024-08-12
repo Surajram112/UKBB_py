@@ -264,18 +264,6 @@ def read_GP(codes, folder='ukbb_data/', filename='GP_gp_clinical', baseline_file
         pl.lit(False).alias('exclude'),
         pl.lit("").alias('exclude_reason')
     ])
-
-    # Update exclude and exclude_reason for invalid dates
-    data2 = data2.with_columns([
-        pl.when(pl.col('event_dt').is_null())
-        .then(True)
-        .otherwise(pl.col('exclude'))
-        .alias('exclude'),
-        pl.when(pl.col('event_dt').is_null())
-        .then("Invalid event_dt")
-        .otherwise(pl.col('exclude_reason'))
-        .alias('exclude_reason')
-    ])
     
     # Convert date columns to datetime and handle invalid dates
     data2 = data2.with_columns([
@@ -284,6 +272,18 @@ def read_GP(codes, folder='ukbb_data/', filename='GP_gp_clinical', baseline_file
         pl.col('assess_date').cast(pl.Datetime, strict=False).dt.date().alias('assess_date')
     ])
 
+    # Update exclude and exclude_reason for invalid dates
+    data2 = data2.with_columns([
+        pl.when(pl.col('event_dt').is_null())
+        .then(True)
+        .otherwise(pl.col('exclude'))
+        .alias('exclude'),
+        pl.when(pl.col('event_dt').is_null())
+        .then("Missing event_dt")
+        .otherwise(pl.col('exclude_reason'))
+        .alias('exclude_reason')
+    ])
+    
     # Convert value columns to float
     data2 = data2.with_columns([
         pl.col('value1').cast(pl.Float64, strict=False),
