@@ -4,8 +4,10 @@ import re
 import csv
 from collections import Counter
 import pickle
-import pandas as pd
 import polars as pl
+import pandas as pd
+import matplotlib.pyplot as plt
+
 
 # Function to run system commands
 def run_command(command):
@@ -295,8 +297,7 @@ def read_GP(codes, folder='ukbb_data/', filename='GP_gp_clinical', baseline_file
     data2 = data2.with_columns([
         ((pl.col('event_dt') - pl.col('dob')).dt.total_seconds() / (60*60*24*365.25)).alias('event_age'),
         (pl.col('event_dt') < pl.col('assess_date')).alias('prev'),
-        pl.lit('GP').alias('source'),
-        pl.col('event_dt').alias('date')
+        pl.lit('GP').alias('source')
     ])
     
     return data2
@@ -362,8 +363,7 @@ def read_OPCS(codes, folder='ukbb_data/', filename='HES_hesin_oper', baseline_fi
     data2 = data2.with_columns([
         ((pl.col('opdate') - pl.col('dob')).dt.total_days() / 365.25).alias('op_age'),
         (pl.col('opdate') < pl.col('assess_date')).alias('prev'),
-        pl.lit('OPCS').alias('source'),
-        pl.col('opdate').alias('date')
+        pl.lit('OPCS').alias('source')
     ])
     
     return data2.drop('dnx_hesin_oper_id')
@@ -460,8 +460,6 @@ def read_ICD10(codes, folder='ukbb_data/', diagfile='HES_hesin_diag', recordfile
         pl.col('bedyear').cast(pl.Int64),
         pl.lit('HES_ICD10').alias('source')
     ])
-    
-    data2 = data2.with_columns(pl.col('epistart').alias('date'))
 
     return data2.drop(['dnx_hesin_diag_id', 'dnx_hesin_id', 'epistart_invalid', 'epiend_invalid', 'epistart_reason', 'epiend_reason'])
 
@@ -568,8 +566,6 @@ def read_ICD9(codes, folder='ukbb_data/', diagfile='HES_hesin_diag', recordfile=
         pl.lit('HES_ICD9').alias('source')
     ])
     
-    data2 = data2.with_columns(pl.col('epistart').alias('date') if 'epistart' in data2.columns else pl.lit(None).alias('date'))
-
     return data2.drop(['dnx_hesin_diag_id', 'dnx_hesin_id'])
 
 # def read_cancer(codes, folder='ukbb_data/', filename='cancer_participant', baseline_filename='Baseline.csv', extension='.parquet'):
@@ -684,12 +680,7 @@ def read_selfreport_illness(codes, folder='ukbb_data/', file='selfreport_partici
         .alias('exclude_reason')
     ])
     
-    data2 = data2.with_columns([
-        pl.lit('Self').alias('source'),
-        pl.col('assess_date').alias('date')
-    ])
-    
-    return data2
+    return data2.with_columns(pl.lit('Self').alias('source'))
 
 def read_selfreport_cancer(codes, folder='ukbb_data/', file='selfreport_participant', baseline_filename='Baseline', coding_file='coding3.tsv', extension='.parquet'):
     if not codes:
@@ -753,12 +744,7 @@ def read_selfreport_cancer(codes, folder='ukbb_data/', file='selfreport_particip
         .alias('exclude_reason')
     ])
     
-    data2 = data2.with_columns([
-        pl.lit('Self').alias('source'),
-        pl.col('assess_date').alias('date')
-    ])
-    
-    return data2
+    return data2.with_columns(pl.lit('Self').alias('source'))
 
 def read_selfreport_treatment(codes, folder='ukbb_data/', file='selfreport_participant', baseline_filename='Baseline', coding_file='coding4.tsv', extension='.parquet'):
     if not codes:
@@ -824,12 +810,7 @@ def read_selfreport_treatment(codes, folder='ukbb_data/', file='selfreport_parti
         .alias('exclude_reason')
     ])
     
-    data2 = data2.with_columns([
-        pl.lit('Self').alias('source'),
-        pl.col('assess_date').alias('date')
-    ])
-    
-    return data2
+    return data2.with_columns(pl.lit('Self').alias('source'))
 
 def read_selfreport_operation(codes, folder='ukbb_data/', file='selfreport_participant', baseline_filename='Baseline', coding_file='coding4.tsv', extension='.parquet'):
     if not codes:
@@ -896,12 +877,7 @@ def read_selfreport_operation(codes, folder='ukbb_data/', file='selfreport_parti
         .alias('exclude_reason')
     ])
     
-    data2 = data2.with_columns([
-        pl.lit('Self').alias('source'),
-        pl.col('assess_date').alias('date')
-    ])
-    
-    return data2
+    return data2.with_columns(pl.lit('Self').alias('source'))
 
 def first_occurence(ICD10='', GP='', ICD9='', OPCS='', cancer=''):
     ICD10_records = read_ICD10(ICD10).assign(date=lambda x: x['epistart']).loc[:, ['eid', 'date']].assign(source='HES10')
