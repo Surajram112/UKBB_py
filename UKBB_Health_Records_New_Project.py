@@ -290,7 +290,8 @@ def read_GP(codes, folder='ukbb_data/', filename='GP_gp_clinical', baseline_file
     data2 = data2.with_columns([
         ((pl.col('event_dt') - pl.col('dob')).dt.total_seconds() / (60*60*24*365.25)).alias('event_age'),
         (pl.col('event_dt') < pl.col('assess_date')).alias('prev'),
-        pl.lit('GP').alias('source')
+        pl.lit('GP').alias('source'),
+        pl.col('event_dt').alias('date')
     ])
     
     return data2, non_datetime_df
@@ -354,7 +355,8 @@ def read_OPCS(codes, folder='ukbb_data/', filename='HES_hesin_oper', baseline_fi
     data2 = data2.with_columns([
         ((pl.col('opdate') - pl.col('dob')).dt.total_days() / 365.25).alias('op_age'),
         (pl.col('opdate') < pl.col('assess_date')).alias('prev'),
-        pl.lit('OPCS').alias('source')
+        pl.lit('OPCS').alias('source'),
+        pl.col('opdate').alias('date')
     ])
     
     return data2.drop('dnx_hesin_oper_id'), non_datetime_df.drop('dnx_hesin_oper_id')
@@ -539,6 +541,8 @@ def read_ICD9(codes, folder='ukbb_data/', diagfile='HES_hesin_diag', recordfile=
         pl.col('epiorder').cast(pl.Int64),
         pl.lit('HES_ICD9').alias('source')
     ])
+    
+    data2 = data2.with_columns(pl.col('epistart').alias('date') if 'epistart' in data2.columns else pl.lit(None).alias('date'))
 
     return data2.drop(['dnx_hesin_diag_id', 'dnx_hesin_id'])
 
