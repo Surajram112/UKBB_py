@@ -245,7 +245,7 @@ def read_GP(codes, folder='ukbb_data/', filename='GP_gp_clinical', baseline_file
         return pl.DataFrame(schema={col: pl.Utf8 for col in gp_header})
     
     # Read the parquet file using polars
-    data = pl.read_parquet(folder + filename + efficient_format)
+    data = pl.read_parquet(folder + filename + efficient_format, use_pyarrow=True)
     
     # Filter data using vectorized operations
     data2 = data.filter(pl.col('read_3').is_in(codes) | pl.col('read_2').is_in(codes))
@@ -375,7 +375,7 @@ def read_ICD10(codes, folder='ukbb_data/', diagfile='HES_hesin_diag', recordfile
         return pl.DataFrame(schema={col: pl.Utf8 for col in icd10_header})
     
     # Read the parquet diagnosis file using polars
-    diag_data = pl.read_parquet(folder + diagfile + extension)
+    diag_data = pl.read_parquet(folder + diagfile + extension, use_pyarrow=True)
     
     # Filter data using vectorized operations to check if any code is in the strings
     data = diag_data.filter(
@@ -388,7 +388,7 @@ def read_ICD10(codes, folder='ukbb_data/', diagfile='HES_hesin_diag', recordfile
     data = data.select(['dnx_hesin_diag_id', 'eid', 'ins_index', 'arr_index', 'level', 'diag_icd9', 'diag_icd10'])
     
     # Read the parquet records file using polars
-    record_data = pl.read_parquet(folder + recordfile + extension)
+    record_data = pl.read_parquet(folder + recordfile + extension, use_pyarrow=True)
     
     record_data = record_data.with_columns([
         pl.col('eid').cast(pl.Int64),
@@ -472,7 +472,7 @@ def read_ICD9(codes, folder='ukbb_data/', diagfile='HES_hesin_diag', recordfile=
         return pl.DataFrame(schema={col: pl.Utf8 for col in icd9_header}), pl.DataFrame(schema={col: pl.Utf8 for col in icd9_header})
     
     # Read the parquet diagnosis file using polars
-    diag_data = pl.read_parquet(folder + diagfile + extension)
+    diag_data = pl.read_parquet(folder + diagfile + extension, use_pyarrow=True)
     
     # Filter data using vectorized operations to check if any code is in the strings
     data = diag_data.filter(
@@ -487,7 +487,7 @@ def read_ICD9(codes, folder='ukbb_data/', diagfile='HES_hesin_diag', recordfile=
     data = data.select(['dnx_hesin_diag_id', 'eid', 'ins_index', 'arr_index', 'classification', 'diag_icd9', 'diag_icd10'])
     
     # Read the parquet records file using polars
-    record_data = pl.read_parquet(folder + recordfile + extension)
+    record_data = pl.read_parquet(folder + recordfile + extension, use_pyarrow=True)
     
     record_data = record_data.with_columns([
         pl.col('eid').cast(pl.Int64),
@@ -627,7 +627,7 @@ def read_selfreport_illness(codes, folder='ukbb_data/', file='selfreport_partici
         return pl.DataFrame(), pl.DataFrame()
     
     # Read the parquet file using polars
-    data = pl.read_parquet(folder + file + extension)
+    data = pl.read_parquet(folder + file + extension, use_pyarrow=True)
     
     # Read the coding6 file
     coding6 = pl.read_csv(folder + coding_file, separator='\t')
@@ -666,7 +666,7 @@ def read_selfreport_illness(codes, folder='ukbb_data/', file='selfreport_partici
     ])
     
     # Load the baseline table
-    baseline_data = pl.read_parquet(baseline_filename + extension)
+    baseline_data = pl.read_parquet(baseline_filename + extension, use_pyarrow=True)
     
     # Merge with baseline table
     data2 = data.join(baseline_data.select(['eid', 'dob', 'assess_date']), on='eid')
@@ -710,7 +710,7 @@ def read_selfreport_cancer(codes, folder='ukbb_data/', file='selfreport_particip
         return pl.DataFrame(), pl.DataFrame()
     
     # Read the parquet file using polars
-    data = pl.read_parquet(folder + file + extension)
+    data = pl.read_parquet(folder + file + extension, use_pyarrow=True)
     
     # Read the coding3 file
     coding3 = pl.read_csv(folder + coding_file, separator='\t')
@@ -738,7 +738,7 @@ def read_selfreport_cancer(codes, folder='ukbb_data/', file='selfreport_particip
     ])
     
     # Load the baseline table
-    baseline_data = pl.read_parquet(baseline_filename + extension)
+    baseline_data = pl.read_parquet(baseline_filename + extension, use_pyarrow=True)
     
     # Merge with baseline table
     data2 = data.join(baseline_data.select(['eid', 'dob', 'assess_date']), on='eid')
@@ -779,7 +779,7 @@ def read_selfreport_cancer(codes, folder='ukbb_data/', file='selfreport_particip
 
 def read_selfreport_treatment(codes, folder='ukbb_data/', file='selfreport_participant', baseline_filename='Baseline', coding_file='coding4.tsv', extension='.parquet'):
     # Read the parquet files using polars
-    data = pl.read_parquet(folder + file + extension)
+    data = pl.read_parquet(folder + file + extension, use_pyarrow=True)
     coding4 = pl.read_csv(folder + coding_file, separator='\t')
     
     # Filter coding4 data
@@ -817,7 +817,7 @@ def read_selfreport_treatment(codes, folder='ukbb_data/', file='selfreport_parti
     ])
     
     # Load the baseline table
-    baseline_data = pl.read_parquet(baseline_filename + extension)
+    baseline_data = pl.read_parquet(baseline_filename + extension, use_pyarrow=True)
     
     # Merge with baseline table
     data2 = data.join(baseline_data.select(['eid', 'dob', 'assess_date']), on='eid')
@@ -858,7 +858,7 @@ def read_selfreport_treatment(codes, folder='ukbb_data/', file='selfreport_parti
 
 def read_selfreport_operation(codes, folder='ukbb_data/', file='selfreport_participant', baseline_filename='Baseline', coding_file='coding4.tsv', extension='.parquet'):
     # Read the parquet files using polars
-    data = pl.read_parquet(folder + file + extension)
+    data = pl.read_parquet(folder + file + extension, use_pyarrow=True)
     coding4 = pl.read_csv(folder + coding_file, separator='\t')
     
     # Filter coding4 data
@@ -887,7 +887,7 @@ def read_selfreport_operation(codes, folder='ukbb_data/', file='selfreport_parti
     ])
     
     # Load the baseline table
-    baseline_data = pl.read_parquet(baseline_filename + extension)
+    baseline_data = pl.read_parquet(baseline_filename + extension, use_pyarrow=True)
     
     # Merge with baseline table
     data2 = data.join(baseline_data.select(['eid', 'dob', 'assess_date']), on='eid')
