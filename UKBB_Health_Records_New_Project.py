@@ -705,7 +705,7 @@ def read_selfreport_cancer(codes, folder='ukbb_data/', file='selfreport_particip
     # Filter data using vectorized operations            
     outlines = []
     for code in codes:
-        # Search in all p20001_i* columns, related to '	Cancer code, self-reported'
+        # Search in all p20001_i* columns, related to 'Cancer code, self-reported'
         treatment_columns = [col for col in data.columns if col.startswith('p20001_i')]
         for col in treatment_columns:
             outline = data.filter(pl.col(col).str.contains(code))['eid']
@@ -729,31 +729,28 @@ def read_selfreport_cancer(codes, folder='ukbb_data/', file='selfreport_particip
     # Merge with baseline table
     data2 = data.join(baseline_data.select(['eid', 'dob', 'assess_date']), on='eid')
     
-    # Function to check if a value is a valid datetime
-    def is_not_datetime(value):
-        try:
-            pd.to_datetime(value)
-            return False
-        except (ValueError, TypeError):
-            return True
-
-    # Apply the function to both 'dob' and 'assess_date' columns using map_elements
-    non_datetime_mask_dob = data2["dob"].map_elements(is_not_datetime, return_dtype=pl.Boolean)
-    non_datetime_mask_assess = data2["assess_date"].map_elements(is_not_datetime, return_dtype=pl.Boolean)
-
-    # Combine the masks using the OR operator
-    combined_non_datetime_mask = non_datetime_mask_dob | non_datetime_mask_assess
-
-    # Filter the DataFrame based on the combined mask
-    non_datetime_df = data2.filter(combined_non_datetime_mask)
-
-    # Filter out non-datetime rows from the main DataFrame
-    data2 = data2.filter(~combined_non_datetime_mask)
-    
-    # Convert date columns to datetime
+    # Add exclusion columns
     data2 = data2.with_columns([
-        pl.col('dob').cast(pl.Datetime).dt.date(),
-        pl.col('assess_date').cast(pl.Datetime).dt.date()
+        pl.lit(False).alias('exclude'),
+        pl.lit("").alias('exclude_reason')
+    ])
+    
+    # Convert date columns to datetime and handle invalid dates
+    data2 = data2.with_columns([
+        pl.col('dob').cast(pl.Datetime, strict=False).dt.date().alias('dob'),
+        pl.col('assess_date').cast(pl.Datetime, strict=False).dt.date().alias('assess_date')
+    ])
+
+    # Update exclude and exclude_reason for invalid dates
+    data2 = data2.with_columns([
+        pl.when(pl.col('dob').is_null() | pl.col('assess_date').is_null())
+        .then(pl.lit(True))
+        .otherwise(pl.col('exclude'))
+        .alias('exclude'),
+        pl.when(pl.col('dob').is_null() | pl.col('assess_date').is_null())
+        .then(pl.lit("Invalid date"))
+        .otherwise(pl.col('exclude_reason'))
+        .alias('exclude_reason')
     ])
     
     data2 = data2.with_columns([
@@ -761,25 +758,20 @@ def read_selfreport_cancer(codes, folder='ukbb_data/', file='selfreport_particip
         pl.col('assess_date').alias('date')
     ])
     
-    return data2, non_datetime_df
+    return data2
 
 def read_selfreport_treatment(codes, folder='ukbb_data/', file='selfreport_participant', baseline_filename='Baseline', coding_file='coding4.tsv', extension='.parquet'):
-    # Read the parquet files using polars
+    if not codes:
+        return pl.DataFrame(), pl.DataFrame()
+    
+    # Read the parquet file using polars
     data = pl.read_parquet(folder + file + extension, use_pyarrow=True)
+    
+    # Read the coding4 file
     coding4 = pl.read_csv(folder + coding_file, separator='\t')
     
     # Filter coding4 data
     coding4 = coding4.filter(pl.col('coding') > 1)
-    
-    # outlines = []
-    # for code in codes:
-    #     meaning = coding4.filter(pl.col('coding') == int(code))['meaning']
-    #     if not meaning.is_empty():
-    #         # Search in all p20003_i* columns, reported as 'Treatment/medication code'
-    #         treatment_columns = [col for col in data.columns if col.startswith('p20003_i')]
-    #         for col in treatment_columns:
-    #             outline = data.filter(pl.col(col).str.contains(meaning[0]))['eid']
-    #             outlines.extend(outline.to_list())
     
     # Filter data using vectorized operations
     outlines = []
@@ -808,31 +800,28 @@ def read_selfreport_treatment(codes, folder='ukbb_data/', file='selfreport_parti
     # Merge with baseline table
     data2 = data.join(baseline_data.select(['eid', 'dob', 'assess_date']), on='eid')
     
-    # Function to check if a value is a valid datetime
-    def is_not_datetime(value):
-        try:
-            pd.to_datetime(value)
-            return False
-        except (ValueError, TypeError):
-            return True
-
-    # Apply the function to both 'dob' and 'assess_date' columns using map_elements
-    non_datetime_mask_dob = data2["dob"].map_elements(is_not_datetime, return_dtype=pl.Boolean)
-    non_datetime_mask_assess = data2["assess_date"].map_elements(is_not_datetime, return_dtype=pl.Boolean)
-
-    # Combine the masks using the OR operator
-    combined_non_datetime_mask = non_datetime_mask_dob | non_datetime_mask_assess
-
-    # Filter the DataFrame based on the combined mask
-    non_datetime_df = data2.filter(combined_non_datetime_mask)
-
-    # Filter out non-datetime rows from the main DataFrame
-    data2 = data2.filter(~combined_non_datetime_mask)
-    
-    # Convert date columns to datetime
+    # Add exclusion columns
     data2 = data2.with_columns([
-        pl.col('dob').cast(pl.Datetime).dt.date(),
-        pl.col('assess_date').cast(pl.Datetime).dt.date()
+        pl.lit(False).alias('exclude'),
+        pl.lit("").alias('exclude_reason')
+    ])
+    
+    # Convert date columns to datetime and handle invalid dates
+    data2 = data2.with_columns([
+        pl.col('dob').cast(pl.Datetime, strict=False).dt.date().alias('dob'),
+        pl.col('assess_date').cast(pl.Datetime, strict=False).dt.date().alias('assess_date')
+    ])
+
+    # Update exclude and exclude_reason for invalid dates
+    data2 = data2.with_columns([
+        pl.when(pl.col('dob').is_null() | pl.col('assess_date').is_null())
+        .then(pl.lit(True))
+        .otherwise(pl.col('exclude'))
+        .alias('exclude'),
+        pl.when(pl.col('dob').is_null() | pl.col('assess_date').is_null())
+        .then(pl.lit("Invalid date"))
+        .otherwise(pl.col('exclude_reason'))
+        .alias('exclude_reason')
     ])
     
     data2 = data2.with_columns([
@@ -840,11 +829,16 @@ def read_selfreport_treatment(codes, folder='ukbb_data/', file='selfreport_parti
         pl.col('assess_date').alias('date')
     ])
     
-    return data2, non_datetime_df
+    return data2
 
 def read_selfreport_operation(codes, folder='ukbb_data/', file='selfreport_participant', baseline_filename='Baseline', coding_file='coding4.tsv', extension='.parquet'):
-    # Read the parquet files using polars
+    if not codes:
+        return pl.DataFrame(), pl.DataFrame()
+    
+    # Read the parquet file using polars
     data = pl.read_parquet(folder + file + extension, use_pyarrow=True)
+    
+    # Read the coding4 file
     coding4 = pl.read_csv(folder + coding_file, separator='\t')
     
     # Filter coding4 data
@@ -878,31 +872,28 @@ def read_selfreport_operation(codes, folder='ukbb_data/', file='selfreport_parti
     # Merge with baseline table
     data2 = data.join(baseline_data.select(['eid', 'dob', 'assess_date']), on='eid')
     
-    # Function to check if a value is a valid datetime
-    def is_not_datetime(value):
-        try:
-            pd.to_datetime(value)
-            return False
-        except (ValueError, TypeError):
-            return True
-
-    # Apply the function to both 'dob' and 'assess_date' columns using map_elements
-    non_datetime_mask_dob = data2["dob"].map_elements(is_not_datetime, return_dtype=pl.Boolean)
-    non_datetime_mask_assess = data2["assess_date"].map_elements(is_not_datetime, return_dtype=pl.Boolean)
-
-    # Combine the masks using the OR operator
-    combined_non_datetime_mask = non_datetime_mask_dob | non_datetime_mask_assess
-
-    # Filter the DataFrame based on the combined mask
-    non_datetime_df = data2.filter(combined_non_datetime_mask)
-
-    # Filter out non-datetime rows from the main DataFrame
-    data2 = data2.filter(~combined_non_datetime_mask)
-    
-    # Convert date columns to datetime
+    # Add exclusion columns
     data2 = data2.with_columns([
-        pl.col('dob').cast(pl.Datetime).dt.date(),
-        pl.col('assess_date').cast(pl.Datetime).dt.date()
+        pl.lit(False).alias('exclude'),
+        pl.lit("").alias('exclude_reason')
+    ])
+    
+    # Convert date columns to datetime and handle invalid dates
+    data2 = data2.with_columns([
+        pl.col('dob').cast(pl.Datetime, strict=False).dt.date().alias('dob'),
+        pl.col('assess_date').cast(pl.Datetime, strict=False).dt.date().alias('assess_date')
+    ])
+
+    # Update exclude and exclude_reason for invalid dates
+    data2 = data2.with_columns([
+        pl.when(pl.col('dob').is_null() | pl.col('assess_date').is_null())
+        .then(pl.lit(True))
+        .otherwise(pl.col('exclude'))
+        .alias('exclude'),
+        pl.when(pl.col('dob').is_null() | pl.col('assess_date').is_null())
+        .then(pl.lit("Invalid date"))
+        .otherwise(pl.col('exclude_reason'))
+        .alias('exclude_reason')
     ])
     
     data2 = data2.with_columns([
@@ -910,7 +901,7 @@ def read_selfreport_operation(codes, folder='ukbb_data/', file='selfreport_parti
         pl.col('assess_date').alias('date')
     ])
     
-    return data2, non_datetime_df
+    return data2
 
 def first_occurence(ICD10='', GP='', ICD9='', OPCS='', cancer=''):
     ICD10_records = read_ICD10(ICD10).assign(date=lambda x: x['epistart']).loc[:, ['eid', 'date']].assign(source='HES10')
