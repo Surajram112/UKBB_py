@@ -289,7 +289,7 @@ def read_GP(codes, folder='ukbb_data/', filename='GP_gp_clinical', efficient_for
     
     return data2
 
-def read_OPCS(codes, folder='ukbb_data/', filename='HES_hesin_oper', baseline_filename='Baseline', extension='.parquet'):
+def read_OPCS(codes, folder='ukbb_data/', filename='HES_hesin_oper', extension='.parquet'):
     opcs_header = ['dnx_hesin_oper_id', 'eid', 'ins_index', 'arr_index', 'opdate', 'level', 'oper3', 'oper3_nb', 'oper4', 'oper4_nb', 'posopdur', 'preopdur']
     
     if not codes:
@@ -315,12 +315,6 @@ def read_OPCS(codes, folder='ukbb_data/', filename='HES_hesin_oper', baseline_fi
         pl.col('preopdur').cast(pl.Int64)
     ])
     
-    # Load the baseline table
-    baseline_data = pl.read_parquet(baseline_filename + extension)
-    
-    # Merge with baseline table
-    data2 = data2.join(baseline_data.select(['eid', 'dob', 'assess_date']), on='eid')
-    
     # Add exclusion columns
     data2 = data2.with_columns([
         pl.lit(False).alias('exclude'),
@@ -329,9 +323,7 @@ def read_OPCS(codes, folder='ukbb_data/', filename='HES_hesin_oper', baseline_fi
     
     # Convert date columns to datetime and handle invalid dates
     data2 = data2.with_columns([
-        pl.col('opdate').str.strptime(pl.Datetime, strict=False).dt.date().alias('opdate'),
-        pl.col('dob').cast(pl.Datetime, strict=False).dt.date().alias('dob'),
-        pl.col('assess_date').cast(pl.Datetime, strict=False).dt.date().alias('assess_date')
+        pl.col('opdate').str.strptime(pl.Datetime, strict=False).dt.date().alias('opdate')
     ])
 
     # Update exclude and exclude_reason for invalid dates
@@ -348,14 +340,12 @@ def read_OPCS(codes, folder='ukbb_data/', filename='HES_hesin_oper', baseline_fi
     
     # Calculate op_age and prev
     data2 = data2.with_columns([
-        ((pl.col('opdate') - pl.col('dob')).dt.total_days() / 365.25).alias('op_age'),
-        (pl.col('opdate') < pl.col('assess_date')).alias('prev'),
         pl.lit('OPCS').alias('source')
     ])
     
     return data2.drop('dnx_hesin_oper_id')
 
-def read_ICD10(codes, folder='ukbb_data/', diagfile='HES_hesin_diag', recordfile='HES_hesin', baseline_filename='Baseline', extension='.parquet'):
+def read_ICD10(codes, folder='ukbb_data/', diagfile='HES_hesin_diag', recordfile='HES_hesin', extension='.parquet'):
     icd10_header = ['dnx_hesin_diag_id', 'eid', 'ins_index', 'arr_index', 'level', 'diag_icd9', 'diag_icd10', 'dnx_hesin_id', 'epistart', 'epiend']
     
     if not codes:
@@ -432,17 +422,8 @@ def read_ICD10(codes, folder='ukbb_data/', diagfile='HES_hesin_diag', recordfile
         .alias('exclude_reason')
     ])
 
-    # Load the baseline table
-    baseline_data = pl.read_parquet(baseline_filename + extension)
-
-    # Merge with baseline table
-    data2 = data2.join(baseline_data.select(['eid', 'dob', 'assess_date']), on='eid')
-
     data2 = data2.with_columns([
-        ((pl.col('epistart') - pl.col('dob')).dt.total_days() / 365.25).alias('diag_age'),
-        (pl.col('epiend') < pl.col('assess_date')).alias('prev'),
-        pl.col('dob').dt.date(),
-        pl.col('assess_date').dt.date(),
+        pl.col('eid').cast(pl.Int64),
         pl.col('epidur').cast(pl.Int64),
         pl.col('bedyear').cast(pl.Int64),
         pl.lit('HES_ICD10').alias('source')
@@ -450,7 +431,7 @@ def read_ICD10(codes, folder='ukbb_data/', diagfile='HES_hesin_diag', recordfile
 
     return data2.drop(['dnx_hesin_diag_id', 'dnx_hesin_id', 'epistart_invalid', 'epiend_invalid', 'epistart_reason', 'epiend_reason'])
 
-def read_ICD9(codes, folder='ukbb_data/', diagfile='HES_hesin_diag', recordfile='HES_hesin', baseline_filename='Baseline', extension='.parquet'):
+def read_ICD9(codes, folder='ukbb_data/', diagfile='HES_hesin_diag', recordfile='HES_hesin', extension='.parquet'):
     icd9_header = ['dnx_hesin_diag_id', 'eid', 'ins_index', 'arr_index', 'level', 'diag_icd9', 'diag_icd10', 'dnx_hesin_id', 'epistart', 'epiend']
     
     if not codes:
@@ -536,17 +517,8 @@ def read_ICD9(codes, folder='ukbb_data/', diagfile='HES_hesin_diag', recordfile=
     # Drop temporary columns
     data2 = data2.drop(['epistart_invalid', 'epiend_invalid', 'epistart_reason', 'epiend_reason'])
 
-    # Load the baseline table
-    baseline_data = pl.read_parquet(baseline_filename + extension)
-
-    # Merge with baseline table
-    data2 = data2.join(baseline_data.select(['eid', 'dob', 'assess_date']), on='eid')
-
     data2 = data2.with_columns([
-        ((pl.col('epistart') - pl.col('dob')).dt.total_days() / 365.25).alias('diag_age'),
-        (pl.col('epiend') < pl.col('assess_date')).alias('prev'),
-        pl.col('dob').dt.date(),
-        pl.col('assess_date').dt.date(),
+        pl.col('eid').cast(pl.Int64),
         pl.col('epidur').cast(pl.Int64),
         pl.col('bedyear').cast(pl.Int64),
         pl.col('epiorder').cast(pl.Int64),
@@ -605,7 +577,7 @@ def read_ICD9(codes, folder='ukbb_data/', diagfile='HES_hesin_diag', recordfile=
     
 #     return data
 
-def read_selfreport_illness(codes, folder='ukbb_data/', file='selfreport_participant', baseline_filename='Baseline', coding_file='coding6.tsv', extension='.parquet'):
+def read_selfreport_illness(codes, folder='ukbb_data/', file='selfreport_participant', coding_file='coding6.tsv', extension='.parquet'):
     if not codes:
         return pl.DataFrame(), pl.DataFrame()
     
@@ -637,39 +609,15 @@ def read_selfreport_illness(codes, folder='ukbb_data/', file='selfreport_partici
         pl.col('eid').cast(pl.Int64)
     ])
     
-    # Load the baseline table
-    baseline_data = pl.read_parquet(baseline_filename + extension, use_pyarrow=True)
-    
-    # Merge with baseline table
-    data2 = data.join(baseline_data.select(['eid', 'dob', 'assess_date']), on='eid')
-    
     # Add exclusion columns
     data2 = data2.with_columns([
         pl.lit(False).alias('exclude'),
         pl.lit("").alias('exclude_reason')
     ])
     
-    # Convert date columns to datetime and handle invalid dates
-    data2 = data2.with_columns([
-        pl.col('dob').cast(pl.Datetime, strict=False).dt.date().alias('dob'),
-        pl.col('assess_date').cast(pl.Datetime, strict=False).dt.date().alias('assess_date')
-    ])
-
-    # Update exclude and exclude_reason for invalid dates
-    data2 = data2.with_columns([
-        pl.when(pl.col('dob').is_null() | pl.col('assess_date').is_null())
-        .then(pl.lit(True))
-        .otherwise(pl.col('exclude'))
-        .alias('exclude'),
-        pl.when(pl.col('dob').is_null() | pl.col('assess_date').is_null())
-        .then(pl.lit("Invalid date"))
-        .otherwise(pl.col('exclude_reason'))
-        .alias('exclude_reason')
-    ])
-    
     return data2.with_columns(pl.lit('Self').alias('source'))
 
-def read_selfreport_cancer(codes, folder='ukbb_data/', file='selfreport_participant', baseline_filename='Baseline', coding_file='coding3.tsv', extension='.parquet'):
+def read_selfreport_cancer(codes, folder='ukbb_data/', file='selfreport_participant', coding_file='coding3.tsv', extension='.parquet'):
     if not codes:
         return pl.DataFrame(), pl.DataFrame()
     
@@ -701,39 +649,15 @@ def read_selfreport_cancer(codes, folder='ukbb_data/', file='selfreport_particip
         pl.col('eid').cast(pl.Int64)
     ])
     
-    # Load the baseline table
-    baseline_data = pl.read_parquet(baseline_filename + extension, use_pyarrow=True)
-    
-    # Merge with baseline table
-    data2 = data.join(baseline_data.select(['eid', 'dob', 'assess_date']), on='eid')
-    
     # Add exclusion columns
     data2 = data2.with_columns([
         pl.lit(False).alias('exclude'),
         pl.lit("").alias('exclude_reason')
     ])
     
-    # Convert date columns to datetime and handle invalid dates
-    data2 = data2.with_columns([
-        pl.col('dob').cast(pl.Datetime, strict=False).dt.date().alias('dob'),
-        pl.col('assess_date').cast(pl.Datetime, strict=False).dt.date().alias('assess_date')
-    ])
-
-    # Update exclude and exclude_reason for invalid dates
-    data2 = data2.with_columns([
-        pl.when(pl.col('dob').is_null() | pl.col('assess_date').is_null())
-        .then(pl.lit(True))
-        .otherwise(pl.col('exclude'))
-        .alias('exclude'),
-        pl.when(pl.col('dob').is_null() | pl.col('assess_date').is_null())
-        .then(pl.lit("Invalid date"))
-        .otherwise(pl.col('exclude_reason'))
-        .alias('exclude_reason')
-    ])
-    
     return data2.with_columns(pl.lit('Self').alias('source'))
 
-def read_selfreport_treatment(codes, folder='ukbb_data/', file='selfreport_participant', baseline_filename='Baseline', coding_file='coding4.tsv', extension='.parquet'):
+def read_selfreport_treatment(codes, folder='ukbb_data/', file='selfreport_participant', coding_file='coding4.tsv', extension='.parquet'):
     if not codes:
         return pl.DataFrame(), pl.DataFrame()
     
@@ -767,39 +691,15 @@ def read_selfreport_treatment(codes, folder='ukbb_data/', file='selfreport_parti
         pl.col('eid').cast(pl.Int64)
     ])
     
-    # Load the baseline table
-    baseline_data = pl.read_parquet(baseline_filename + extension, use_pyarrow=True)
-    
-    # Merge with baseline table
-    data2 = data.join(baseline_data.select(['eid', 'dob', 'assess_date']), on='eid')
-    
     # Add exclusion columns
     data2 = data2.with_columns([
         pl.lit(False).alias('exclude'),
         pl.lit("").alias('exclude_reason')
     ])
     
-    # Convert date columns to datetime and handle invalid dates
-    data2 = data2.with_columns([
-        pl.col('dob').cast(pl.Datetime, strict=False).dt.date().alias('dob'),
-        pl.col('assess_date').cast(pl.Datetime, strict=False).dt.date().alias('assess_date')
-    ])
-
-    # Update exclude and exclude_reason for invalid dates
-    data2 = data2.with_columns([
-        pl.when(pl.col('dob').is_null() | pl.col('assess_date').is_null())
-        .then(pl.lit(True))
-        .otherwise(pl.col('exclude'))
-        .alias('exclude'),
-        pl.when(pl.col('dob').is_null() | pl.col('assess_date').is_null())
-        .then(pl.lit("Invalid date"))
-        .otherwise(pl.col('exclude_reason'))
-        .alias('exclude_reason')
-    ])
-    
     return data2.with_columns(pl.lit('Self').alias('source'))
 
-def read_selfreport_operation(codes, folder='ukbb_data/', file='selfreport_participant', baseline_filename='Baseline', coding_file='coding4.tsv', extension='.parquet'):
+def read_selfreport_operation(codes, folder='ukbb_data/', file='selfreport_participant', coding_file='coding4.tsv', extension='.parquet'):
     if not codes:
         return pl.DataFrame(), pl.DataFrame()
     
@@ -825,43 +725,19 @@ def read_selfreport_operation(codes, folder='ukbb_data/', file='selfreport_parti
     if not outlines:
         return pl.DataFrame(), pl.DataFrame()
     
-    data = data.filter(pl.col('eid').is_in(outlines))
+    data2 = data.filter(pl.col('eid').is_in(outlines))
     
-    if data.is_empty():
+    if data2.is_empty():
         return pl.DataFrame(), pl.DataFrame()
     
-    data = data.with_columns([
+    data2 = data2.with_columns([
         pl.col('eid').cast(pl.Int64)
     ])
-    
-    # Load the baseline table
-    baseline_data = pl.read_parquet(baseline_filename + extension, use_pyarrow=True)
-    
-    # Merge with baseline table
-    data2 = data.join(baseline_data.select(['eid', 'dob', 'assess_date']), on='eid')
     
     # Add exclusion columns
     data2 = data2.with_columns([
         pl.lit(False).alias('exclude'),
         pl.lit("").alias('exclude_reason')
-    ])
-    
-    # Convert date columns to datetime and handle invalid dates
-    data2 = data2.with_columns([
-        pl.col('dob').cast(pl.Datetime, strict=False).dt.date().alias('dob'),
-        pl.col('assess_date').cast(pl.Datetime, strict=False).dt.date().alias('assess_date')
-    ])
-
-    # Update exclude and exclude_reason for invalid dates
-    data2 = data2.with_columns([
-        pl.when(pl.col('dob').is_null() | pl.col('assess_date').is_null())
-        .then(pl.lit(True))
-        .otherwise(pl.col('exclude'))
-        .alias('exclude'),
-        pl.when(pl.col('dob').is_null() | pl.col('assess_date').is_null())
-        .then(pl.lit("Invalid date"))
-        .otherwise(pl.col('exclude_reason'))
-        .alias('exclude_reason')
     ])
     
     return data2.with_columns(pl.lit('Self').alias('source'))
