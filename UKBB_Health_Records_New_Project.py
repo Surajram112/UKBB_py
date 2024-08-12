@@ -279,7 +279,7 @@ def read_GP(codes, folder='ukbb_data/', filename='GP_gp_clinical', baseline_file
         .otherwise(pl.col('exclude'))
         .alias('exclude'),
         pl.when(pl.col('event_dt').is_null())
-        .then("Missing event_dt")
+        .then(pl.lit("Missing event_dt"))
         .otherwise(pl.col('exclude_reason'))
         .alias('exclude_reason')
     ])
@@ -333,30 +333,32 @@ def read_OPCS(codes, folder='ukbb_data/', filename='HES_hesin_oper', baseline_fi
     # Merge with baseline table
     data2 = data2.join(baseline_data.select(['eid', 'dob', 'assess_date']), on='eid')
     
-    # Function to check if a value is a valid datetime
-    def is_not_datetime(value):
-        try:
-            pd.to_datetime(value)
-            return False
-        except (ValueError, TypeError):
-            return True
-
-    # Apply the function to the specified column using map_elements
-    non_datetime_mask = data2["opdate"].map_elements(is_not_datetime, return_dtype=pl.Boolean)
-
-    # Filter the DataFrame based on the mask
-    non_datetime_df = data2.filter(non_datetime_mask)
-
-    # Filter out non-datetime rows from the main DataFrame
-    data2 = data2.filter(~non_datetime_mask)
-    
-    # Convert date columns to datetime
-    data2 = data2.with_columns([                                                                                                                                                 
-        pl.col('opdate').str.strptime(pl.Datetime).dt.date(),
-        pl.col('dob').cast(pl.Datetime).dt.date(),
-        pl.col('assess_date').cast(pl.Datetime).dt.date()
+    # Add exclusion columns
+    data2 = data2.with_columns([
+        pl.lit(False).alias('exclude'),
+        pl.lit("").alias('exclude_reason')
     ])
     
+    # Convert date columns to datetime and handle invalid dates
+    data2 = data2.with_columns([
+        pl.col('opdate').str.strptime(pl.Datetime, strict=False).dt.date().alias('opdate'),
+        pl.col('dob').cast(pl.Datetime, strict=False).dt.date().alias('dob'),
+        pl.col('assess_date').cast(pl.Datetime, strict=False).dt.date().alias('assess_date')
+    ])
+
+    # Update exclude and exclude_reason for invalid dates
+    data2 = data2.with_columns([
+        pl.when(pl.col('opdate').is_null())
+        .then(True)
+        .otherwise(pl.col('exclude'))
+        .alias('exclude'),
+        pl.when(pl.col('opdate').is_null())
+        .then(pl.lit("Missing opdate"))
+        .otherwise(pl.col('exclude_reason'))
+        .alias('exclude_reason')
+    ])
+    
+    # Calculate op_age and prev
     data2 = data2.with_columns([
         ((pl.col('opdate') - pl.col('dob')).dt.total_days() / 365.25).alias('op_age'),
         (pl.col('opdate') < pl.col('assess_date')).alias('prev'),
@@ -364,7 +366,7 @@ def read_OPCS(codes, folder='ukbb_data/', filename='HES_hesin_oper', baseline_fi
         pl.col('opdate').alias('date')
     ])
     
-    return data2.drop('dnx_hesin_oper_id'), non_datetime_df.drop('dnx_hesin_oper_id')
+    return data2.drop('dnx_hesin_oper_id')
 
 def read_ICD10(codes, folder='ukbb_data/', diagfile='HES_hesin_diag', recordfile='HES_hesin', baseline_filename='Baseline', extension='.parquet'):
     icd10_header = ['dnx_hesin_diag_id', 'eid', 'ins_index', 'arr_index', 'level', 'diag_icd9', 'diag_icd10', 'dnx_hesin_id', 'epistart', 'epiend']
