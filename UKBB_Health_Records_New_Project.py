@@ -673,7 +673,8 @@ def read_selfreport_illness(codes, folder='ukbb_data/', file='selfreport_partici
     ])
     
     data2 = data2.with_columns([
-        pl.lit('Self').alias('source')
+        pl.lit('Self').alias('source'),
+        pl.col('assess_date').alias('date')
     ])
     
     return data2, non_datetime_df
@@ -744,7 +745,8 @@ def read_selfreport_cancer(codes, folder='ukbb_data/', file='selfreport_particip
     ])
     
     data2 = data2.with_columns([
-        pl.lit('Self').alias('source')
+        pl.lit('Self').alias('source'),
+        pl.col('assess_date').alias('date')
     ])
     
     return data2, non_datetime_df
@@ -822,7 +824,8 @@ def read_selfreport_treatment(codes, folder='ukbb_data/', file='selfreport_parti
     ])
     
     data2 = data2.with_columns([
-        pl.lit('Self').alias('source')
+        pl.lit('Self').alias('source'),
+        pl.col('assess_date').alias('date')
     ])
     
     return data2, non_datetime_df
@@ -891,7 +894,8 @@ def read_selfreport_operation(codes, folder='ukbb_data/', file='selfreport_parti
     ])
     
     data2 = data2.with_columns([
-        pl.lit('Self').alias('source')
+        pl.lit('Self').alias('source'),
+        pl.col('assess_date').alias('date')
     ])
     
     return data2, non_datetime_df
