@@ -6,6 +6,7 @@ import os
 import subprocess
 import polars as pl
 import pandas as pd
+from pyspark.sql.functions import col, count, when, isnan
 
 # Spark configuration
 conf = pyspark.SparkConf() \
@@ -153,53 +154,69 @@ def extract_and_save_data(dataset_name, columns_file, search_terms, output_path,
     subprocess.run(f'dx upload {ext_folder + output_filename + ".txt"} --path {output_path + ext_folder}', shell=True, check=True)
     print(f"Field names saved and uploaded to DNAnexus Project folder")
     
-    # # Check if file already exists
-    # if os.path.exists(project_folder + data_folder + output_filename + extension):
-    #     # Load existing data
-    #     existing_data = pl.read_parquet(project_folder + data_folder + output_filename + extension)
+    # Check if file already exists
+    if os.path.exists(project_folder + data_folder + output_filename + extension):
+        # Load existing data
+        existing_data = pl.read_parquet(project_folder + data_folder + output_filename + extension)
 
-    #     # Determine which columns have not been processed yet
-    #     existing_columns = existing_data.columns
-    #     new_columns = [col for col in list(field_names_dict.keys()) if col not in existing_columns]
+        # Determine which columns have not been processed yet
+        existing_columns = existing_data.columns
+        new_columns = [col for col in list(field_names_dict.keys()) if col not in existing_columns]
 
-    #     # If there are new columns to process
-    #     if new_columns:
-    #         # Retrieve fields and convert Spark DataFrame to Pandas DataFrame
-    #         df_new = dataset.retrieve_fields(names=new_columns, engine=dxdata.connect()).toPandas()
-
-    #         # Concatenate existing and new data using pd.concat
-    #         df_combined = pd.concat([existing_data.to_pandas(), df_new], axis=1)
-
-    #         # Save as Parquet file
-    #         df_combined.to_parquet(data_folder + output_filename + extension)
-
-    #         # Ensure the directory exists on DNAnexus
-    #         subprocess.run(f'dx mkdir -p {output_path + data_folder}', shell=True, check=True)
+        # If there are new columns to process
+        if new_columns:
+            # Retrieve fields and convert Spark DataFrame to Pandas DataFrame
+            df_new = dataset.retrieve_fields(names=new_columns, engine=dxdata.connect()).toPandas()
             
-    #         # Upload to DNAnexus
-    #         subprocess.run(f'dx upload {data_folder + output_filename + extension} --path {output_path + data_folder}', shell=True, check=True)
-    #         print(f"Data saved and uploaded to DNAnexus Project folder")
-    #     else:
-    #         # Save as Parquet file
-    #         existing_data.write_parquet(data_folder + output_filename + extension)
+            # Calculate the count of null values in each column
+            null_counts = df_new.select([count(when(col(c).isNull() | isnan(col(c)), c)).alias(c) for c in df_new.columns]).collect()[0].asDict()
+
+            # Identify columns where the null count equals the total row count of the DataFrame
+            total_rows = df_new.count()
+            columns_to_drop = [col for col, null_count in null_counts.items() if null_count == total_rows]
             
-    #         # Upload to DNAnexus
-    #         subprocess.run(f'dx upload {data_folder + output_filename + extension} --path {output_path + data_folder}', shell=True, check=True)
-    #         print(f"No additional columns were requested and data already exists in DNAnexus Project folder")
-    # else:
-    
-    # Retrieve fields
-    df = dataset.retrieve_fields(names=list(field_names_dict.keys()), engine=dxdata.connect()).toPandas()
-    
-    # Rename columns to use titles instead of names
-    df.rename(columns=field_names_dict, inplace=True)
-    
-    # Save as Parquet file with renamed columns
-    df.to_parquet(data_folder + output_filename + extension, index=False)
-    
-    # Ensure the directory exists on DNAnexus
-    subprocess.run(f'dx mkdir -p {output_path + data_folder}', shell=True, check=True)
-    
-    # Upload to DNAnexus
-    subprocess.run(f'dx upload {data_folder + output_filename + extension} --path {output_path + data_folder}', shell=True, check=True)
-    print(f"Data saved and uploaded to DNAnexus Project folder")
+            # Drop these columns from the DataFrame
+            df_new = df_new.drop(*columns_to_drop)
+
+            # Concatenate existing and new data using pd.concat
+            df_combined = pd.concat([existing_data.to_pandas(), df_new], axis=1)
+
+            # Save as Parquet file
+            df_combined.to_parquet(data_folder + output_filename + extension)
+
+            # Ensure the directory exists on DNAnexus
+            subprocess.run(f'dx mkdir -p {output_path + data_folder}', shell=True, check=True)
+            
+            # Upload to DNAnexus
+            subprocess.run(f'dx upload {data_folder + output_filename + extension} --path {output_path + data_folder}', shell=True, check=True)
+            print(f"Data saved and uploaded to DNAnexus Project folder")
+        else:
+            # Save as Parquet file
+            existing_data.write_parquet(data_folder + output_filename + extension)
+            
+            # Upload to DNAnexus
+            subprocess.run(f'dx upload {data_folder + output_filename + extension} --path {output_path + data_folder}', shell=True, check=True)
+            print(f"No additional columns were requested and data already exists in DNAnexus Project folder")
+    else:
+        # Retrieve fields
+        df = dataset.retrieve_fields(names=list(field_names_dict.keys()), engine=dxdata.connect())
+        
+        # Calculate the count of null values in each column
+        null_counts = df.select([count(when(col(c).isNull() | isnan(col(c)), c)).alias(c) for c in df.columns]).collect()[0].asDict()
+
+        # Identify columns where the null count equals the total row count of the DataFrame
+        total_rows = df.count()
+        columns_to_drop = [col for col, null_count in null_counts.items() if null_count == total_rows]
+        
+        # Drop these columns from the DataFrame
+        df = df.drop(*columns_to_drop)
+        
+        # Save as Parquet file with renamed columns
+        df.toPandas().to_parquet(data_folder + output_filename + extension, index=False)
+        
+        # Ensure the directory exists on DNAnexus
+        subprocess.run(f'dx mkdir -p {output_path + data_folder}', shell=True, check=True)
+        
+        # Upload to DNAnexus
+        subprocess.run(f'dx upload {data_folder + output_filename + extension} --path {output_path + data_folder}', shell=True, check=True)
+        print(f"Data saved and uploaded to DNAnexus Project folder")
