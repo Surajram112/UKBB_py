@@ -58,7 +58,7 @@ def load_save_data(project_folder):
     ukbb_folder  = f'{project_folder}/ukbb_data/'
     os.makedirs(ukbb_folder, exist_ok=True)
     
-    tables_folder  = f'{project_folder}/cols_in_table/'
+    tables_folder  = f'{project_folder}/cols_in_tables/'
     os.makedirs(tables_folder, exist_ok=True)
     
     data_file_ids = read_txt_file('data_file_ids.txt')['Id'].tolist()
