@@ -67,7 +67,7 @@ def load_save_data(project_folder):
     # Load extracted tables columns lists , if force download is True then original files will be reloaded
     load_files(cols_file_ids, tables_folder)
 
-def load_files(file_ids, data_folder, efficient_format='parquet'):
+def load_files(file_ids, data_folder):
     
     # Create the output folder if it doesn't already exist
     os.makedirs(data_folder, exist_ok=True)
@@ -77,129 +77,34 @@ def load_files(file_ids, data_folder, efficient_format='parquet'):
         file_name = run_command(f'dx describe {file_id} --name').strip()
 
         # Set up file paths
-        efficient_file_path = os.path.join(data_folder, file_name)
+        file_path = os.path.join(data_folder, file_name)
         
         # Get project ID and create project folder
-        project_folder = run_command(f'dx pwd').strip()
-        project_folder = os.path.join(project_folder, data_folder)
-        project_efficient_file_path = os.path.join(project_folder, file_name).replace('.csv', f'.{efficient_format}')
+        local_file_path = os.path.join('../../mnt/project/', file_name)
         
         # If the file does not exist in the folders both local and in the instance, go through the pipeline
-        if not os.path.exists(local_efficient_file_path) and not os.path.exists(efficient_file_path):
-            # Create temporary folder for large files, if they are not in the efficient format
-            os.makedirs('temp', exist_ok=True)
-            # Set temporary file path 
-            temp_file_path = os.path.join('temp', file_name)
-            
-            # if csv file go through pipeline and then save it to efficient format
-            if temp_file_path.endswith('.csv'):
-                # Download the file to the instance ukbb_data file
-                run_command(f'dx download {file_id} -o {temp_file_path} --overwrite')
-                print(f"Downloaded {file_name} to {temp_file_path}")
-                
-                # Convert to efficient format and save
-                convert_output_file_path = convert_to_efficient_format(temp_file_path, efficient_file_path, efficient_format)
-                print(f"Converted {file_name} to {efficient_format} and saved to {convert_output_file_path}")
-            else:
-                # Download the file to the instance ukbb_data file
-                run_command(f'dx download {file_id} -o {data_folder}')
-                print(f"{file_name} is not a CSV file. Saving original format to {data_folder}.")
+        if not os.path.exists(local_file_path) and not os.path.exists(file_path):
+            # Download the file to the instance ukbb_data file
+            run_command(f'dx download {file_id} -o {data_folder}')
+            print(f"Getting original file and saving to {data_folder}.")
             
             # Transfer the files from instance ukbb_data file to local biobank project ukbb_data file
-            run_command(f'dx upload {efficient_file_path} -o {project_folder}')
-            print(f"Transferred {file_name} back to {project_folder}")
-            
-            # Delete temp folder directory
-            delete_directory('temp')
+            run_command(f'dx upload {file_path} -o {data_folder}')
+            print(f"Uploaded {file_name} back to DNAnexus Project.")
 
         # Transfer the files from efficient instance ukbb_data file to efficient local biobank project ukbb_data file if not in ukbb project folder
-        if os.path.exists(efficient_file_path) and not os.path.exists(local_efficient_file_path):
-            run_command(f'dx upload {efficient_file_path} -o {project_folder}')
-            print(f"Transferred {file_name} back to {project_folder}")
+        if os.path.exists(file_path) and not os.path.exists(local_file_path):
+            run_command(f'dx upload {file_path} -o {data_folder}')
+            print(f"Uploaded {file_name} back to DNAnexus Project.")
         else:
-            print(f"{file_name} in {efficient_format} format already exists in {efficient_file_path}")
+            print(f"{file_name} already exists in the instance, at {file_path}")
         
         # Transfer the files from efficient local biobank project ukbb_data file to efficient instance ukbb_data file if not in instance
-        if os.path.exists(local_efficient_file_path) and not os.path.exists(efficient_file_path):
-            run_command(f'dx download {project_efficient_file_path} -o {data_folder}')
-            print(f"Transferred {file_name} to {efficient_file_path}")
+        if os.path.exists(local_file_path) and not os.path.exists(file_path):
+            run_command(f'dx download {file_path} -o {data_folder}')
+            print(f"Transferred {file_name} to {file_path}")
         else:
-            print(f"{file_name} in {efficient_format} format already exists in {local_efficient_file_path}")
-
-def adjust_num_col(temp_file_path, sample_size=100):
-    """
-    Preprocess a CSV file.
-
-    Parameters:
-    - file_path: The path to the CSV file.
-    - sample_size: The number of lines to sample to determine the most common number of fields.
-    """
-    # Function to handle extra fields
-    def handle_extra_fields(fields, num_expected_cols):
-        fields[num_expected_cols - 1:] = [','.join(fields[num_expected_cols - 1:])]
-        return fields[:num_expected_cols]
-
-    # Read the CSV file line by line
-    with open(temp_file_path, 'r') as f:
-        reader = csv.reader(f)
-        lines = list(reader)
-
-    # Determine the most common number of fields in the first sample_size lines
-    field_counts = Counter(len(line) for line in lines[:sample_size])
-    num_expected_cols = field_counts.most_common(1)[0][0]
-
-    # Iterate over the rows and handle lines with extra fields
-    for i, line in enumerate(lines):
-        if len(line) != num_expected_cols:
-            lines[i] = handle_extra_fields(line, num_expected_cols)
-
-    # Write the corrected lines back to the file
-    with open(temp_file_path, 'w', newline='') as f:
-        writer = csv.writer(f)
-        writer.writerows(lines)
-
-def convert_to_efficient_format(input_file_path, output_file_path, efficient_format='parquet'):
-    try:
-        # Load the data into a temporary variable with specified dtypes
-        df = pd.read_csv(input_file_path, dtype=str)
-        efficient_file_path = output_file_path.replace('.csv', f'.{efficient_format}')
-    except:
-        # Checked number of columns in file and adjusted to the same
-        adjust_num_col(input_file_path)
-        # Load the data into a temporary variable with specified dtype as string 
-        df = pd.read_csv(input_file_path, dtype=str)
-        efficient_file_path = output_file_path.replace('.csv', f'.{efficient_format}')
-    
-    if efficient_format == 'parquet':
-        df.to_parquet(efficient_file_path)
-    elif efficient_format == 'pickle':
-        with open(efficient_file_path, 'wb') as f:
-            pickle.dump(df, f)
-            
-    return efficient_file_path
-
-def delete_directory(directory):
-    # Delete all files in the directory
-    for filename in os.listdir(directory):
-        file_path = os.path.join(directory, filename)
-        if os.path.isfile(file_path) or os.path.islink(file_path):
-            os.unlink(file_path)
-        elif os.path.isdir(file_path):
-            delete_directory(file_path)
-    # Delete the directory itself
-    os.rmdir(directory)
-
-def load_efficient_format(file_path, efficient_format='parquet'):
-    efficient_file_path = file_path.replace('.csv', f'.{efficient_format}')
-    
-    if os.path.exists(efficient_file_path):
-        if efficient_format == 'parquet':
-            return pd.read_parquet(efficient_file_path)
-        elif efficient_format == 'pickle':
-            with open(efficient_file_path, 'rb') as f:
-                return pickle.load(f)
-    else:
-        return None
+            print(f"{file_name} already exists in the DNAnexus Project.")
 
 def read_GP(codes, folder='ukbb_data/', filename='GP_gp_clinical', efficient_format='.parquet'):
     gp_header = ['eid', 'data_provider', 'event_dt', 'read_2', 'read_3', 'value1', 'value2', 'value3', 'dob', 'assess_date', 'event_age', 'prev']
