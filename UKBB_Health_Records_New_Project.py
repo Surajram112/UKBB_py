@@ -187,13 +187,13 @@ def load_efficient_format(file_path, efficient_format='parquet'):
 
 def load_save_data(project_folder='original'):
     # Create a data and traits folder if it doesn't exist
-    ukbb_folder  = '{project_folder}/ukbb_data/'
+    ukbb_folder  = f'{project_folder}/ukbb_data/'
     os.makedirs(ukbb_folder, exist_ok=True)
 
-    traits_folder  = '{project_folder}/ukbb_traits/'
+    traits_folder  = f'{project_folder}/ukbb_traits/'
     os.makedirs(traits_folder, exist_ok=True)
     
-    tables_folder  = '{project_folder}/extract_table_codes/'
+    tables_folder  = f'{project_folder}/extract_table_codes/'
     os.makedirs(tables_folder, exist_ok=True)
 
     # Set the local project folder just to run find
