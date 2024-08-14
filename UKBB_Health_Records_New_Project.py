@@ -61,8 +61,8 @@ def load_save_data(project_folder):
     tables_folder  = f'{project_folder}/cols_in_tables/'
     os.makedirs(tables_folder, exist_ok=True)
     
-    data_file_ids = read_txt_file('data_file_ids.txt')
-    cols_file_ids = read_txt_file('cols_file_ids.txt')
+    data_file_ids = read_txt_file('data_file_ids.txt')['Id'].tolist()
+    cols_file_ids = read_txt_file('cols_file_ids.txt')['Id'].tolist()
     
     # Load data files, if force download is True then original files will be reloaded
     load_files(data_file_ids, ukbb_folder)
