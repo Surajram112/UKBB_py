@@ -1,13 +1,10 @@
 import os
 import subprocess
-import re
 import csv
 from collections import Counter
 import pickle
 import polars as pl
 import pandas as pd
-import matplotlib.pyplot as plt
-
 
 # Function to run system commands
 def run_command(command):
@@ -18,6 +15,13 @@ def run_command(command):
         print(f"Command '{e.cmd}' returned non-zero exit status {e.returncode}.")
         print(f"Error output: {e.stderr}")
         raise
+
+# Load baseline table and import file to run it
+run_command("curl https://raw.githubusercontent.com/Surajram112/UKBB_py/main/new_baseline.py > new_baseline.py")
+import new_baseline
+
+run_command('curl https://raw.githubusercontent.com/Surajram112/UKBB_py/main/Generate_GRS.sh > Generate_GRS.sh')
+run_command('chmod +777 Generate_GRS.sh')
 
 def read_traits_file(file_path):
     with open(file_path, 'r') as file:
@@ -181,64 +185,81 @@ def load_efficient_format(file_path, efficient_format='parquet'):
     else:
         return None
 
-# Create a data and traits folder if it doesn't exist
-ukbb_folder  = 'ukbb_data/'
-os.makedirs(ukbb_folder, exist_ok=True)
+def load_save_data(project_folder='original'):
+    # Create a data and traits folder if it doesn't exist
+    ukbb_folder  = '{project_folder}/ukbb_data/'
+    os.makedirs(ukbb_folder, exist_ok=True)
 
-traits_folder  = 'ukbb_traits/'
-os.makedirs(traits_folder, exist_ok=True)
+    traits_folder  = '{project_folder}/ukbb_traits/'
+    os.makedirs(traits_folder, exist_ok=True)
+    
+    tables_folder  = '{project_folder}/extract_table_codes/'
+    os.makedirs(tables_folder, exist_ok=True)
 
-# Set the local project folder just to run find
-local_data_folder = '../../mnt/project/ukbb_data/'
-local_traits_folder = '../../mnt/project/ukbb_traits/'
+    # Set the local project folder just to run find
+    local_data_folder = f'../../mnt/project/{project_folder}/ukbb_data/'
+    local_traits_folder = f'../../mnt/project/{project_folder}/ukbb_traits/'
+    local_tables_folder = f'../../mnt/project/{project_folder}/extract_table_codes/'
 
-# List of file IDs for data to download
-data_file_ids = [
-    'file-GZKXxpQJKVzZ0BgzQZ1YYj9Z',  # GP registrations
-    'file-GZKXxpQJKVzVb7gQvQbYfxKF',  # GP clinical
-    'file-GZKXxpQJKVzxKb0FYfGg28v9',  # GP scripts
-    'file-Gp36v5jJ0qKKgQXxxQ0gjf0f',  # HES Diagnoses
-    'file-Gp36v5QJ0qKJv0pQ0X5Z2B5K',  # HES Records
-    'file-Gp36v5jJ0qK58yQkJ06gzGvv',  # OPCS Records
-    'file-GZKXgQjJY2Fkg1ZG4Bg8ZJBP',  # Cancer_Registry
-    'file-Gpp9P0jJ40Y3ZPg13B3kzj2g',  # self report
-    'file-GZJ9Z98Jj59fZFqVq69b6p2Z',  # read code 2 list
-    'file-GZJ9Z98Jj59b8zjVF1x1Z19G',  # read code 3 list
-    'file-GZJ9bbQJj59YBg8j4Kffpx9v',  # data coding 3
-    'file-GZJ9Z98Jj59YBg8j4Kffpx78',  # data coding 4
-    'file-GZJ9Z98Jj59gQ0zX6p3Jx3p9',  # data coding 6
-    'file-GZq40X0Jj59QzkKqx73PX3ff',  # ICD-O3 coding
-    'file-GZKXVx8J9jFp1qpBQZ8z5PbJ',  # death records
-    'file-GZKXVx8J9jFqG2GvJV8vzxK1'   # death causes
-]
+    # List of file IDs for data to download
+    data_file_ids = [
+        'file-GZKXxpQJKVzZ0BgzQZ1YYj9Z',  # GP registrations
+        'file-GZKXxpQJKVzVb7gQvQbYfxKF',  # GP clinical
+        'file-GZKXxpQJKVzxKb0FYfGg28v9',  # GP scripts
+        'file-Gp36v5jJ0qKKgQXxxQ0gjf0f',  # HES Diagnoses
+        'file-Gp36v5QJ0qKJv0pQ0X5Z2B5K',  # HES Records
+        'file-Gp36v5jJ0qK58yQkJ06gzGvv',  # OPCS Records
+        'file-GZKXgQjJY2Fkg1ZG4Bg8ZJBP',  # Cancer_Registry
+        'file-Gpp9P0jJ40Y3ZPg13B3kzj2g',  # self report
+        'file-GZJ9Z98Jj59fZFqVq69b6p2Z',  # read code 2 list
+        'file-GZJ9Z98Jj59b8zjVF1x1Z19G',  # read code 3 list
+        'file-GZJ9bbQJj59YBg8j4Kffpx9v',  # data coding 3
+        'file-GZJ9Z98Jj59YBg8j4Kffpx78',  # data coding 4
+        'file-GZJ9Z98Jj59gQ0zX6p3Jx3p9',  # data coding 6
+        'file-GZq40X0Jj59QzkKqx73PX3ff',  # ICD-O3 coding
+        'file-GZKXVx8J9jFp1qpBQZ8z5PbJ',  # death records
+        'file-GZKXVx8J9jFqG2GvJV8vzxK1'   # death causes
+    ]
 
-# List of file IDs for traits codes to download
-traits_file_ids = [
-    'file-GpFq378J40Y1PGqP8gQpKzp6',  # self reported diabetes
-    'file-GpFq9vjJ40Y559k7FZpx4bQf',  # self reported type 1 dm
-    'file-Gpp7QJ8J40Y0P0Fj0g0fpvKV',  # self reported treatments type 1 dm
-    'file-GpFjjb0J40YJ1Xkj442Y7pPq',  # manchester diabetes research codes
-    'file-GpFjjb0J40YJXV7Y8xGbXx1Q',  # read code v2 drugs
-    'file-GpFjjb0J40Y2KQ1yK3Qzx3V9',  # read code v2 exclusion
-    'file-GpFjjb0J40YJ1Xkj442Y7pPk',  # read code v2 type 1 dm
-    'file-GpFjjb0J40Y0Jky82gPj2fxq',  # read code v2 type 2 dm
-    'file-GpFjjb0J40Y7py7pKGxZ4FV6',  # read code v3 exclusion
-    'file-GpFjjb0J40YJXV7Y8xGbXx1X',  # read code v2 type 1 dm
-    'file-GpFjjb0J40Y11QYZBVfQ7YF4',  # read code v2 type 2 dm
-    'file-GpFpg18J40YBYgZXG11Y2qq6',  # ICD10 diabetes
-    'file-GpFq9vjJ40Y3Gz5KyqZjKx24',  # ICD10 type 1 dm
-    'file-GppGB38J40YKP747926fbV5J',  # ICD9 type 1 dm
-]
+    # List of file IDs for traits codes to download
+    traits_file_ids = [
+        'file-GpFq378J40Y1PGqP8gQpKzp6',  # self reported diabetes
+        'file-GpFq9vjJ40Y559k7FZpx4bQf',  # self reported type 1 dm
+        'file-Gpp7QJ8J40Y0P0Fj0g0fpvKV',  # self reported treatments type 1 dm
+        'file-GpFjjb0J40YJ1Xkj442Y7pPq',  # manchester diabetes research codes
+        'file-GpFjjb0J40YJXV7Y8xGbXx1Q',  # read code v2 drugs
+        'file-GpFjjb0J40Y2KQ1yK3Qzx3V9',  # read code v2 exclusion
+        'file-GpFjjb0J40YJ1Xkj442Y7pPk',  # read code v2 type 1 dm
+        'file-GpFjjb0J40Y0Jky82gPj2fxq',  # read code v2 type 2 dm
+        'file-GpFjjb0J40Y7py7pKGxZ4FV6',  # read code v3 exclusion
+        'file-GpFjjb0J40YJXV7Y8xGbXx1X',  # read code v2 type 1 dm
+        'file-GpFjjb0J40Y11QYZBVfQ7YF4',  # read code v2 type 2 dm
+        'file-GpFpg18J40YBYgZXG11Y2qq6',  # ICD10 diabetes
+        'file-GpFq9vjJ40Y3Gz5KyqZjKx24',  # ICD10 type 1 dm
+        'file-GppGB38J40YKP747926fbV5J',  # ICD9 type 1 dm
+    ]
+    
+    # List of file IDs for extract tables columns to download
+    tables_file_ids = [
+        'file-Gpk4FQQJ40Y4xbx5zfkkKZ38',  # GP registrations
+        'file-Gpk49FQJ40Y4Q95v9vkzv9y3',  # GP clinical
+        'file-Gpk4B6QJ40YBYVV615QV0J8f',  # GP scripts
+        'file-Gpk4VPjJ40Y72PgbyFYVQQb1',  # HES Diagnoses
+        'file-Gpk4Q70J40YFjb22JgqfxG0j',  # HES Records
+        'file-Gpk4Y0QJ40Y0BkyjQV4fXYzj',  # OPCS Records
+        'file-Gpp8jJjJ40Y5FXf55F1QBYG6',  # self report
+        'file-Gpk4ZbQJ40Y72PgbyFYVVjqK',  # death records
+        'file-Gpk4b38J40Y6FV9bZFVjg56y'   # death causes
+    ]
+    
+    # Load data files, if force download is True then original files will be reloaded
+    load_files(data_file_ids, ukbb_folder, local_data_folder)
 
-# Load data files, if force download is True then original files will be reloaded
-load_files(data_file_ids, ukbb_folder, local_data_folder)
-
-# Load codes lists , if force download is True then original files will be reloaded
-load_files(traits_file_ids, traits_folder, local_traits_folder)
-
-# Load baseline table and import file to run it
-run_command("curl https://raw.githubusercontent.com/Surajram112/UKBB_py/main/new_baseline.py > new_baseline.py")
-import new_baseline
+    # Load codes lists , if force download is True then original files will be reloaded
+    load_files(traits_file_ids, traits_folder, local_traits_folder)
+    
+    # Load extracted tables columns lists , if force download is True then original files will be reloaded
+    load_files(tables_file_ids, tables_folder, local_tables_folder)
 
 def read_GP(codes, folder='ukbb_data/', filename='GP_gp_clinical', efficient_format='.parquet'):
     gp_header = ['eid', 'data_provider', 'event_dt', 'read_2', 'read_3', 'value1', 'value2', 'value3', 'dob', 'assess_date', 'event_age', 'prev']
@@ -848,9 +869,6 @@ def read_death(codes, folder='ukbb_date/', diagfile='death_death_cause.csv', rec
     data2['prev'] = data2['date_of_death'] < data2['assess_date']
     
     return data2
-
-run_command('curl https://raw.githubusercontent.com/Surajram112/UKBB_py/main/Generate_GRS.sh > Generate_GRS.sh')
-run_command('chmod +777 Generate_GRS.sh')
 
 def Generate_GRS(grs_file, folder='ukbb_date/'):
     command = f'./Generate_GRS.sh {grs_file}'
