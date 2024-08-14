@@ -16,10 +16,15 @@ def run_command(command):
         print(f"Error output: {e.stderr}")
         raise
 
+# Load the field ids
+run_command("curl https://raw.githubusercontent.com/Surajram112/UKBB_py/main/data_file_ids.txt > data_file_ids.txt")
+run_command("curl https://raw.githubusercontent.com/Surajram112/UKBB_py/main/cols_file_ids.txt > cols_file_ids.txt")
+
 # Load baseline table and import file to run it
 run_command("curl https://raw.githubusercontent.com/Surajram112/UKBB_py/main/new_baseline.py > new_baseline.py")
 import new_baseline
 
+# Load Generate_GRS basch script
 run_command('curl https://raw.githubusercontent.com/Surajram112/UKBB_py/main/Generate_GRS.sh > Generate_GRS.sh')
 run_command('chmod +777 Generate_GRS.sh')
 
