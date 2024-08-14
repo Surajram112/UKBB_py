@@ -458,7 +458,7 @@ def read_ICD9(codes, project_folder, diagfile='HES_hesin_diag', recordfile='HES_
     
 #     return data
 
-def read_selfreport_illness(codes, project_folder, filename='selfreport_participant', coding_file='coding6.tsv', extension='.parquet'):
+def read_selfreport_illness(codes, project_folder, columns_file, filename='selfreport_participant', coding_file='coding6.tsv', extension='.parquet'):
     if not codes:
         return pl.DataFrame(), pl.DataFrame()
     
@@ -471,6 +471,10 @@ def read_selfreport_illness(codes, project_folder, filename='selfreport_particip
     # Read the coding6 file
     coding6 = pl.read_csv(data_folder + coding_file, separator='\t')
     coding6 = coding6.filter(pl.col('coding') > 1)
+
+    # Read the columns file to get the current and new column names
+    columns_df = pl.read_csv(columns_file, separator='\t')
+    columns_dict = dict(zip(columns_df['Code'], columns_df['Description']))
 
     # Filter data using vectorized operations
     outlines = []
@@ -492,6 +496,9 @@ def read_selfreport_illness(codes, project_folder, filename='selfreport_particip
     data2 = data2.with_columns([
         pl.col('eid').cast(pl.Int64)
     ])
+    
+    # Rename the columns in the DataFrame
+    data = data.rename(columns_dict)
     
     # Add exclusion columns
     data2 = data2.with_columns([
