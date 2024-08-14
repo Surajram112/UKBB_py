@@ -193,7 +193,7 @@ def load_save_data(project_folder='original'):
     traits_folder  = f'{project_folder}/ukbb_traits/'
     os.makedirs(traits_folder, exist_ok=True)
     
-    tables_folder  = f'{project_folder}/extract_table_codes/'
+    tables_folder  = f'{project_folder}/cols_in_tables/'
     os.makedirs(tables_folder, exist_ok=True)
 
     # Set the local project folder just to run find
