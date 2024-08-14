@@ -83,7 +83,7 @@ def field_titles_by_title_keyword(keyword, dataset):
     return [f.title for f in fields_by_title_keyword(keyword, dataset)]
 
 # Extract and save datasets in efficient format with desired columns
-def extract_and_save_data(dataset_name, columns_file, search_terms, output_path, extension=".parquet"):
+def extract_and_save_data(dataset_name, columns_file, search_terms, project_folder='original', extension=".parquet"):
     """
     Extracts specific columns from a dataset and saves them as a Parquet file.
 
@@ -99,9 +99,9 @@ def extract_and_save_data(dataset_name, columns_file, search_terms, output_path,
     datasets = load_dataset()
 
     # Set DNAnexus project, data and traits folder
-    project_folder = "../../mnt/project/"
-    data_folder = "ukbb_data/"
-    ext_folder = "extract_table_codes/"
+    project_folder = f'../../mnt/project/{project_folder}'
+    data_folder = f'{project_folder}/ukbb_data/'
+    ext_folder = f'{project_folder}/extract_table_codes/'
 
     # Set up local dir for ukbb data
     os.makedirs(data_folder, exist_ok=True)
@@ -148,10 +148,10 @@ def extract_and_save_data(dataset_name, columns_file, search_terms, output_path,
             f.write(field_name + '\t' + field_title + '\n')
     
     # Ensure the directory exists on DNAnexus
-    subprocess.run(f'dx mkdir -p {output_path + ext_folder}', shell=True, check=True)
+    subprocess.run(f'dx mkdir -p {ext_folder}', shell=True, check=True)
     
     # Upload to DNAnexus
-    subprocess.run(f'dx upload {ext_folder + output_filename + ".txt"} --path {output_path + ext_folder}', shell=True, check=True)
+    subprocess.run(f'dx upload {ext_folder + output_filename + ".txt"} --path {ext_folder}', shell=True, check=True)
     print(f"Field names saved and uploaded to DNAnexus Project folder")
     
     # Check if file already exists
@@ -185,17 +185,17 @@ def extract_and_save_data(dataset_name, columns_file, search_terms, output_path,
             df_combined.to_parquet(data_folder + output_filename + extension)
 
             # Ensure the directory exists on DNAnexus
-            subprocess.run(f'dx mkdir -p {output_path + data_folder}', shell=True, check=True)
+            subprocess.run(f'dx mkdir -p {data_folder}', shell=True, check=True)
             
             # Upload to DNAnexus
-            subprocess.run(f'dx upload {data_folder + output_filename + extension} --path {output_path + data_folder}', shell=True, check=True)
+            subprocess.run(f'dx upload {data_folder + output_filename + extension} --path {data_folder}', shell=True, check=True)
             print(f"Data saved and uploaded to DNAnexus Project folder")
         else:
             # Save as Parquet file
             existing_data.write_parquet(data_folder + output_filename + extension)
             
             # Upload to DNAnexus
-            subprocess.run(f'dx upload {data_folder + output_filename + extension} --path {output_path + data_folder}', shell=True, check=True)
+            subprocess.run(f'dx upload {data_folder + output_filename + extension} --path {data_folder}', shell=True, check=True)
             print(f"No additional columns were requested and data already exists in DNAnexus Project folder")
     else:
         # Retrieve fields
@@ -215,8 +215,8 @@ def extract_and_save_data(dataset_name, columns_file, search_terms, output_path,
         df.toPandas().to_parquet(data_folder + output_filename + extension, index=False)
         
         # Ensure the directory exists on DNAnexus
-        subprocess.run(f'dx mkdir -p {output_path + data_folder}', shell=True, check=True)
+        subprocess.run(f'dx mkdir -p {data_folder}', shell=True, check=True)
         
         # Upload to DNAnexus
-        subprocess.run(f'dx upload {data_folder + output_filename + extension} --path {output_path + data_folder}', shell=True, check=True)
+        subprocess.run(f'dx upload {data_folder + output_filename + extension} --path {data_folder}', shell=True, check=True)
         print(f"Data saved and uploaded to DNAnexus Project folder")
