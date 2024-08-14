@@ -101,7 +101,7 @@ def extract_and_save_data(dataset_name, columns_file, search_terms, project_fold
     # Set DNAnexus project, data and traits folder
     local_project_folder = f'../../mnt/project/'
     data_folder = f'{project_folder}/ukbb_data/'
-    ext_folder = f'{project_folder}/extract_table_codes/'
+    ext_folder = f'{project_folder}/cols_in_tables/'
 
     # Set up local dir for ukbb data
     os.makedirs(data_folder, exist_ok=True)

@@ -199,7 +199,7 @@ def load_save_data(project_folder='original'):
     # Set the local project folder just to run find
     local_data_folder = f'../../mnt/project/{project_folder}/ukbb_data/'
     local_traits_folder = f'../../mnt/project/{project_folder}/ukbb_traits/'
-    local_tables_folder = f'../../mnt/project/{project_folder}/extract_table_codes/'
+    local_tables_folder = f'../../mnt/project/{project_folder}/cols_in_tables/'
 
     # List of file IDs for data to download
     data_file_ids = [
