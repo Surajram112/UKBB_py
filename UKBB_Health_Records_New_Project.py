@@ -109,14 +109,17 @@ def load_files(file_ids, data_folder):
         else:
             print(f"{file_name} already exists in the DNAnexus Project.")
 
-def read_GP(codes, folder='ukbb_data/', filename='GP_gp_clinical', efficient_format='.parquet'):
+def read_GP(codes, project_folder, filename='GP_gp_clinical', extension='.parquet'):
     gp_header = ['eid', 'data_provider', 'event_dt', 'read_2', 'read_3', 'value1', 'value2', 'value3', 'dob', 'assess_date', 'event_age', 'prev']
      
     if not codes:
         return pl.DataFrame(schema={col: pl.Utf8 for col in gp_header})
     
+    # Set up local dir for ukbb data
+    data_folder = f'{project_folder}/ukbb_data/' 
+    
     # Read the parquet file using polars
-    data = pl.read_parquet(folder + filename + efficient_format, use_pyarrow=True)
+    data = pl.read_parquet(data_folder + filename + extension, use_pyarrow=True)
     
     # Filter data using vectorized operations
     data2 = data.filter(pl.col('read_3').is_in(codes) | pl.col('read_2').is_in(codes))
@@ -158,14 +161,17 @@ def read_GP(codes, folder='ukbb_data/', filename='GP_gp_clinical', efficient_for
     
     return data2
 
-def read_OPCS(codes, folder='ukbb_data/', filename='HES_hesin_oper', extension='.parquet'):
+def read_OPCS(codes, project_folder, filename='HES_hesin_oper', extension='.parquet'):
     opcs_header = ['dnx_hesin_oper_id', 'eid', 'ins_index', 'arr_index', 'opdate', 'level', 'oper3', 'oper3_nb', 'oper4', 'oper4_nb', 'posopdur', 'preopdur']
     
     if not codes:
         return pl.DataFrame(schema={col: pl.Utf8 for col in opcs_header}), pl.DataFrame(schema={col: pl.Utf8 for col in opcs_header})
     
+    # Set up local dir for ukbb data
+    data_folder = f'{project_folder}/ukbb_data/' 
+    
     # Read the parquet file using polars
-    data = pl.read_parquet(folder + filename + extension, use_pyarrow=True)
+    data = pl.read_parquet(data_folder + filename + extension, use_pyarrow=True)
     
     # Filter data using vectorized operations
     data2 = data.filter(
@@ -214,14 +220,17 @@ def read_OPCS(codes, folder='ukbb_data/', filename='HES_hesin_oper', extension='
     
     return data2.drop('dnx_hesin_oper_id')
 
-def read_ICD10(codes, folder='ukbb_data/', diagfile='HES_hesin_diag', recordfile='HES_hesin', extension='.parquet'):
+def read_ICD10(codes, project_folder, diagfile='HES_hesin_diag', recordfile='HES_hesin', extension='.parquet'):
     icd10_header = ['dnx_hesin_diag_id', 'eid', 'ins_index', 'arr_index', 'level', 'diag_icd9', 'diag_icd10', 'dnx_hesin_id', 'epistart', 'epiend']
     
     if not codes:
         return pl.DataFrame(schema={col: pl.Utf8 for col in icd10_header})
     
-    # Read the parquet diagnosis file using polars
-    diag_data = pl.read_parquet(folder + diagfile + extension, use_pyarrow=True)
+    # Set up local dir for ukbb data
+    data_folder = f'{project_folder}/ukbb_data/' 
+    
+    # Read the parquet file using polars
+    diag_data = pl.read_parquet(data_folder + diagfile + extension, use_pyarrow=True)
     
     # Filter data using vectorized operations to check if any code is in the strings
     data = diag_data.filter(
@@ -234,7 +243,7 @@ def read_ICD10(codes, folder='ukbb_data/', diagfile='HES_hesin_diag', recordfile
     data = data.select(['dnx_hesin_diag_id', 'eid', 'ins_index', 'arr_index', 'level', 'diag_icd9', 'diag_icd10'])
     
     # Read the parquet records file using polars
-    record_data = pl.read_parquet(folder + recordfile + extension, use_pyarrow=True)
+    record_data = pl.read_parquet(data_folder + recordfile + extension, use_pyarrow=True)
     
     record_data = record_data.with_columns([
         pl.col('eid').cast(pl.Int64),
@@ -300,14 +309,17 @@ def read_ICD10(codes, folder='ukbb_data/', diagfile='HES_hesin_diag', recordfile
 
     return data2.drop(['dnx_hesin_diag_id', 'dnx_hesin_id', 'epistart_invalid', 'epiend_invalid', 'epistart_reason', 'epiend_reason'])
 
-def read_ICD9(codes, folder='ukbb_data/', diagfile='HES_hesin_diag', recordfile='HES_hesin', extension='.parquet'):
+def read_ICD9(codes, project_folder, diagfile='HES_hesin_diag', recordfile='HES_hesin', extension='.parquet'):
     icd9_header = ['dnx_hesin_diag_id', 'eid', 'ins_index', 'arr_index', 'level', 'diag_icd9', 'diag_icd10', 'dnx_hesin_id', 'epistart', 'epiend']
     
     if not codes:
         return pl.DataFrame(schema={col: pl.Utf8 for col in icd9_header}), pl.DataFrame(schema={col: pl.Utf8 for col in icd9_header})
     
-    # Read the parquet diagnosis file using polars
-    diag_data = pl.read_parquet(folder + diagfile + extension, use_pyarrow=True)
+    # Set up local dir for ukbb data
+    data_folder = f'{project_folder}/ukbb_data/' 
+    
+    # Read the parquet file using polars
+    diag_data = pl.read_parquet(data_folder + diagfile + extension, use_pyarrow=True)
     
     # Filter data using vectorized operations to check if any code is in the strings
     data = diag_data.filter(
@@ -322,7 +334,7 @@ def read_ICD9(codes, folder='ukbb_data/', diagfile='HES_hesin_diag', recordfile=
     data = data.select(['dnx_hesin_diag_id', 'eid', 'ins_index', 'arr_index', 'classification', 'diag_icd9', 'diag_icd10'])
     
     # Read the parquet records file using polars
-    record_data = pl.read_parquet(folder + recordfile + extension, use_pyarrow=True)
+    record_data = pl.read_parquet(data_folder + recordfile + extension, use_pyarrow=True)
     
     record_data = record_data.with_columns([
         pl.col('eid').cast(pl.Int64),
@@ -446,15 +458,18 @@ def read_ICD9(codes, folder='ukbb_data/', diagfile='HES_hesin_diag', recordfile=
     
 #     return data
 
-def read_selfreport_illness(codes, folder='ukbb_data/', file='selfreport_participant', coding_file='coding6.tsv', extension='.parquet'):
+def read_selfreport_illness(codes, project_folder, filename='selfreport_participant', coding_file='coding6.tsv', extension='.parquet'):
     if not codes:
         return pl.DataFrame(), pl.DataFrame()
     
+    # Set up local dir for ukbb data
+    data_folder = f'{project_folder}/ukbb_data/' 
+    
     # Read the parquet file using polars
-    data = pl.read_parquet(folder + file + extension, use_pyarrow=True)
+    data = pl.read_parquet(data_folder + filename + extension, use_pyarrow=True)
     
     # Read the coding6 file
-    coding6 = pl.read_csv(folder + coding_file, separator='\t')
+    coding6 = pl.read_csv(data_folder + coding_file, separator='\t')
     coding6 = coding6.filter(pl.col('coding') > 1)
 
     # Filter data using vectorized operations
@@ -486,15 +501,18 @@ def read_selfreport_illness(codes, folder='ukbb_data/', file='selfreport_partici
     
     return data2.with_columns(pl.lit('Self').alias('source'))
 
-def read_selfreport_cancer(codes, folder='ukbb_data/', file='selfreport_participant', coding_file='coding3.tsv', extension='.parquet'):
+def read_selfreport_cancer(codes, project_folder, filename='selfreport_participant', coding_file='coding3.tsv', extension='.parquet'):
     if not codes:
         return pl.DataFrame(), pl.DataFrame()
     
+    # Set up local dir for ukbb data
+    data_folder = f'{project_folder}/ukbb_data/' 
+    
     # Read the parquet file using polars
-    data = pl.read_parquet(folder + file + extension, use_pyarrow=True)
+    data = pl.read_parquet(data_folder + filename + extension, use_pyarrow=True)
     
     # Read the coding3 file
-    coding3 = pl.read_csv(folder + coding_file, separator='\t')
+    coding3 = pl.read_csv(data_folder + coding_file, separator='\t')
     coding3 = coding3.filter(pl.col('coding') > 1)
     
     # Filter data using vectorized operations            
@@ -526,15 +544,18 @@ def read_selfreport_cancer(codes, folder='ukbb_data/', file='selfreport_particip
     
     return data2.with_columns(pl.lit('Self').alias('source'))
 
-def read_selfreport_treatment(codes, folder='ukbb_data/', file='selfreport_participant', coding_file='coding4.tsv', extension='.parquet'):
+def read_selfreport_treatment(codes, project_folder, filename='selfreport_participant', coding_file='coding4.tsv', extension='.parquet'):
     if not codes:
         return pl.DataFrame(), pl.DataFrame()
     
+    # Set up local dir for ukbb data
+    data_folder = f'{project_folder}/ukbb_data/' 
+    
     # Read the parquet file using polars
-    data = pl.read_parquet(folder + file + extension, use_pyarrow=True)
+    data = pl.read_parquet(data_folder + filename + extension, use_pyarrow=True)
     
     # Read the coding4 file
-    coding4 = pl.read_csv(folder + coding_file, separator='\t')
+    coding4 = pl.read_csv(data_folder + coding_file, separator='\t')
     
     # Filter coding4 data
     coding4 = coding4.filter(pl.col('coding') > 1)
@@ -568,15 +589,18 @@ def read_selfreport_treatment(codes, folder='ukbb_data/', file='selfreport_parti
     
     return data2.with_columns(pl.lit('Self').alias('source'))
 
-def read_selfreport_operation(codes, folder='ukbb_data/', file='selfreport_participant', coding_file='coding4.tsv', extension='.parquet'):
+def read_selfreport_operation(codes, project_folder, filename='selfreport_participant', coding_file='coding4.tsv', extension='.parquet'):
     if not codes:
         return pl.DataFrame(), pl.DataFrame()
     
+    # Set up local dir for ukbb data
+    data_folder = f'{project_folder}/ukbb_data/' 
+    
     # Read the parquet file using polars
-    data = pl.read_parquet(folder + file + extension, use_pyarrow=True)
+    data = pl.read_parquet(data_folder + filename + extension, use_pyarrow=True)
     
     # Read the coding4 file
-    coding4 = pl.read_csv(folder + coding_file, separator='\t')
+    coding4 = pl.read_csv(data_folder + coding_file, separator='\t')
     
     # Filter coding4 data
     coding4 = coding4.filter(pl.col('coding') > 1)
