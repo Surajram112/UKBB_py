@@ -168,15 +168,15 @@ def extract_and_save_data(dataset_name, columns_file, search_terms, project_fold
             # Retrieve fields and convert Spark DataFrame to Pandas DataFrame
             df_new = dataset.retrieve_fields(names=new_columns, engine=dxdata.connect()).toPandas()
             
-            # Calculate the count of null values in each column
-            null_counts = df_new.select([count(when(col(c).isNull() | isnan(col(c)), c)).alias(c) for c in df_new.columns]).collect()[0].asDict()
+            # # Calculate the count of null values in each column
+            # null_counts = df_new.select([count(when(col(c).isNull() | isnan(col(c)), c)).alias(c) for c in df_new.columns]).collect()[0].asDict()
 
-            # Identify columns where the null count equals the total row count of the DataFrame
-            total_rows = df_new.count()
-            columns_to_drop = [col for col, null_count in null_counts.items() if null_count == total_rows]
+            # # Identify columns where the null count equals the total row count of the DataFrame
+            # total_rows = df_new.count()
+            # columns_to_drop = [col for col, null_count in null_counts.items() if null_count == total_rows]
             
-            # Drop these columns from the DataFrame
-            df_new = df_new.drop(*columns_to_drop)
+            # # Drop these columns from the DataFrame
+            # df_new = df_new.drop(*columns_to_drop)
 
             # Concatenate existing and new data using pd.concat
             df_combined = pd.concat([existing_data.to_pandas(), df_new], axis=1)
