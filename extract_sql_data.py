@@ -99,7 +99,7 @@ def extract_and_save_data(dataset_name, columns_file, search_terms, project_fold
     datasets = load_dataset()
 
     # Set DNAnexus project, data and traits folder
-    project_folder = f'../../mnt/project/{project_folder}'
+    local_project_folder = f'../../mnt/project/'
     data_folder = f'{project_folder}/ukbb_data/'
     ext_folder = f'{project_folder}/extract_table_codes/'
 
@@ -113,7 +113,7 @@ def extract_and_save_data(dataset_name, columns_file, search_terms, project_fold
     if os.path.exists(ext_folder + columns_file):
         base_fields = read_traits_file(ext_folder + columns_file)['Code'].tolist()
     else:
-        base_fields = read_traits_file(project_folder + ext_folder + columns_file)['Code'].tolist()
+        base_fields = read_traits_file(local_project_folder + ext_folder + columns_file)['Code'].tolist()
 
     # Take columns file name as file name for output
     output_filename = os.path.basename(columns_file).split('.')[0]
@@ -155,9 +155,9 @@ def extract_and_save_data(dataset_name, columns_file, search_terms, project_fold
     print(f"Field names saved and uploaded to DNAnexus Project folder")
     
     # Check if file already exists
-    if os.path.exists(project_folder + data_folder + output_filename + extension):
+    if os.path.exists(local_project_folder + data_folder + output_filename + extension):
         # Load existing data
-        existing_data = pl.read_parquet(project_folder + data_folder + output_filename + extension)
+        existing_data = pl.read_parquet(local_project_folder + data_folder + output_filename + extension)
 
         # Determine which columns have not been processed yet
         existing_columns = existing_data.columns
