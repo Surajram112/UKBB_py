@@ -3,6 +3,7 @@ import subprocess
 from collections import Counter
 import polars as pl
 import pandas as pd
+import matplotlib.pyplot as plt
 
 # Function to run system commands
 def run_command(command):
@@ -704,6 +705,39 @@ def first_occurance(all_records):
         .alias('Diagnosis Age')
     )
     return all_records        
+
+def plot_age_groups(records, bin_size=10):
+    """
+    Plots the number of individuals by age group with a specified bin size.
+
+    Parameters:
+    - records: A Polars DataFrame containing the data.
+    - bin_size: The size of the bins for age grouping (default is 10).
+    """
+    # Remove duplicates based on 'eid'
+    unique_records = records.unique(subset=['eid'])
+
+    # Convert to pandas DataFrame for easier manipulation
+    df = unique_records.to_pandas()
+
+    # Create bins for age groups based on the specified bin size
+    bins = range(0, int(df['Diagnosis Age'].max()) + bin_size, bin_size)
+    labels = [f'{i}-{i + bin_size - 1}' for i in bins[:-1]]
+
+    # Bin the ages
+    df['Age Group'] = pd.cut(df['Diagnosis Age'], bins=bins, labels=labels, right=False)
+
+    # Count the number of records in each age group
+    age_group_counts = df['Age Group'].value_counts().sort_index()
+
+    # Plot the data
+    plt.figure(figsize=(10, 6))
+    age_group_counts.plot(kind='bar')
+    plt.xlabel('Age Group')
+    plt.ylabel('Number of Individuals')
+    plt.title('Number of Individuals by Age Group')
+    plt.xticks(rotation=45)
+    plt.show()
 
 def read_GP_scripts(codes, folder='ukbb_date/', file='GP_gp_scripts.csv'):
     gp_header = ['eid', 'data_provider', 'issue_date', 'read_2', 'dmd_code', 'bnf_code', 'drug_name', 'quantity']
