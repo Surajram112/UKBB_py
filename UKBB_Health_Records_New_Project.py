@@ -515,6 +515,7 @@ def read_selfreport_cancer(codes, project_folder, filename='selfreport_participa
     
     # Set up local dir for ukbb data
     data_folder = f'{project_folder}/ukbb_data/' 
+    cols_folder = f'{project_folder}/cols_in_tables/'
     
     # Read the parquet file using polars
     data = pl.read_parquet(data_folder + filename + extension, use_pyarrow=True)
@@ -522,6 +523,10 @@ def read_selfreport_cancer(codes, project_folder, filename='selfreport_participa
     # Read the coding3 file
     coding3 = pl.read_csv(data_folder + coding_file, separator='\t')
     coding3 = coding3.filter(pl.col('coding') > 1)
+    
+    # Read the columns file to get the current and new column names
+    columns_df = pl.read_csv(cols_folder+ filename + '.txt', separator='\t')
+    columns_dict = dict(zip(columns_df['Code'], columns_df['Description']))
     
     # Filter data using vectorized operations            
     outlines = []
@@ -543,6 +548,9 @@ def read_selfreport_cancer(codes, project_folder, filename='selfreport_participa
     data2 = data2.with_columns([
         pl.col('eid').cast(pl.Int64)
     ])
+    
+    # Rename the columns in the DataFrame
+    data = data.rename(columns_dict)
     
     # Add exclusion columns
     data2 = data2.with_columns([
