@@ -458,12 +458,13 @@ def read_ICD9(codes, project_folder, diagfile='HES_hesin_diag', recordfile='HES_
     
 #     return data
 
-def read_selfreport_illness(codes, project_folder, columns_file, filename='selfreport_participant', coding_file='coding6.tsv', extension='.parquet'):
+def read_selfreport_illness(codes, project_folder, filename='selfreport_participant', coding_file='coding6.tsv', extension='.parquet'):
     if not codes:
         return pl.DataFrame(), pl.DataFrame()
     
     # Set up local dir for ukbb data
-    data_folder = f'{project_folder}/ukbb_data/' 
+    data_folder = f'{project_folder}/ukbb_data/'
+    cols_folder = f'{project_folder}/cols_in_tables/'
     
     # Read the parquet file using polars
     data = pl.read_parquet(data_folder + filename + extension, use_pyarrow=True)
@@ -473,7 +474,7 @@ def read_selfreport_illness(codes, project_folder, columns_file, filename='selfr
     coding6 = coding6.filter(pl.col('coding') > 1)
 
     # Read the columns file to get the current and new column names
-    columns_df = pl.read_csv(columns_file, separator='\t')
+    columns_df = pl.read_csv(cols_folder+ filename + '.txt', separator='\t')
     columns_dict = dict(zip(columns_df['Code'], columns_df['Description']))
 
     # Filter data using vectorized operations
