@@ -500,7 +500,7 @@ def read_selfreport_illness(codes, project_folder, filename='selfreport_particip
     ])
     
     # Rename the columns in the DataFrame
-    data = data.rename(columns_dict)
+    data2 = data2.rename(columns_dict)
     
     # Add exclusion columns
     data2 = data2.with_columns([
@@ -551,7 +551,7 @@ def read_selfreport_cancer(codes, project_folder, filename='selfreport_participa
     ])
     
     # Rename the columns in the DataFrame
-    data = data.rename(columns_dict)
+    data2 = data2.rename(columns_dict)
     
     # Add exclusion columns
     data2 = data2.with_columns([
@@ -604,7 +604,7 @@ def read_selfreport_treatment(codes, project_folder, filename='selfreport_partic
     ])
     
     # Rename the columns in the DataFrame
-    data = data.rename(columns_dict)
+    data2 = data2.rename(columns_dict)
     
     # Add exclusion columns
     data2 = data2.with_columns([
