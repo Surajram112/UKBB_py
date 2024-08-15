@@ -683,21 +683,7 @@ def align_participant_records(*dataframes):
     all_records = pl.concat(processed_dfs, how="diagonal")
     return all_records
 
-def first_occurance(*dataframes):
-    # Create a new column 'diag_date' for each DataFrame
-    processed_dfs = []
-    for df in dataframes:
-        if 'event_dt' in df.columns:
-            df = df.with_columns(pl.col('event_dt').cast(pl.Datetime).alias('diag_date'))
-        elif 'date' in df.columns:
-            df = df.with_columns(pl.col('date').cast(pl.Datetime).alias('diag_date'))
-        elif 'assess_date' in df.columns:
-            df = df.with_columns(pl.col('assess_date').cast(pl.Datetime).alias('diag_date'))
-        processed_dfs.append(df)
-    
-    # Concatenate the DataFrames
-    all_records = pl.concat(processed_dfs, how="diagonal")
-
+def first_occurance(all_records):
     # Group by 'eid' and get the earliest 'Date_diag_earliest'
     earliest_dates = all_records.group_by('eid').agg(pl.col('diag_date').min().alias('diag_date'))
 
@@ -717,7 +703,6 @@ def first_occurance(*dataframes):
         .round()
         .alias('Diagnosis Age')
     )
-    
     return all_records        
 
 def read_GP_scripts(codes, folder='ukbb_date/', file='GP_gp_scripts.csv'):
