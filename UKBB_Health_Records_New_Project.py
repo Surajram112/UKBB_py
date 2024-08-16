@@ -531,7 +531,7 @@ def read_selfreport_illness(codes, project_folder, filename='selfreport_particip
         pl.lit("").alias('exclude_reason')
     ])
     
-    return data2.with_columns(pl.lit('Self').alias('source')), coding6
+    return data2.with_columns(pl.lit('Self').alias('source'))
 
 def read_selfreport_cancer(codes, project_folder, filename='selfreport_participant', coding_file='coding3.tsv', extension='.parquet', filter_column=None, filter_criteria=None):
     # Set up local dir for ukbb data
@@ -587,7 +587,7 @@ def read_selfreport_cancer(codes, project_folder, filename='selfreport_participa
         pl.lit("").alias('exclude_reason')
     ])
     
-    return data2.with_columns(pl.lit('Self').alias('source')), coding3
+    return data2.with_columns(pl.lit('Self').alias('source'))
 
 def read_selfreport_treatment(codes, project_folder, filename='selfreport_participant', coding_file='coding4.tsv', extension='.parquet', filter_column=None, filter_criteria=None):
     # Set up local dir for ukbb data
@@ -645,7 +645,7 @@ def read_selfreport_treatment(codes, project_folder, filename='selfreport_partic
         pl.lit("").alias('exclude_reason')
     ])
     
-    return data2.with_columns(pl.lit('Self').alias('source')), coding4
+    return data2.with_columns(pl.lit('Self').alias('source'))
 
 def read_selfreport_operation(codes, project_folder, filename='selfreport_participant', coding_file='coding4.tsv', extension='.parquet', filter_column=None, filter_criteria=None):
     # Set up local dir for ukbb data
@@ -704,7 +704,7 @@ def read_selfreport_operation(codes, project_folder, filename='selfreport_partic
         pl.lit("").alias('exclude_reason')
     ])
     
-    return data2.with_columns(pl.lit('Self').alias('source')), coding4
+    return data2.with_columns(pl.lit('Self').alias('source'))
 
 def align_participant_records(*dataframes):
     # Create a new column 'diag_date' for each DataFrame
