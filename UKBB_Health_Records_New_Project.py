@@ -421,7 +421,6 @@ def read_ICD9(codes, project_folder, diagfile='HES_hesin_diag', recordfile='HES_
         pl.col('eid').cast(pl.Int64),
         pl.col('epidur').cast(pl.Int64),
         pl.col('bedyear').cast(pl.Int64),
-        pl.col('epiorder').cast(pl.Int64),
         pl.lit('HES_ICD9').alias('source')
     ])
     
