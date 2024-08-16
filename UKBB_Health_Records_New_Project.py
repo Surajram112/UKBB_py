@@ -1,4 +1,5 @@
 import os
+import re
 import subprocess
 import polars as pl
 import pandas as pd
@@ -535,6 +536,40 @@ def read_ICD9(codes, project_folder, diagfile='HES_hesin_diag', recordfile='HES_
     
 #     return data
 
+def identify_and_merge_array_columns(df):
+    column_patterns = {}
+    for col in df.columns:
+        match = re.match(r'(.+) \| Instance (\d+)(?: \| Array (\d+))?$', col)
+        if match:
+            base_name, instance, array = match.groups()
+            if base_name not in column_patterns:
+                column_patterns[base_name] = set()
+            column_patterns[base_name].add((instance, array))
+
+    for base_name, instances in column_patterns.items():
+        max_instance = max(int(instance) for instance, _ in instances if instance is not None)
+        for instance in range(max_instance + 1):
+            array_columns = [f"{base_name} | Instance {instance} | Array {array}" 
+                             for _, array in instances 
+                             if _ == str(instance) and array is not None]
+            if array_columns:
+                new_column_name = f"{base_name} | Instance {instance}"
+                df = df.with_columns(
+                    pl.concat_list([pl.col(col) for col in array_columns]).alias(new_column_name)
+                )
+                df = df.drop(array_columns)
+
+    return df
+
+def search_instances(df, base_column_name, search_value):
+    columns = [col for col in df.columns if col.startswith(f"{base_column_name} | Instance")]
+    return df.filter(
+        pl.any_horizontal([
+            pl.col(col).arr.contains(search_value) 
+            for col in columns
+        ])
+    )
+
 def read_selfreport_illness(codes, project_folder, filename='selfreport_participant', coding_file='coding6.tsv', extension='.parquet', filter_column=None, filter_criteria=None):
     # Set up local dir for ukbb data
     data_folder = f'{project_folder}/ukbb_data/'
@@ -582,6 +617,9 @@ def read_selfreport_illness(codes, project_folder, filename='selfreport_particip
     
     # Rename the columns in the DataFrame
     data2 = data2.rename(columns_dict)
+    
+    # Merge columns that have multiple arrays for each instance, into its respective instance
+    data2 = identify_and_merge_array_columns(data2)
     
     return data2.with_columns(pl.lit('Self').alias('source'))
 
