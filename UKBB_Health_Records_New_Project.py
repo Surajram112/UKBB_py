@@ -155,19 +155,23 @@ def load_files(file_ids, data_folder):
             print(f"{file_name} already exists in the DNAnexus Project.")
 
 def filter_by_criteria(df, criteria):
-    # Start with all rows
-    mask = pl.lit(True)
-    
-    for column, condition in criteria:
-        # Check if the column exists in the dataframe
-        if column in df.columns:
-            # Apply the condition and combine with the existing mask
-            mask = mask & condition(pl.col(column))
+    conditions = []
+    for base_column, condition in criteria:
+        instance_columns = [col for col in df.columns if col.startswith(base_column)]
+        if instance_columns:
+            instance_conditions = []
+            for instance_col in instance_columns:
+                if '| Array' in instance_col:
+                    # For array columns, check if any array element meets the condition
+                    array_columns = [col for col in df.columns if col.startswith(instance_col.split('| Array')[0])]
+                    instance_conditions.append(pl.any([condition(pl.col(col)) for col in array_columns]))
+                else:
+                    instance_conditions.append(condition(pl.col(instance_col)))
+            conditions.append(pl.any(instance_conditions))
         else:
-            print(f"Warning: Column '{column}' not found in the dataframe.")
+            print(f"Warning: No columns found starting with '{base_column}'")
     
-    # Apply the mask to filter the dataframe
-    return df.filter(mask)
+    return df.filter(pl.all(conditions))
 
 def identify_and_merge_array_columns(df):
     column_patterns = {}
