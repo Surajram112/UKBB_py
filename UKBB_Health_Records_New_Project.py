@@ -161,51 +161,15 @@ def filter_by_criteria(df, criteria):
         if instance_columns:
             instance_conditions = []
             for instance_col in instance_columns:
-                if '| Array' in instance_col:
-                    # For array columns, check if any array element meets the condition
-                    array_columns = [col for col in df.columns if col.startswith(instance_col.split('| Array')[0])]
-                    instance_conditions.append(pl.any([condition(pl.col(col)) for col in array_columns]))
-                else:
-                    instance_conditions.append(condition(pl.col(instance_col)))
-            conditions.append(pl.any(instance_conditions))
+                # Apply condition to each instance column
+                instance_conditions.append(condition(pl.col(instance_col)))
+            # Combine conditions for each instance with logical OR
+            conditions.append(pl.fold(pl.lit(False), lambda acc, x: acc | x, instance_conditions))
         else:
             print(f"Warning: No columns found starting with '{base_column}'")
     
-    return df.filter(pl.all(conditions))
-
-def identify_and_merge_array_columns(df):
-    column_patterns = {}
-    for col in df.columns:
-        match = re.match(r'(.+) \| Instance (\d+)(?: \| Array (\d+))?$', col)
-        if match:
-            base_name, instance, array = match.groups()
-            if base_name not in column_patterns:
-                column_patterns[base_name] = set()
-            column_patterns[base_name].add((instance, array))
-
-    for base_name, instances in column_patterns.items():
-        max_instance = max(int(instance) for instance, _ in instances if instance is not None)
-        for instance in range(max_instance + 1):
-            array_columns = [f"{base_name} | Instance {instance} | Array {array}" 
-                             for _, array in instances 
-                             if _ == str(instance) and array is not None]
-            if array_columns:
-                new_column_name = f"{base_name} | Instance {instance}"
-                df = df.with_columns(
-                    pl.concat_list([pl.col(col) for col in array_columns]).alias(new_column_name)
-                )
-                df = df.drop(array_columns)
-
-    return df
-
-def search_instances(df, base_column_name, search_value):
-    columns = [col for col in df.columns if col.startswith(f"{base_column_name} | Instance")]
-    return df.filter(
-        pl.any_horizontal([
-            pl.col(col).arr.contains(search_value) 
-            for col in columns
-        ])
-    )
+    # Combine all criteria with logical AND
+    return df.filter(pl.fold(pl.lit(True), lambda acc, x: acc & x, conditions))
 
 def read_GP(codes, project_folder, filename='GP_gp_clinical', extension='.parquet', filter_column=None, filter_criteria=None):
     gp_header = ['eid', 'data_provider', 'event_dt', 'read_2', 'read_3', 'value1', 'value2', 'value3', 'dob', 'assess_date', 'event_age', 'prev']
@@ -621,9 +585,6 @@ def read_selfreport_illness(codes, project_folder, filename='selfreport_particip
     
     # Rename the columns in the DataFrame
     data2 = data2.rename(columns_dict)
-    
-    # Merge columns that have multiple arrays for each instance, into its respective instance
-    # data2 = identify_and_merge_array_columns(data2)
     
     return data2.with_columns(pl.lit('Self').alias('source'))
 
