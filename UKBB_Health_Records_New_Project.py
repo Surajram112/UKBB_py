@@ -753,7 +753,7 @@ def order_participant_records(*dataframes):
             df.select(join_columns + right_columns),
             on=join_columns,
             how='outer',
-            suffix=f'_{df['source'].item()}'
+            suffix=f'_{df["source"].item()}'
         )
     
     # Sort the result by 'eid' and 'diag_date' if available
