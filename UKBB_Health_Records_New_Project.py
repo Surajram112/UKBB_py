@@ -92,12 +92,12 @@ def load_files(file_ids, data_folder):
             print(f"Getting original file and saving to {data_folder}.")
             
             # Transfer the files from instance ukbb_data file to local biobank project ukbb_data file
-            run_command(f'dx upload {file_path} -o {data_folder}')
+            run_command(f'dx upload {file_path} -o {data_folder} --overwrite')
             print(f"Uploaded {file_name} back to DNAnexus Project.")
 
         # Transfer the files from efficient instance ukbb_data file to efficient local biobank project ukbb_data file if not in ukbb project folder
         if os.path.exists(file_path) and not os.path.exists(local_file_path):
-            run_command(f'dx upload {file_path} -o {data_folder}')
+            run_command(f'dx upload {file_path} -o {data_folder} --overwrite')
             print(f"Uploaded {file_name} back to DNAnexus Project.")
         else:
             print(f"{file_name} already exists in the instance, at {file_path}")
