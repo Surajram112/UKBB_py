@@ -623,7 +623,7 @@ def read_selfreport_illness(codes, project_folder, filename='selfreport_particip
     data2 = data2.rename(columns_dict)
     
     # Merge columns that have multiple arrays for each instance, into its respective instance
-    data2 = identify_and_merge_array_columns(data2)
+    # data2 = identify_and_merge_array_columns(data2)
     
     return data2.with_columns(pl.lit('Self').alias('source'))
 
