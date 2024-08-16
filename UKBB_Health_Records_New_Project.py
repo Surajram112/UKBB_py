@@ -153,6 +153,21 @@ def load_files(file_ids, data_folder):
         else:
             print(f"{file_name} already exists in the DNAnexus Project.")
 
+def filter_by_criteria(df, criteria):
+    # Start with all rows
+    mask = pl.lit(True)
+    
+    for column, condition in criteria:
+        # Check if the column exists in the dataframe
+        if column in df.columns:
+            # Apply the condition and combine with the existing mask
+            mask = mask & condition(pl.col(column))
+        else:
+            print(f"Warning: Column '{column}' not found in the dataframe.")
+    
+    # Apply the mask to filter the dataframe
+    return df.filter(mask)
+
 def read_GP(codes, project_folder, filename='GP_gp_clinical', extension='.parquet', filter_column=None, filter_criteria=None):
     gp_header = ['eid', 'data_provider', 'event_dt', 'read_2', 'read_3', 'value1', 'value2', 'value3', 'dob', 'assess_date', 'event_age', 'prev']
      
