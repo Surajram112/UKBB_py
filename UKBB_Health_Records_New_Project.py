@@ -713,11 +713,35 @@ def align_participant_records(*dataframes):
             df = df.with_columns(pl.col('event_dt').cast(pl.Datetime).alias('diag_date'))
         elif 'date' in df.columns:
             df = df.with_columns(pl.col('date').cast(pl.Datetime).alias('diag_date'))
+        elif 'opdate' in df.columns:
+            df = df.with_columns(pl.col('opdate').cast(pl.Datetime).alias('diag_date'))
+        elif 'epistart' in df.columns:
+            df = df.with_columns(pl.col('epistart').cast(pl.Datetime).alias('diag_date'))
         processed_dfs.append(df)
     
-    # Concatenate the DataFrames
-    all_records = pl.concat(processed_dfs, how="diagonal")
-    return all_records
+    # Perform an outer join on 'eid' and 'diag_date' if available, otherwise just on 'eid'
+    merged_df = processed_dfs[0]
+    for df in processed_dfs[1:]:
+        join_columns = ['eid']
+        if 'diag_date' in df.columns and 'diag_date' in merged_df.columns:
+            join_columns.append('diag_date')
+        
+        # Get unique columns from the right DataFrame
+        right_columns = [col for col in df.columns if col not in merged_df.columns and col not in join_columns]
+        
+        merged_df = merged_df.join(
+            df.select(join_columns + right_columns),
+            on=join_columns,
+            how='outer'
+        )
+    
+    # Sort the result by 'eid' and 'diag_date' if available
+    if 'diag_date' in merged_df.columns:
+        merged_df = merged_df.sort(['eid', 'diag_date'])
+    else:
+        merged_df = merged_df.sort('eid')
+    
+    return merged_df
 
 def first_occurance(all_records):
     # Group by 'eid' and get the earliest 'Date_diag_earliest'
