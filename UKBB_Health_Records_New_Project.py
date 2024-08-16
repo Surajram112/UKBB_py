@@ -1,6 +1,5 @@
 import os
 import subprocess
-from collections import Counter
 import polars as pl
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -110,24 +109,28 @@ def load_files(file_ids, data_folder):
         else:
             print(f"{file_name} already exists in the DNAnexus Project.")
 
-def read_GP(codes, project_folder, filename='GP_gp_clinical', extension='.parquet'):
+def read_GP(codes, project_folder, filename='GP_gp_clinical', extension='.parquet', filter_column=None, filter_criteria=None):
     gp_header = ['eid', 'data_provider', 'event_dt', 'read_2', 'read_3', 'value1', 'value2', 'value3', 'dob', 'assess_date', 'event_age', 'prev']
      
-    if not codes:
-        return pl.DataFrame(schema={col: pl.Utf8 for col in gp_header})
-    
     # Set up local dir for ukbb data
     data_folder = f'{project_folder}/ukbb_data/' 
     
     # Read the parquet file using polars
     data = pl.read_parquet(data_folder + filename + extension, use_pyarrow=True)
     
-    # Filter data using vectorized operations
-    data2 = data.filter(pl.col('read_3').is_in(codes) | pl.col('read_2').is_in(codes))
+    if codes:
+        # Filter data using vectorized operations
+        data2 = data.filter(pl.col('read_3').is_in(codes) | pl.col('read_2').is_in(codes))
+    else:
+        # If codes is empty, use the entire dataset
+        data2 = data
     
     if data2.is_empty():
         return pl.DataFrame(schema={col: pl.Utf8 for col in gp_header})
     
+    # Apply additional filtering based on filter_column and filter_criteria
+    if filter_column and filter_criteria:
+        data2 = data2.filter(pl.col(filter_column).is_in(filter_criteria))
     
     # Add exclusion columns
     data2 = data2.with_columns([
@@ -162,11 +165,8 @@ def read_GP(codes, project_folder, filename='GP_gp_clinical', extension='.parque
     
     return data2
 
-def read_OPCS(codes, project_folder, filename='HES_hesin_oper', extension='.parquet'):
+def read_OPCS(codes, project_folder, filename='HES_hesin_oper', extension='.parquet', filter_column=None, filter_criteria=None):
     opcs_header = ['dnx_hesin_oper_id', 'eid', 'ins_index', 'arr_index', 'opdate', 'level', 'oper3', 'oper3_nb', 'oper4', 'oper4_nb', 'posopdur', 'preopdur']
-    
-    if not codes:
-        return pl.DataFrame(schema={col: pl.Utf8 for col in opcs_header}), pl.DataFrame(schema={col: pl.Utf8 for col in opcs_header})
     
     # Set up local dir for ukbb data
     data_folder = f'{project_folder}/ukbb_data/' 
@@ -174,14 +174,22 @@ def read_OPCS(codes, project_folder, filename='HES_hesin_oper', extension='.parq
     # Read the parquet file using polars
     data = pl.read_parquet(data_folder + filename + extension, use_pyarrow=True)
     
-    # Filter data using vectorized operations
-    data2 = data.filter(
-        pl.col('oper3').str.contains('|'.join(codes)) | 
-        pl.col('oper4').str.contains('|'.join(codes))
-    )
+    if codes:
+        # Filter data using vectorized operations
+        data2 = data.filter(
+            pl.col('oper3').str.contains('|'.join(codes)) | 
+            pl.col('oper4').str.contains('|'.join(codes))
+        )
+    else:
+        # If codes is empty, use the entire dataset
+        data2 = data
     
     if data2.is_empty():
         return pl.DataFrame(schema={col: pl.Utf8 for col in opcs_header}), pl.DataFrame(schema={col: pl.Utf8 for col in opcs_header})
+    
+    # Apply additional filtering based on filter_column and filter_criteria
+    if filter_column and filter_criteria:
+        data2 = data2.filter(pl.col(filter_column).is_in(filter_criteria))
     
     data2 = data2.with_columns([
         pl.col('eid').cast(pl.Int64),
@@ -221,11 +229,8 @@ def read_OPCS(codes, project_folder, filename='HES_hesin_oper', extension='.parq
     
     return data2.drop('dnx_hesin_oper_id')
 
-def read_ICD10(codes, project_folder, diagfile='HES_hesin_diag', recordfile='HES_hesin', extension='.parquet'):
+def read_ICD10(codes, project_folder, diagfile='HES_hesin_diag', recordfile='HES_hesin', extension='.parquet', filter_column=None, filter_criteria=None):
     icd10_header = ['dnx_hesin_diag_id', 'eid', 'ins_index', 'arr_index', 'level', 'diag_icd9', 'diag_icd10', 'dnx_hesin_id', 'epistart', 'epiend']
-    
-    if not codes:
-        return pl.DataFrame(schema={col: pl.Utf8 for col in icd10_header})
     
     # Set up local dir for ukbb data
     data_folder = f'{project_folder}/ukbb_data/' 
@@ -233,10 +238,14 @@ def read_ICD10(codes, project_folder, diagfile='HES_hesin_diag', recordfile='HES
     # Read the parquet file using polars
     diag_data = pl.read_parquet(data_folder + diagfile + extension, use_pyarrow=True)
     
-    # Filter data using vectorized operations to check if any code is in the strings
-    data = diag_data.filter(
-        pl.col('diag_icd10').str.contains('|'.join(codes))
-    )
+    if codes:
+        # Filter data using vectorized operations to check if any code is in the strings
+        data = diag_data.filter(
+            pl.col('diag_icd10').str.contains('|'.join(codes))
+        )
+    else:
+        # If codes is empty, use the entire dataset
+        data = diag_data
     
     if data.is_empty():
         return pl.DataFrame(schema={col: pl.Utf8 for col in icd10_header})
@@ -253,6 +262,10 @@ def read_ICD10(codes, project_folder, diagfile='HES_hesin_diag', recordfile='HES
     
     # Join with record data
     data2 = data.join(record_data, on=['eid', 'ins_index'])
+
+    # Apply additional filtering based on filter_column and filter_criteria
+    if filter_column and filter_criteria:
+        data2 = data2.filter(pl.col(filter_column).is_in(filter_criteria))
 
     # Check for the existence of 'epistart' and 'epiend' columns
     columns_to_check = ['epistart', 'epiend']
@@ -310,11 +323,8 @@ def read_ICD10(codes, project_folder, diagfile='HES_hesin_diag', recordfile='HES
 
     return data2.drop(['dnx_hesin_diag_id', 'dnx_hesin_id', 'epistart_invalid', 'epiend_invalid', 'epistart_reason', 'epiend_reason'])
 
-def read_ICD9(codes, project_folder, diagfile='HES_hesin_diag', recordfile='HES_hesin', extension='.parquet'):
+def read_ICD9(codes, project_folder, diagfile='HES_hesin_diag', recordfile='HES_hesin', extension='.parquet', filter_column=None, filter_criteria=None):
     icd9_header = ['dnx_hesin_diag_id', 'eid', 'ins_index', 'arr_index', 'level', 'diag_icd9', 'diag_icd10', 'dnx_hesin_id', 'epistart', 'epiend']
-    
-    if not codes:
-        return pl.DataFrame(schema={col: pl.Utf8 for col in icd9_header}), pl.DataFrame(schema={col: pl.Utf8 for col in icd9_header})
     
     # Set up local dir for ukbb data
     data_folder = f'{project_folder}/ukbb_data/' 
@@ -322,10 +332,14 @@ def read_ICD9(codes, project_folder, diagfile='HES_hesin_diag', recordfile='HES_
     # Read the parquet file using polars
     diag_data = pl.read_parquet(data_folder + diagfile + extension, use_pyarrow=True)
     
-    # Filter data using vectorized operations to check if any code is in the strings
-    data = diag_data.filter(
-        pl.col('diag_icd9').str.contains('|'.join(codes))
-    )
+    if codes:
+        # Filter data using vectorized operations to check if any code is in the strings
+        data = diag_data.filter(
+            pl.col('diag_icd9').str.contains('|'.join(codes))
+        )
+    else:
+        # If codes is empty, use the entire dataset
+        data = diag_data
     
     if data.is_empty():
         return pl.DataFrame(schema={col: pl.Utf8 for col in icd9_header}), pl.DataFrame(schema={col: pl.Utf8 for col in icd9_header})
@@ -344,6 +358,10 @@ def read_ICD9(codes, project_folder, diagfile='HES_hesin_diag', recordfile='HES_
     
     # Join with record data
     data2 = data.join(record_data, on=['eid', 'ins_index'])
+
+    # Apply additional filtering based on filter_column and filter_criteria
+    if filter_column and filter_criteria:
+        data2 = data2.filter(pl.col(filter_column).is_in(filter_criteria))
 
     # Check for the existence of 'epistart' and 'epiend' columns
     columns_to_check = ['epistart', 'epiend']
@@ -459,10 +477,7 @@ def read_ICD9(codes, project_folder, diagfile='HES_hesin_diag', recordfile='HES_
     
 #     return data
 
-def read_selfreport_illness(codes, project_folder, filename='selfreport_participant', coding_file='coding6.tsv', extension='.parquet'):
-    if not codes:
-        return pl.DataFrame(), pl.DataFrame()
-    
+def read_selfreport_illness(codes, project_folder, filename='selfreport_participant', coding_file='coding6.tsv', extension='.parquet', filter_column=None, filter_criteria=None):
     # Set up local dir for ukbb data
     data_folder = f'{project_folder}/ukbb_data/'
     cols_folder = f'{project_folder}/cols_in_tables/'
@@ -475,22 +490,30 @@ def read_selfreport_illness(codes, project_folder, filename='selfreport_particip
     coding6 = coding6.filter(pl.col('coding') > 1)
 
     # Read the columns file to get the current and new column names
-    columns_df = pl.read_csv(cols_folder+ filename + '.txt', separator='\t')
+    columns_df = pl.read_csv(cols_folder + filename + '.txt', separator='\t')
     columns_dict = dict(zip(columns_df['Code'], columns_df['Description']))
 
-    # Filter data using vectorized operations
-    outlines = []
-    for code in codes:
-        # Search in all p20002_i* columns, reporting 'Non-cancer illness code, self-reported'
-        non_cancer_illness_columns = [col for col in data.columns if col.startswith('p20002_i')]
-        for col in non_cancer_illness_columns:
-            outline = data.filter(pl.col(col).str.contains(code))['eid']
-            outlines.extend(outline.to_list())
-            
-    if not outlines:
-        return pl.DataFrame(), pl.DataFrame()
+    if codes:
+        # Filter data using vectorized operations
+        outlines = []
+        for code in codes:
+            # Search in all p20002_i* columns, reporting 'Non-cancer illness code, self-reported'
+            non_cancer_illness_columns = [col for col in data.columns if col.startswith('p20002_i')]
+            for col in non_cancer_illness_columns:
+                outline = data.filter(pl.col(col).str.contains(code))['eid']
+                outlines.extend(outline.to_list())
+        
+        if outlines:
+            data2 = data.filter(pl.col('eid').is_in(outlines))
+        else:
+            data2 = data
+    else:
+        # If codes is empty, use the entire dataset
+        data2 = data
     
-    data2 = data.filter(pl.col('eid').is_in(outlines))
+    # Apply additional filtering based on filter_column and filter_criteria
+    if filter_column and filter_criteria:
+        data2 = data2.filter(pl.col(filter_column).is_in(filter_criteria))
     
     if data2.is_empty():
         return pl.DataFrame(), pl.DataFrame()
@@ -508,12 +531,9 @@ def read_selfreport_illness(codes, project_folder, filename='selfreport_particip
         pl.lit("").alias('exclude_reason')
     ])
     
-    return data2.with_columns(pl.lit('Self').alias('source'))
+    return data2.with_columns(pl.lit('Self').alias('source')), coding6
 
-def read_selfreport_cancer(codes, project_folder, filename='selfreport_participant', coding_file='coding3.tsv', extension='.parquet'):
-    if not codes:
-        return pl.DataFrame(), pl.DataFrame()
-    
+def read_selfreport_cancer(codes, project_folder, filename='selfreport_participant', coding_file='coding3.tsv', extension='.parquet', filter_column=None, filter_criteria=None):
     # Set up local dir for ukbb data
     data_folder = f'{project_folder}/ukbb_data/' 
     cols_folder = f'{project_folder}/cols_in_tables/'
@@ -526,22 +546,30 @@ def read_selfreport_cancer(codes, project_folder, filename='selfreport_participa
     coding3 = coding3.filter(pl.col('coding') > 1)
     
     # Read the columns file to get the current and new column names
-    columns_df = pl.read_csv(cols_folder+ filename + '.txt', separator='\t')
+    columns_df = pl.read_csv(cols_folder + filename + '.txt', separator='\t')
     columns_dict = dict(zip(columns_df['Code'], columns_df['Description']))
     
-    # Filter data using vectorized operations            
-    outlines = []
-    for code in codes:
-        # Search in all p20001_i* columns, related to 'Cancer code, self-reported'
-        treatment_columns = [col for col in data.columns if col.startswith('p20001_i')]
-        for col in treatment_columns:
-            outline = data.filter(pl.col(col).str.contains(code))['eid']
-            outlines.extend(outline.to_list())
+    if codes:
+        # Filter data using vectorized operations            
+        outlines = []
+        for code in codes:
+            # Search in all p20001_i* columns, related to 'Cancer code, self-reported'
+            treatment_columns = [col for col in data.columns if col.startswith('p20001_i')]
+            for col in treatment_columns:
+                outline = data.filter(pl.col(col).str.contains(code))['eid']
+                outlines.extend(outline.to_list())
+        
+        if outlines:
+            data2 = data.filter(pl.col('eid').is_in(outlines))
+        else:
+            data2 = data
+    else:
+        # If codes is empty, use the entire dataset
+        data2 = data
     
-    if not outlines:
-        return pl.DataFrame(), pl.DataFrame()
-    
-    data2 = data.filter(pl.col('eid').is_in(outlines))
+    # Apply additional filtering based on filter_column and filter_criteria
+    if filter_column and filter_criteria:
+        data2 = data2.filter(pl.col(filter_column).is_in(filter_criteria))
     
     if data2.is_empty():
         return pl.DataFrame(), pl.DataFrame()
@@ -559,12 +587,9 @@ def read_selfreport_cancer(codes, project_folder, filename='selfreport_participa
         pl.lit("").alias('exclude_reason')
     ])
     
-    return data2.with_columns(pl.lit('Self').alias('source'))
+    return data2.with_columns(pl.lit('Self').alias('source')), coding3
 
-def read_selfreport_treatment(codes, project_folder, filename='selfreport_participant', coding_file='coding4.tsv', extension='.parquet'):
-    if not codes:
-        return pl.DataFrame(), pl.DataFrame()
-    
+def read_selfreport_treatment(codes, project_folder, filename='selfreport_participant', coding_file='coding4.tsv', extension='.parquet', filter_column=None, filter_criteria=None):
     # Set up local dir for ukbb data
     data_folder = f'{project_folder}/ukbb_data/' 
     cols_folder = f'{project_folder}/cols_in_tables/'
@@ -579,22 +604,30 @@ def read_selfreport_treatment(codes, project_folder, filename='selfreport_partic
     coding4 = coding4.filter(pl.col('coding') > 1)
     
     # Read the columns file to get the current and new column names
-    columns_df = pl.read_csv(cols_folder+ filename + '.txt', separator='\t')
+    columns_df = pl.read_csv(cols_folder + filename + '.txt', separator='\t')
     columns_dict = dict(zip(columns_df['Code'], columns_df['Description']))
     
-    # Filter data using vectorized operations
-    outlines = []
-    for code in codes:
-        # Search in all p20003_i* columns, reported as 'Treatment/medication code'
-        treatment_columns = [col for col in data.columns if col.startswith('p20003_i')]
-        for col in treatment_columns:
-            outline = data.filter(pl.col(col).str.contains(code))['eid']
-            outlines.extend(outline.to_list())
+    if codes:
+        # Filter data using vectorized operations
+        outlines = []
+        for code in codes:
+            # Search in all p20003_i* columns, reported as 'Treatment/medication code'
+            treatment_columns = [col for col in data.columns if col.startswith('p20003_i')]
+            for col in treatment_columns:
+                outline = data.filter(pl.col(col).str.contains(code))['eid']
+                outlines.extend(outline.to_list())
+        
+        if outlines:
+            data2 = data.filter(pl.col('eid').is_in(outlines))
+        else:
+            data2 = data
+    else:
+        # If codes is empty, use the entire dataset
+        data2 = data
     
-    if not outlines:
-        return pl.DataFrame(), pl.DataFrame()
-    
-    data2 = data.filter(pl.col('eid').is_in(outlines))
+    # Apply additional filtering based on filter_column and filter_criteria
+    if filter_column and filter_criteria:
+        data2 = data2.filter(pl.col(filter_column).is_in(filter_criteria))
     
     if data2.is_empty():
         return pl.DataFrame(), pl.DataFrame()
@@ -612,12 +645,9 @@ def read_selfreport_treatment(codes, project_folder, filename='selfreport_partic
         pl.lit("").alias('exclude_reason')
     ])
     
-    return data2.with_columns(pl.lit('Self').alias('source'))
+    return data2.with_columns(pl.lit('Self').alias('source')), coding4
 
-def read_selfreport_operation(codes, project_folder, filename='selfreport_participant', coding_file='coding4.tsv', extension='.parquet'):
-    if not codes:
-        return pl.DataFrame(), pl.DataFrame()
-    
+def read_selfreport_operation(codes, project_folder, filename='selfreport_participant', coding_file='coding4.tsv', extension='.parquet', filter_column=None, filter_criteria=None):
     # Set up local dir for ukbb data
     data_folder = f'{project_folder}/ukbb_data/'
     cols_folder = f'{project_folder}/cols_in_tables/'
@@ -630,27 +660,33 @@ def read_selfreport_operation(codes, project_folder, filename='selfreport_partic
     
     # Filter coding4 data
     coding4 = coding4.filter(pl.col('coding') > 1)
-        # Read the coding4 file
-    coding4 = pl.read_csv(data_folder + coding_file, separator='\t')
     
     # Read the columns file to get the current and new column names
-    columns_df = pl.read_csv(cols_folder+ filename + '.txt', separator='\t')
+    columns_df = pl.read_csv(cols_folder + filename + '.txt', separator='\t')
     columns_dict = dict(zip(columns_df['Code'], columns_df['Description']))
     
-    outlines = []
-    for code in codes:
-        meaning = coding4.filter(pl.col('coding') == int(code))['meaning']
-        if not meaning.is_empty():
-            # Search in all p20004_i* columns, recorded as 'Operation code'
-            treatment_columns = [col for col in data.columns if col.startswith('p20004_i')]
-            for col in treatment_columns:
-                outline = data.filter(pl.col(col).str.contains(meaning[0]))['eid']
-                outlines.extend(outline.to_list())
-                
-    if not outlines:
-        return pl.DataFrame(), pl.DataFrame()
+    if codes:
+        outlines = []
+        for code in codes:
+            meaning = coding4.filter(pl.col('coding') == int(code))['meaning']
+            if not meaning.is_empty():
+                # Search in all p20004_i* columns, recorded as 'Operation code'
+                treatment_columns = [col for col in data.columns if col.startswith('p20004_i')]
+                for col in treatment_columns:
+                    outline = data.filter(pl.col(col).str.contains(meaning[0]))['eid']
+                    outlines.extend(outline.to_list())
+        
+        if outlines:
+            data2 = data.filter(pl.col('eid').is_in(outlines))
+        else:
+            data2 = data
+    else:
+        # If codes is empty, use the entire dataset
+        data2 = data
     
-    data2 = data.filter(pl.col('eid').is_in(outlines))
+    # Apply additional filtering based on filter_column and filter_criteria
+    if filter_column and filter_criteria:
+        data2 = data2.filter(pl.col(filter_column).is_in(filter_criteria))
     
     if data2.is_empty():
         return pl.DataFrame(), pl.DataFrame()
@@ -660,7 +696,7 @@ def read_selfreport_operation(codes, project_folder, filename='selfreport_partic
     ])
     
     # Rename the columns in the DataFrame
-    data = data.rename(columns_dict)
+    data2 = data2.rename(columns_dict)
     
     # Add exclusion columns
     data2 = data2.with_columns([
@@ -668,7 +704,7 @@ def read_selfreport_operation(codes, project_folder, filename='selfreport_partic
         pl.lit("").alias('exclude_reason')
     ])
     
-    return data2.with_columns(pl.lit('Self').alias('source'))
+    return data2.with_columns(pl.lit('Self').alias('source')), coding4
 
 def align_participant_records(*dataframes):
     # Create a new column 'diag_date' for each DataFrame
