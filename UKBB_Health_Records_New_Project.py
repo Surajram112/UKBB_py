@@ -568,12 +568,6 @@ def read_selfreport_illness(codes, project_folder, filename='selfreport_particip
     # Rename the columns in the DataFrame
     data2 = data2.rename(columns_dict)
     
-    # Add exclusion columns
-    data2 = data2.with_columns([
-        pl.lit(False).alias('exclude'),
-        pl.lit("").alias('exclude_reason')
-    ])
-    
     return data2.with_columns(pl.lit('Self').alias('source'))
 
 def read_selfreport_cancer(codes, project_folder, filename='selfreport_participant', coding_file='coding3.tsv', extension='.parquet', filter_column=None, filter_criteria=None):
@@ -623,12 +617,6 @@ def read_selfreport_cancer(codes, project_folder, filename='selfreport_participa
     
     # Rename the columns in the DataFrame
     data2 = data2.rename(columns_dict)
-    
-    # Add exclusion columns
-    data2 = data2.with_columns([
-        pl.lit(False).alias('exclude'),
-        pl.lit("").alias('exclude_reason')
-    ])
     
     return data2.with_columns(pl.lit('Self').alias('source'))
 
@@ -681,12 +669,6 @@ def read_selfreport_treatment(codes, project_folder, filename='selfreport_partic
     
     # Rename the columns in the DataFrame
     data2 = data2.rename(columns_dict)
-    
-    # Add exclusion columns
-    data2 = data2.with_columns([
-        pl.lit(False).alias('exclude'),
-        pl.lit("").alias('exclude_reason')
-    ])
     
     return data2.with_columns(pl.lit('Self').alias('source'))
 
@@ -741,15 +723,9 @@ def read_selfreport_operation(codes, project_folder, filename='selfreport_partic
     # Rename the columns in the DataFrame
     data2 = data2.rename(columns_dict)
     
-    # Add exclusion columns
-    data2 = data2.with_columns([
-        pl.lit(False).alias('exclude'),
-        pl.lit("").alias('exclude_reason')
-    ])
-    
     return data2.with_columns(pl.lit('Self').alias('source'))
 
-def align_participant_records(*dataframes):
+def order_participant_records(*dataframes):
     # Create a new column 'diag_date' for each DataFrame
     processed_dfs = []
     for df in dataframes:
@@ -776,7 +752,8 @@ def align_participant_records(*dataframes):
         merged_df = merged_df.join(
             df.select(join_columns + right_columns),
             on=join_columns,
-            how='outer'
+            how='outer',
+            suffix=f'_{df['source'].item()}'
         )
     
     # Sort the result by 'eid' and 'diag_date' if available
