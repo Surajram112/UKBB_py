@@ -27,7 +27,7 @@ This repository contains an ensemble of functions for use analyzing the UKBB rec
 To set up the environment for running the Python scripts, you need to have Python installed along with the necessary packages. You can install the required packages using pip:
 
 ```sh
-pip install pandas numpy scipy matplotlib seaborn statsmodels
+pip install pandas numpy scipy matplotlib seaborn statsmodels polars pyarrow fastparquet
 ```
 
 ```python
