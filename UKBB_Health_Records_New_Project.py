@@ -863,6 +863,14 @@ def read_GP_scripts(codes, folder='ukbb_date/', file='GP_gp_scripts.csv'):
     
     return data2
 
+def calculate_bmi(weight_kg, height_cm):
+    """Calculate BMI given weight in kilograms and height in centimeters."""
+    height_m = height_cm / 100  # Convert height from cm to meters
+    if height_m > 0:
+        return weight_kg / (height_m ** 2)
+    else:
+        return None
+
 def read_death(codes, folder='ukbb_date/', diagfile='death_death_cause.csv', recordfile='death_death.csv', baseline_filename='Baseline.csv'):
     death_header = ['dnx_death_id', 'eid', 'ins_index', 'dsource', 'source', 'date_of_death', 'level', 'cause_icd10']
     
