@@ -104,7 +104,7 @@ def load_files(file_ids, data_folder):
         
         # Transfer the files from efficient local biobank project ukbb_data file to efficient instance ukbb_data file if not in instance
         if os.path.exists(local_file_path) and not os.path.exists(file_path):
-            run_command(f'dx download {file_path} -o {data_folder}')
+            run_command(f'dx download {file_path} -o {file_path}')
             print(f"Transferred {file_name} to {file_path}")
         else:
             print(f"{file_name} already exists in the DNAnexus Project.")
