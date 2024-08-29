@@ -82,9 +82,6 @@ def load_files(file_ids, data_folder):
         # Set up file paths
         file_path = os.path.join(data_folder, file_name)
         
-        # Get project ID and create project folder
-        local_file_path = os.path.join('../../mnt/project/', data_folder, file_name)
-        
         # If the file does not exist in the folders both local and in the instance, go through the pipeline
         if not dx_exists(file_name) and not os.path.exists(file_path):
             # Download the file to the instance ukbb_data file
