@@ -86,7 +86,7 @@ def load_files(file_ids, data_folder):
         local_file_path = os.path.join('../../mnt/project/', data_folder, file_name)
         
         # If the file does not exist in the folders both local and in the instance, go through the pipeline
-        if not os.path.exists(local_file_path) and not os.path.exists(file_path):
+        if not dx_exists(file_name) and not os.path.exists(file_path):
             # Download the file to the instance ukbb_data file
             run_command(f'dx download {file_id} -o {data_folder}')
             print(f"Getting original file and saving to {data_folder}.")
@@ -96,14 +96,14 @@ def load_files(file_ids, data_folder):
             print(f"Uploaded {file_name} back to DNAnexus Project.")
 
         # Transfer the files from efficient instance ukbb_data file to efficient local biobank project ukbb_data file if not in ukbb project folder
-        if os.path.exists(file_path) and not os.path.exists(local_file_path):
+        if os.path.exists(file_path) and not dx_exists(file_name):
             run_command(f'dx upload {file_path} -o {data_folder}')
             print(f"Uploaded {file_name} back to DNAnexus Project.")
         else:
             print(f"{file_name} already exists in the instance, at {file_path}")
         
         # Transfer the files from efficient local biobank project ukbb_data file to efficient instance ukbb_data file if not in instance
-        if os.path.exists(local_file_path) and not os.path.exists(file_path):
+        if dx_exists(file_name) and not os.path.exists(file_path):
             run_command(f'dx download {file_path} -o {data_folder}')
             print(f"Transferred {file_name} to {file_path}")
         else:
