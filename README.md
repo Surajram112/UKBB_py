@@ -52,10 +52,10 @@ This will return a DataFrame `ICD10_records` which will contain all HES records 
 
 Many phenotypes can be defined in a variety of ways. For example, Frozen Shoulder can be defined by ICD10 code M75.0, GP codes N210., XE1FL, and XE1Hm or OPCS4 code W78.1.
 
-The function `first_occurence` can take ICD, GP, OPCS, and cancer registry codes (also ICD10) and output the first date the phenotype appears and where it first appears. Running
+The function `first_occurence` can take ICD, GP, OPCS and output the first date the phenotype appears and where it first appears. Running
 
 ```python
-frozen_shoulder = first_occurence(ICD10='M75.0', GP=["N210.", "XE1FL", "XE1Hm"], OPCS='W78.1', cancer='', project_folder)
+frozen_shoulder = first_occurence(project_folder, ICD10='M75.0', GP=["N210.", "XE1FL", "XE1Hm"], OPCS='W78.1')
 ```
 
 will return a DataFrame with three columns: the id, the date of the first frozen shoulder record, and the source that appeared in. For this phenotype, I don't need to query the cancer registry, so '' is used as the input.
