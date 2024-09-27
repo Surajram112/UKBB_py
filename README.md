@@ -83,7 +83,7 @@ import subprocess
 subprocess.run("curl https://raw.githubusercontent.com/Surajram112/UKBB_py/main/UKBB_Health_Records_New_Project.py > UKBB_Health_Records_New_Project.py", shell=True, check=True)
 from UKBB_Health_Records_New_Project import *
 project_folder = 'test'
-load_save_data(project_folder=)
+load_save_data(project_folder)
 
 # Define read functions and other functionality here
 GP_codes = ['XE2eD', '22K..']
