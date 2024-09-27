@@ -34,6 +34,7 @@ pip install pandas numpy scipy matplotlib seaborn statsmodels polars pyarrow fas
 import subprocess
 subprocess.run("curl https://raw.githubusercontent.com/Surajram112/UKBB_py/main/UKBB_Health_Records_New_Project.py > UKBB_Health_Records_New_Project.py", shell=True, check=True)
 from UKBB_Health_Records_New_Project import *
+load_data()
 ```
 ### Extracting Healthcare Records
 
