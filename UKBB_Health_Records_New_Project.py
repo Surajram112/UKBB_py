@@ -855,16 +855,16 @@ def Generate_GRS(grs_file, folder='ukbb_date/'):
 
 # Example usage
 # Self_codes = ['1222']
-# Self_records = read_selfreport(Self_codes)
+# Self_records = read_selfreport(Self_codes,project_folder = 't1diabetes')
 
 # GP_codes = ['C10..']
-# GP_records = read_GP(GP_codes)
+# GP_records = read_GP(GP_codes, project_folder = 't1diabetes')
 
 # OPCS_codes = ['Z92.4', 'C29.2']
-# OPCS_records = read_OPCS(OPCS_codes)
+# OPCS_records = read_OPCS(OPCS_codes, project_folder = 't1diabetes')
 
 # ICD9_codes = ['250']
-# ICD9_records = read_ICD9(ICD9_codes)
+# ICD9_records = read_ICD9(ICD9_codes, project_folder = 't1diabetes')
 
 # ICD10_codes = ['E10']
-# ICD10_records = read_ICD10(ICD10_codes)
+# ICD10_records = read_ICD10(ICD10_codes, project_folder = 't1diabetes')
