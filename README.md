@@ -42,8 +42,8 @@ project_folder = "name you want to give to the particular project you are going 
 You can use the functions provided to extract healthcare records. For example, to extract ICD10 records, you can run:
 
 ```python
-GP_codes = ['XE2eD', '22K..']
-GP_records = read_GP(GP_codes, project_folder)
+ICD10_codes = ['E10', 'E11']
+ICD_records = read_ICD10(ICD10_codes, project_folder)
 ```
 
 This will return a DataFrame `ICD10_records` which will contain all HES records that match either E10 (Insulin-dependent diabetes mellitus) or E11 (Non-insulin-dependent diabetes mellitus). This can also be run on sub-codes, e.g. E11.3, for Diabetic Retinopathy.
