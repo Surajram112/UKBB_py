@@ -31,6 +31,7 @@ from UKBB_Health_Records_New_Project import *
 ```
 ### Loading data into your UkBiobank Project
 ```python
+project_folder = 't1diabetes'
 load_save_data(project_folder)
  ```
 project_folder = "name you want to give to the particular project you are going to be working on"
@@ -80,7 +81,8 @@ Below is an example usage of the main script:
 import subprocess
 subprocess.run("curl https://raw.githubusercontent.com/Surajram112/UKBB_py/main/UKBB_Health_Records_New_Project.py > UKBB_Health_Records_New_Project.py", shell=True, check=True)
 from UKBB_Health_Records_New_Project import *
-load_save_data(project_folder="test")
+project_folder = 'test'
+load_save_data(project_folder=)
 
 # Define read functions and other functionality here
 GP_codes = ['XE2eD', '22K..']
