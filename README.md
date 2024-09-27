@@ -12,13 +12,7 @@ This repository contains an ensemble of functions for use analyzing the UKBB rec
 
 - **`read_ICD9`**: Reads data from the HES records using ICD9. It performs an inner join on the diagnosis but there is no data on ICD9 dates of diagnosis in the UKBB HES records.
 
-- **`read_cancer`**: Reads data from the Cancer Registry data using ICD10. It returns the eid, date, and cancer type.
-
 - **`read_selfreport`**: Reads data from the UK Biobank's non-cancer self-reported illness codes. It takes a list of codes from https://biobank.ctsu.ox.ac.uk/crystal/coding.cgi?id=6 and returns a list of matching IDs.
-
-- **`read_selfreport_cancer`**: Reads data from the UK Biobank's cancer self-reported illness codes. It takes a list of codes from https://biobank.ctsu.ox.ac.uk/crystal/coding.cgi?id=3 and returns a list of matching IDs.
-
-- **`first_occurence`**: Takes a list of ICD10, read3, OPCS, and cancer ICD10 codes and returns the date and source of the first occurrence of disease. It does not use ICD9, because the dates are not present in these records.
 
 ## How to Use
 
@@ -70,24 +64,13 @@ will return a DataFrame with three columns: the id, the date of the first frozen
 
 These are longitudinal and have the date in `event_dt` and the actual BMI value in `value1`, `value2`, or `value3`.
 
-### Combining with Baseline Data
+## Working on
 
-To combine the output with baseline data, you can use pandas' merge function. For example, if you have a DataFrame with the baseline data called `baseline`, you can run:
+- **`read_cancer`**: Reads data from the Cancer Registry data using ICD10. It returns the eid, date, and cancer type.
 
-```python
-frozen_shoulder = first_occurence(ICD10='M75.0', GP=["N210.", "XE1FL", "XE1Hm"], OPCS='W78.1', cancer='')
-frozen_shoulder['FS'] = 1
-all_data = baseline.merge(frozen_shoulder, on='eid', how='left')
-all_data['FS'] = all_data['FS'].fillna(0)
-```
+- **`read_selfreport_cancer`**: Reads data from the UK Biobank's cancer self-reported illness codes. It takes a list of codes from https://biobank.ctsu.ox.ac.uk/crystal/coding.cgi?id=3 and returns a list of matching IDs.
 
-`all_data` will now contain the frozen shoulder records, with a column `FS` which is 1 if they were in the record and 0 if they weren't.
-
-## Known Issues
-
-The script relies on grepping entire lines from a CSV. As ICD9 codes are purely numeric, these can match on participant IDs and cannot currently be read in. We're working on replacing the grep with an awk command which should address this issue and allow ICD9 codes to be read.
-
-The line-level grep might also accidentally tag other things that happen to match. This is still in testing, and we'd recommend looking at the data to check there isn't anything in there you don't want.
+- **`first_occurence`**: Takes a list of ICD10, read3, OPCS, and cancer ICD10 codes and returns the date and source of the first occurrence of disease. It does not use ICD9, because the dates are not present in these records.
 
 ## Example Usage
 
@@ -97,6 +80,7 @@ Below is an example usage of the main script:
 import subprocess
 subprocess.run("curl https://raw.githubusercontent.com/Surajram112/UKBB_py/main/UKBB_Health_Records_New_Project.py > UKBB_Health_Records_New_Project.py", shell=True, check=True)
 from UKBB_Health_Records_New_Project import *
+load_save_data(project_folder="test")
 
 # Define read functions and other functionality here
 GP_codes = ['XE2eD', '22K..']
