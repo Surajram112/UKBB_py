@@ -34,6 +34,7 @@ from UKBB_Health_Records_New_Project import *
 project_folder = 't1diabetes'
 load_save_data(project_folder)
  ```
+The project foler is where the data will be imported to.
 project_folder = "name you want to give to the particular project you are going to be working on"
 
 ### Extracting Healthcare Records
