@@ -74,7 +74,7 @@ def load_files(file_ids, data_folder):
     
     # Create the output folder and dna nexus output folder if it doesn't already exist
     os.makedirs(data_folder, exist_ok=True)
-    run_command(f'dx mkdir {data_folder}')
+    run_command(f'dx mkdir -p {data_folder}')
     
     for file_id in file_ids:
         # Extract the file name from the file ID
