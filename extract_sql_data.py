@@ -83,7 +83,7 @@ def field_titles_by_title_keyword(keyword, dataset):
     return [f.title for f in fields_by_title_keyword(keyword, dataset)]
 
 # Extract and save datasets in efficient format with desired columns
-def extract_and_save_data(dataset_name, columns_file, search_terms, project_folder='original', extension=".parquet"):
+def extract_and_save_data(dataset_name, columns_file, search_terms, project_folder='original', extension=".parquet", use_descriptions=False):
     """
     Extracts specific columns from a dataset and saves them as a Parquet file.
 
@@ -174,6 +174,12 @@ def extract_and_save_data(dataset_name, columns_file, search_terms, project_fold
             # Retrieve fields and convert Spark DataFrame to Pandas DataFrame
             df_new = dataset.retrieve_fields(names=new_columns, engine=dxdata.connect()).toPandas()
 
+            # Add this block before saving:
+            if use_descriptions:
+                # Create a mapping of field names to descriptions
+                name_to_desc = {name: title for name, title in field_names_dict.items() if name in df_new.columns}
+                df_new = df_new.rename(columns=name_to_desc)
+
             # # Calculate the count of null values in each column
             # null_counts = df_new.select([count(when(col(c).isNull() | isnan(col(c)), c)).alias(c) for c in df_new.columns]).collect()[0].asDict()
 
@@ -211,7 +217,13 @@ def extract_and_save_data(dataset_name, columns_file, search_terms, project_fold
             print(f"No additional columns were requested and data already exists in DNAnexus Project folder")
     else:
         # Retrieve fields
-        df = dataset.retrieve_fields(names=list(field_names_dict.keys()), engine=dxdata.connect())
+        df = dataset.retrieve_fields(names=list(field_names_dict.keys()), engine=dxdata.connect()).toPandas()
+
+        # Add this block before saving:
+        if use_descriptions:
+            # Create a mapping of field names to descriptions
+            name_to_desc = {name: title for name, title in field_names_dict.items() if name in df_pandas.columns}
+            df = df.rename(columns=name_to_desc)
 
         # # Calculate the count of null values in each column
         # null_counts = df.select([count(when(col(c).isNull() | isnan(col(c)), c)).alias(c) for c in df.columns]).collect()[0].asDict()
@@ -225,9 +237,9 @@ def extract_and_save_data(dataset_name, columns_file, search_terms, project_fold
         
         # Save as CSV or Parquet file with renamed columns
         if extension == ".parquet":
-            df.toPandas().to_parquet(output_filepath, index=False)
+            df.to_parquet(output_filepath, index=False)
         elif extension == ".csv":
-            df.toPandas().to_csv(output_filepath, index=False)
+            df.to_csv(output_filepath, index=False)
 
         # Ensure the directory exists on DNAnexus
         subprocess.run(f'dx mkdir -p {data_folder}', shell=True, check=True)
