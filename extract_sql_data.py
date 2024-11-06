@@ -153,11 +153,17 @@ def extract_and_save_data(dataset_name, columns_file, search_terms, project_fold
     # Upload to DNAnexus
     subprocess.run(f'dx upload {ext_folder + output_filename + ".txt"} --path {ext_folder}', shell=True, check=True)
     print(f"Field names saved and uploaded to DNAnexus Project folder")
-    
+
+    # Determine the output file path
+    output_filepath = data_folder + output_filename + extension
+
     # Check if file already exists
-    if os.path.exists(local_project_folder + data_folder + output_filename + extension):
+    if os.path.exists(local_project_folder + output_filepath):
         # Load existing data
-        existing_data = pl.read_parquet(local_project_folder + data_folder + output_filename + extension)
+        if extension == ".parquet":
+            existing_data = pl.read_parquet(local_project_folder + output_filepath)
+        elif extension == ".csv":
+            existing_data = pd.read_csv(local_project_folder + output_filepath)
 
         # Determine which columns have not been processed yet
         existing_columns = existing_data.columns
@@ -167,7 +173,7 @@ def extract_and_save_data(dataset_name, columns_file, search_terms, project_fold
         if new_columns:
             # Retrieve fields and convert Spark DataFrame to Pandas DataFrame
             df_new = dataset.retrieve_fields(names=new_columns, engine=dxdata.connect()).toPandas()
-            
+
             # # Calculate the count of null values in each column
             # null_counts = df_new.select([count(when(col(c).isNull() | isnan(col(c)), c)).alias(c) for c in df_new.columns]).collect()[0].asDict()
 
@@ -181,26 +187,32 @@ def extract_and_save_data(dataset_name, columns_file, search_terms, project_fold
             # Concatenate existing and new data using pd.concat
             df_combined = pd.concat([existing_data.to_pandas(), df_new], axis=1)
 
-            # Save as Parquet file
-            df_combined.to_parquet(data_folder + output_filename + extension)
+            # Save as CSV or Parquet file
+            if extension == ".parquet":
+                df_combined.to_parquet(output_filepath)
+            elif extension == ".csv":
+                df_combined.to_csv(output_filepath, index=False)
 
             # Ensure the directory exists on DNAnexus
             subprocess.run(f'dx mkdir -p {data_folder}', shell=True, check=True)
-            
+
             # Upload to DNAnexus
-            subprocess.run(f'dx upload {data_folder + output_filename + extension} --path {data_folder}', shell=True, check=True)
+            subprocess.run(f'dx upload {output_filepath} --path {data_folder}', shell=True, check=True)
             print(f"Data saved and uploaded to DNAnexus Project folder")
         else:
-            # Save as Parquet file
-            existing_data.write_parquet(data_folder + output_filename + extension)
+            # Save as CSV or Parquet file
+            if extension == ".parquet":
+                existing_data.to_parquet(output_filepath)
+            elif extension == ".csv":
+                existing_data.to_csv(output_filepath, index=False)
             
             # Upload to DNAnexus
-            subprocess.run(f'dx upload {data_folder + output_filename + extension} --path {data_folder}', shell=True, check=True)
+            subprocess.run(f'dx upload {output_filepath} --path {data_folder}', shell=True, check=True)
             print(f"No additional columns were requested and data already exists in DNAnexus Project folder")
     else:
         # Retrieve fields
         df = dataset.retrieve_fields(names=list(field_names_dict.keys()), engine=dxdata.connect())
-        
+
         # # Calculate the count of null values in each column
         # null_counts = df.select([count(when(col(c).isNull() | isnan(col(c)), c)).alias(c) for c in df.columns]).collect()[0].asDict()
 
@@ -211,12 +223,15 @@ def extract_and_save_data(dataset_name, columns_file, search_terms, project_fold
         # # Drop these columns from the DataFrame
         # df = df.drop(*columns_to_drop)
         
-        # Save as Parquet file with renamed columns
-        df.toPandas().to_parquet(data_folder + output_filename + extension, index=False)
-        
+        # Save as CSV or Parquet file with renamed columns
+        if extension == ".parquet":
+            df.toPandas().to_parquet(output_filepath, index=False)
+        elif extension == ".csv":
+            df.toPandas().to_csv(output_filepath, index=False)
+
         # Ensure the directory exists on DNAnexus
         subprocess.run(f'dx mkdir -p {data_folder}', shell=True, check=True)
-        
+
         # Upload to DNAnexus
-        subprocess.run(f'dx upload {data_folder + output_filename + extension} --path {data_folder}', shell=True, check=True)
+        subprocess.run(f'dx upload {output_filepath} --path {data_folder}', shell=True, check=True)
         print(f"Data saved and uploaded to DNAnexus Project folder")
