@@ -36,6 +36,7 @@ def load_dataset():
     
     return dxdata.load_dataset(id=dispensed_dataset_id)
 
+# Reads trait file and makes sure it has a code columns added to it
 def read_traits_file(file_path):
     with open(file_path, 'r') as file:
         lines = file.readlines()
@@ -43,17 +44,22 @@ def read_traits_file(file_path):
     # remove any newline characters from each line
     lines = [line.rstrip('\n') for line in lines]
 
-    # split each line into a list of values
-    lines = [line.split('\t') for line in lines]
-
-    # the first line contains the column names
-    column_names = lines[0]
-
-    # the rest of the lines contain the data
-    data = lines[1:]
-
-    # create a DataFrame from the data
-    df = pd.DataFrame(data, columns=column_names)
+    # Check if the file has tab-separated values
+    if '\t' in lines[0]:
+        # split each line into a list of values
+        lines = [line.split('\t') for line in lines]
+        
+        # the first line contains the column names
+        column_names = lines[0]
+        
+        # the rest of the lines contain the data
+        data = lines[1:]
+        
+        # create a DataFrame from the data
+        df = pd.DataFrame(data, columns=column_names)
+    else:
+        # If no tabs, treat as single column of codes
+        df = pd.DataFrame(lines, columns=['Code'])
 
     return df
 
@@ -108,12 +114,15 @@ def extract_and_save_data(dataset_name, columns_file, search_terms, project_fold
 
     # Set up local dir for field names used to extract data
     os.makedirs(ext_folder, exist_ok=True)
-
-    # Load the columns file from the ubkk project folder. Check if it exists in the instance first.
+    
+    # Load the columns file from the ukbb project folder
     if os.path.exists(ext_folder + columns_file):
-        base_fields = read_traits_file(ext_folder + columns_file)['Code'].tolist()
+        traits_df = read_traits_file(ext_folder + columns_file)
     else:
-        base_fields = read_traits_file(local_project_folder + ext_folder + columns_file)['Code'].tolist()
+        traits_df = read_traits_file(local_project_folder + ext_folder + columns_file)
+    
+    # Extract base fields from the 'Code' column
+    base_fields = traits_df['Code'].tolist()
 
     # Take columns file name as file name for output
     output_filename = os.path.basename(columns_file).split('.')[0]
