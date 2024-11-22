@@ -47,9 +47,9 @@ def read_txt_file(file_path):
 
     return df
 
-def dx_exists(file_name):
-    # Function to check if a file exists on DNAnexus using dx find command
-    command = f"dx find data --name {file_name} --brief"
+def dx_exists(file_name, data_folder):
+    # Function to check if a file exists on DNAnexus using dx find command in a folder
+    command = f"dx find data --name {file_name} --path {data_folder} --brief"
     result = run_command(command)
     return bool(result.strip())
 
@@ -84,7 +84,7 @@ def load_files(file_ids, data_folder):
         file_path = os.path.join(data_folder, file_name)
         
         # If the file does not exist in the folders both local and in the instance, go through the pipeline
-        if not dx_exists(file_name) and not os.path.exists(file_path):
+        if not dx_exists(file_name, data_folder) and not os.path.exists(file_path):
             # Download the file to the instance ukbb_data file
             run_command(f'dx download {file_id} -o {data_folder}')
             print(f"Getting original file and saving to {data_folder}.")
@@ -94,14 +94,14 @@ def load_files(file_ids, data_folder):
             print(f"Uploaded {file_name} back to DNAnexus Project.")
 
         # Transfer the files from efficient instance ukbb_data file to efficient local biobank project ukbb_data file if not in ukbb project folder
-        if os.path.exists(file_path) and not dx_exists(file_name):
+        if os.path.exists(file_path) and not dx_exists(file_name, data_folder):
             run_command(f'dx upload {file_path} -o {data_folder}')
             print(f"Uploaded {file_name} back to DNAnexus Project.")
         else:
             print(f"{file_name} already exists in the instance, at {file_path}")
         
         # Transfer the files from efficient local biobank project ukbb_data file to efficient instance ukbb_data file if not in instance
-        if dx_exists(file_name) and not os.path.exists(file_path):
+        if dx_exists(file_name, data_folder) and not os.path.exists(file_path):
             run_command(f'dx download {file_path} -o {data_folder}')
             print(f"Transferred {file_name} to {file_path}")
         else:
